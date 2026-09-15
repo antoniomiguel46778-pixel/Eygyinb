@@ -129,7 +129,6 @@
                 if (window.listenToFirestorePurchases) window.listenToFirestorePurchases();
             } catch (error) {
                 console.error("Erro no Discord Login:", error);
-                // Fallback simples para simulação de username/Tag Discord
                 const discordTag = prompt("Digite seu usuário do Discord (Ex: Nick#0000 ou @usuario):");
                 if (discordTag && discordTag.trim() !== "") {
                     const tagClean = discordTag.trim();
@@ -422,7 +421,6 @@
                     <h4 class="font-bold text-white text-sm mb-4">Minha Conta</h4>
                     <ul class="space-y-2 text-xs text-gray-400">
                         <li><button onclick="playAudioEffect('modal'); openProfileModal('profile')" class="hover:text-spk-blue transition">Meu Perfil</button></li>
-                        <!-- BOTÃO PAINEL DO DONO: Invisível por padrão, visível APENAS para antoniomiguel46779@gmail.com -->
                         <li id="ownerAdminLink" class="hidden">
                             <button onclick="promptAdminAccess()" class="text-amber-400 hover:text-amber-300 transition font-bold flex items-center gap-1.5">
                                 <i class="fa-solid fa-crown text-xs"></i> Painel do Dono
@@ -1053,7 +1051,6 @@
                     </div>
                 `;
 
-                // EXIBE O BOTÃO DO DONO SOMENTE SE FOR O SEU E-MAIL
                 if (currentUser.email && currentUser.email.toLowerCase() === OWNER_EMAIL.toLowerCase()) {
                     if (ownerLink) ownerLink.classList.remove("hidden");
                 } else {
