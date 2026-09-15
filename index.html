@@ -701,7 +701,7 @@
                 <h3 class="text-xl font-bold text-white">Painel do Dono (Administração Completa)</h3>
             </div>
 
-            <!-- Abas do Painel do Dono (Igualzinho à foto) -->
+            <!-- Abas do Painel do Dono -->
             <div class="flex gap-2 mb-6 border-b border-white/10 pb-3 flex-wrap">
                 <button type="button" onclick="switchAdminTab('general')" id="admTabGen" class="px-3.5 py-1.5 rounded-xl text-xs font-bold bg-spk-blue text-white transition">Geral & Bot</button>
                 <button type="button" onclick="switchAdminTab('products')" id="admTabProd" class="px-3.5 py-1.5 rounded-xl text-xs font-bold text-gray-400 hover:text-white transition">Gerenciar Produtos</button>
@@ -710,7 +710,7 @@
             </div>
 
             <form id="adminForm" onsubmit="saveAdminSettings(event)" class="space-y-4">
-                <!-- Aba Geral & Bot -->
+                <!-- Aba Geral & Bot (Com Botão de Categorias e Webhook) -->
                 <div id="admSecGeneral" class="space-y-4">
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>
@@ -726,20 +726,24 @@
                         <label class="block text-xs font-bold text-gray-300 mb-1">URL Webhook Bot (Discord)</label>
                         <input id="cfgBotWebhook" type="text" placeholder="https://discord.com/api/webhooks/..." class="w-full bg-spk-dark text-sm text-white px-3.5 py-2.5 rounded-xl border border-white/10 outline-none">
                     </div>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-300 mb-1">Categorias do Bot (separadas por vírgula)</label>
+                        <input id="cfgCategoriesInput" type="text" placeholder="iniciante, popular, elite" class="w-full bg-spk-dark text-sm text-white px-3.5 py-2.5 rounded-xl border border-white/10 outline-none">
+                    </div>
                 </div>
 
-                <!-- Aba Produtos -->
+                <!-- Aba Produtos (Layout Atualizado: Título/Preço em cima, Estoque/Categoria embaixo, Foto e Descrição) -->
                 <div id="admSecProducts" class="hidden space-y-4">
                     <div class="flex justify-between items-center mb-2">
-                        <span class="text-xs text-gray-400 font-bold">Edite os valores e estoques dos seus VIPs:</span>
+                        <span class="text-xs text-gray-400 font-bold">Edite os produtos e estoques dos seus VIPs:</span>
                         <button type="button" onclick="addNewProduct()" class="bg-emerald-500 hover:bg-emerald-600 text-white font-bold px-3 py-1.5 rounded-xl text-xs transition">
                             + Criar VIP
                         </button>
                     </div>
-                    <div id="adminProductsList" class="space-y-3 max-h-[300px] overflow-y-auto pr-1"></div>
+                    <div id="adminProductsList" class="space-y-4 max-h-[380px] overflow-y-auto pr-1"></div>
                 </div>
 
-                <!-- Aba Termos & Textos (Igualzinho à foto) -->
+                <!-- Aba Termos & Textos (Mantido Intacto) -->
                 <div id="admSecTerms" class="hidden space-y-4">
                     <div>
                         <label class="block text-xs font-bold text-gray-300 mb-1">Termos de Uso do Site</label>
@@ -1366,6 +1370,7 @@
             document.getElementById("cfgServerName").value = serverConfig.name;
             document.getElementById("cfgServerLogo").value = serverConfig.logo;
             document.getElementById("cfgBotWebhook").value = serverConfig.botWebhookUrl || "";
+            document.getElementById("cfgCategoriesInput").value = serverConfig.categories.join(", ");
             document.getElementById("cfgTerms").value = serverConfig.terms;
             document.getElementById("cfgPrivacy").value = serverConfig.privacy;
 
@@ -1420,14 +1425,45 @@
             let html = "";
             plansData.forEach((p, index) => {
                 html += `
-                    <div class="bg-spk-dark p-3 rounded-xl border border-white/10 flex items-center justify-between gap-3 text-xs">
-                        <div class="flex-grow">
-                            <span class="font-bold text-white block">${p.title}</span>
-                            <span class="text-gray-400">Preço: R$ ${p.price.toFixed(2)} | Estoque: ${p.stock}</span>
+                    <div class="bg-spk-dark p-4 rounded-2xl border border-white/10 space-y-3">
+                        <!-- Linha 1: Título e Preço -->
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                            <div class="sm:col-span-2">
+                                <label class="block text-[11px] font-bold text-gray-400 mb-1">Título do Produto</label>
+                                type="text" value="${p.title}" onchange="updatePlanField(${index}, 'title', this.value)" class="w-full bg-spk-card text-xs text-white p-2.5 rounded-xl border border-white/10 outline-none">
+                            </div>
+                            <div>
+                                <label class="block text-[11px] font-bold text-gray-400 mb-1">Preço (R$)</label>
+                                <input type="number" value="${p.price}" onchange="updatePlanField(${index}, 'price', parseFloat(this.value))" class="w-full bg-spk-card text-xs text-white p-2.5 rounded-xl border border-white/10 outline-none">
+                            </div>
                         </div>
-                        <div class="flex items-center gap-2">
-                            <input type="number" value="${p.price}" onchange="updatePlanPrice(${index}, this.value)" class="w-20 bg-spk-card text-white p-1.5 rounded border border-white/10 text-xs">
-                            <button type="button" onclick="deletePlan(${index})" class="text-rose-400 hover:text-rose-300 p-1"><i class="fa-solid fa-trash"></i></button>
+
+                        <!-- Linha 2: Estoque e Categoria -->
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <div>
+                                <label class="block text-[11px] font-bold text-gray-400 mb-1">Estoque</label>
+                                <input type="number" value="${p.stock || 99}" onchange="updatePlanField(${index}, 'stock', parseInt(this.value))" class="w-full bg-spk-card text-xs text-white p-2.5 rounded-xl border border-white/10 outline-none">
+                            </div>
+                            <div>
+                                <label class="block text-[11px] font-bold text-gray-400 mb-1">Categoria</label>
+                                <input type="text" value="${p.category || 'iniciante'}" onchange="updatePlanField(${index}, 'category', this.value)" class="w-full bg-spk-card text-xs text-white p-2.5 rounded-xl border border-white/10 outline-none">
+                            </div>
+                        </div>
+
+                        <!-- Linha 3: Foto do Produto e Descrição -->
+                        <div>
+                            <label class="block text-[11px] font-bold text-gray-400 mb-1">Foto do Produto (URL da Imagem)</label>
+                            <input type="text" value="${p.image || ''}" onchange="updatePlanField(${index}, 'image', this.value)" class="w-full bg-spk-card text-xs text-white p-2.5 rounded-xl border border-white/10 outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-[11px] font-bold text-gray-400 mb-1">Descrição</label>
+                            <textarea rows="2" onchange="updatePlanField(${index}, 'description', this.value)" class="w-full bg-spk-card text-xs text-white p-2.5 rounded-xl border border-white/10 outline-none">${p.description || ''}</textarea>
+                        </div>
+
+                        <div class="flex justify-end pt-1">
+                            <button type="button" onclick="deletePlan(${index})" class="bg-rose-500/10 text-rose-400 hover:bg-rose-500/20 px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 border border-rose-500/30">
+                                <i class="fa-solid fa-trash"></i> Excluir Produto
+                            </button>
                         </div>
                     </div>
                 `;
@@ -1435,29 +1471,25 @@
             container.innerHTML = html;
         }
 
-        window.updatePlanPrice = function(index, val) {
-            const num = parseFloat(val);
-            if (!isNaN(num) && plansData[index]) {
-                plansData[index].price = num;
+        window.updatePlanField = function(index, field, val) {
+            if (plansData[index]) {
+                plansData[index][field] = val;
             }
         };
 
         window.addNewProduct = function() {
-            const title = prompt("Título do novo VIP:");
-            if (!title) return;
-            const price = parseFloat(prompt("Preço do VIP (Ex: 25.00):") || "10");
             plansData.push({
                 id: "custom_" + Date.now(),
-                title: title,
+                title: "Novo Plano VIP",
                 badge: "Novo",
                 category: "iniciante",
-                price: isNaN(price) ? 10.00 : price,
+                price: 25.00,
                 stock: 99,
-                image: "https://placehold.co/600x300/0f172a/3b82f6?text=Painel+VIP",
-                description: "Plano personalizado criado pelo painel do dono.",
+                image: "https://placehold.co/600x300/0f172a/3b82f6?text=Novo+VIP",
+                description: "Descrição detalhada do novo plano VIP.",
                 badgeStyle: "bg-spk-blue text-white",
                 btnBg: "bg-spk-blue hover:bg-blue-600 text-white font-bold",
-                benefits: ["Vantagens personalizadas do plano"]
+                benefits: ["Vantagem exclusiva 1", "Vantagem exclusiva 2"]
             });
             renderAdminProductsList();
         };
@@ -1504,6 +1536,12 @@
             serverConfig.name = document.getElementById("cfgServerName").value;
             serverConfig.logo = document.getElementById("cfgServerLogo").value;
             serverConfig.botWebhookUrl = document.getElementById("cfgBotWebhook").value;
+            
+            const catsRaw = document.getElementById("cfgCategoriesInput").value;
+            if (catsRaw) {
+                serverConfig.categories = catsRaw.split(',').map(c => c.trim().toLowerCase()).filter(c => c.length > 0);
+            }
+
             serverConfig.terms = document.getElementById("cfgTerms").value;
             serverConfig.privacy = document.getElementById("cfgPrivacy").value;
 
@@ -1512,6 +1550,7 @@
             localStorage.setItem("spk_shop_coupons", JSON.stringify(validCoupons));
 
             updateServerDisplay();
+            renderCategories();
             renderPlans();
             closeAdminModal();
             showToast("Configurações atualizadas com sucesso!", "success");
