@@ -260,7 +260,7 @@
                 <button onclick="toggleMobileMenu()" class="md:hidden text-gray-300 hover:text-white p-2 text-xl">
                     <i class="fa-solid fa-bars"></i>
                 </button>
-                <div class="flex items-center space-x-3 cursor-pointer select-none" onclick="playAudioEffect('click'); location.reload();">
+                <div class="flex items-center space-x-3 cursor-pointer select-none" onclick="playAudioEffect('click'); openProfileModal('profile');">
                     <img id="serverLogo" src="https://placehold.co/120x120/0a1026/3b82f6?text=STORM" alt="Storm VIPs Logo" class="w-11 h-11 rounded-2xl object-cover border-2 border-spk-blue shadow-lg shadow-spk-blue/30">
                     <div class="flex flex-col">
                         <h1 id="serverNameDisplay" class="font-black text-xl tracking-wider text-white flex items-center gap-1.5">
@@ -291,17 +291,12 @@
                 </button>
 
                 <div id="authSection">
-                    <!-- Renderizado dinamicamente pelo JS -->
+                    <button onclick="playAudioEffect('modal'); openLoginModal();" class="bg-gradient-to-r from-blue-600 via-blue-500 to-cyan-500 hover:from-blue-500 hover:to-cyan-400 text-white font-extrabold px-5 py-2.5 rounded-2xl text-sm transition shadow-lg btn-glow flex items-center gap-2">
+                        <i class="fa-solid fa-user-large text-xs"></i>
+                        <span>Entrar</span>
+                    </button>
                 </div>
             </div>
-        </div>
-
-        <!-- MENU MOBILE -->
-        <div id="mobileMenu" class="hidden md:hidden bg-spk-dark/95 border-b border-white/10 px-4 py-4 space-y-3">
-            <a href="#catalogo" onclick="toggleMobileMenu();" class="block text-gray-300 hover:text-spk-blue font-semibold text-sm">Planos VIP</a>
-            <a href="#vantagens" onclick="toggleMobileMenu();" class="block text-gray-300 hover:text-spk-blue font-semibold text-sm">Garantia</a>
-            <a href="#quem-somos" onclick="toggleMobileMenu();" class="block text-gray-300 hover:text-spk-blue font-semibold text-sm">Quem Somos</a>
-            <button onclick="toggleMobileMenu(); openAiSupportModal();" class="w-full text-left text-spk-blue font-semibold text-sm">Suporte IA 24h</button>
         </div>
     </header>
 
@@ -433,6 +428,7 @@
                     <ul class="space-y-2 text-xs text-gray-400">
                         <li><button onclick="playAudioEffect('modal'); openProfileModal('profile')" class="hover:text-spk-blue transition">Meu Perfil</button></li>
                         <li><button onclick="playAudioEffect('modal'); openProfileModal('purchases')" class="hover:text-spk-blue transition">Minhas Compras</button></li>
+                        <!-- BOTÃO PAINEL DO DONO: Invisível por padrão, visível APENAS para antoniomiguel46779@gmail.com -->
                         <li id="ownerAdminLink" class="hidden">
                             <button onclick="promptAdminAccess()" class="text-amber-400 hover:text-amber-300 transition font-bold flex items-center gap-1.5">
                                 <i class="fa-solid fa-crown text-xs"></i> Painel do Dono
@@ -560,6 +556,7 @@
                     <p><strong class="text-white">Titular:</strong> <span id="successUserName">@User</span></p>
                     <p><strong class="text-white">Identificador:</strong> <span id="successTxId" class="font-mono text-spk-blue">#STORM-0000</span></p>
                     <p><strong class="text-white">Nuvem Firestore:</strong> <span class="text-emerald-400 font-bold"><i class="fa-solid fa-cloud-check"></i> Sincronizado</span></p>
+                    <p><strong class="text-white">Bot Discord:</strong> <span id="botNotifyStatus" class="text-blue-400 font-bold"><i class="fa-solid fa-paper-plane"></i> Enviado</span></p>
                 </div>
                 
                 <button onclick="closeCheckoutModal(); playAudioEffect('click'); openProfileModal('purchases');" class="bg-spk-blue hover:bg-blue-600 text-white font-bold px-8 py-3.5 rounded-2xl transition">
@@ -569,7 +566,7 @@
         </div>
     </div>
 
-    <!-- MODAL DE LOGIN -->
+    <!-- MODAL DE LOGIN (GOOGLE E DISCORD DISPONÍVEIS) -->
     <div id="loginModal" class="fixed inset-0 bg-black/80 backdrop-blur-md z-50 hidden flex items-center justify-center p-4">
         <div class="bg-spk-card border border-spk-border w-full max-w-md rounded-3xl p-6 sm:p-8 relative shadow-2xl text-center">
             <button onclick="closeLoginModal(); playAudioEffect('click');" class="absolute top-5 right-5 text-gray-400 hover:text-white w-9 h-9 rounded-full bg-spk-dark flex items-center justify-center transition">
@@ -609,19 +606,17 @@
                 <i class="fa-solid fa-xmark text-lg"></i>
             </button>
 
-            <!-- Cabeçalho do Perfil -->
             <div class="flex items-center gap-4 pb-6 border-b border-white/10">
                 <img id="profileUserAvatar" src="https://placehold.co/100x100/3b82f6/ffffff?text=U" class="w-16 h-16 rounded-2xl border-2 border-spk-blue object-cover">
-                <div class="overflow-hidden">
-                    <h3 id="profileUserName" class="text-xl font-black text-white flex items-center gap-2 truncate">
+                <div>
+                    <h3 id="profileUserName" class="text-xl font-black text-white flex items-center gap-2">
                         Usuário <span id="profileProviderBadge" class="text-[10px] px-2 py-0.5 rounded-full bg-spk-blue/20 text-spk-blue border border-spk-blue/30 font-bold uppercase">Google</span>
                     </h3>
-                    <p id="profileUserEmail" class="text-xs text-gray-400 mt-0.5 truncate">email@exemplo.com</p>
-                    <p id="profileUserId" class="text-[11px] font-mono text-gray-500 mt-1 truncate">ID: 000000</p>
+                    <p id="profileUserEmail" class="text-xs text-gray-400 mt-0.5">email@exemplo.com</p>
+                    <p id="profileUserId" class="text-[11px] font-mono text-gray-500 mt-1">ID: 000000</p>
                 </div>
             </div>
 
-            <!-- Abas do Modal -->
             <div class="flex items-center gap-3 my-4 border-b border-white/10 pb-3">
                 <button id="tabBtnProfile" onclick="switchProfileTab('profile'); playAudioEffect('click');" class="px-4 py-2 rounded-xl text-xs font-bold transition bg-spk-blue text-white">
                     <i class="fa-solid fa-user mr-1.5"></i> Perfil
@@ -631,19 +626,19 @@
                 </button>
             </div>
 
-            <!-- Conteúdo Aba Perfil -->
             <div id="tabContentProfile" class="space-y-4 py-2 overflow-y-auto">
                 <div class="bg-spk-dark p-4 rounded-2xl border border-white/10 space-y-3 text-xs text-gray-300">
                     <div class="flex justify-between items-center pb-2 border-b border-white/5">
-                        <span class="text-gray-400">Método de Autenticação:</span>
+                        <span class="text-gray-400">Autenticação:</span>
                         <span id="profDetailProvider" class="font-bold text-white capitalize">Google</span>
                     </div>
                     <div class="flex justify-between items-center pb-2 border-b border-white/5">
-                        <span class="text-gray-400">Sincronização em Nuvem:</span>
-                        <span class="font-bold text-emerald-400 flex items-center gap-1"><i class="fa-solid fa-cloud-arrow-up"></i> Firestore Ativo</span>
+                        <span class="text-gray-400">Status Nuvem:</span>
+                        <span class="font-bold text-emerald-400 flex items-center gap-1"><i class="fa-solid fa-cloud-arrow-up"></i> Conectado com Firestore</span>
                     </div>
                 </div>
 
+                <!-- Botão para atalho direto das compras dentro do modal -->
                 <button onclick="switchProfileTab('purchases'); playAudioEffect('click');" class="w-full bg-spk-dark hover:bg-white/5 text-gray-200 border border-white/10 font-bold py-3 rounded-2xl transition text-xs flex items-center justify-center gap-2">
                     <i class="fa-solid fa-receipt text-spk-blue"></i> Ver Histórico de VIPs Comprados
                 </button>
@@ -653,7 +648,6 @@
                 </button>
             </div>
 
-            <!-- Conteúdo Aba Minhas Compras -->
             <div id="tabContentPurchases" class="hidden py-2 overflow-y-auto flex-grow">
                 <div id="purchasesListContainer" class="space-y-3">
                     <p class="text-center text-gray-400 text-xs py-8">Carregando histórico...</p>
@@ -662,7 +656,7 @@
         </div>
     </div>
 
-    <!-- MODAL DO PAINEL ADMIN DO DONO (COMPLETO) -->
+    <!-- MODAL DO PAINEL ADMIN DO DONO -->
     <div id="adminModal" class="fixed inset-0 bg-black/80 backdrop-blur-md z-50 hidden flex items-center justify-center p-4">
         <div class="bg-spk-card border border-spk-border w-full max-w-3xl rounded-3xl p-6 sm:p-8 relative shadow-2xl max-h-[90vh] overflow-y-auto">
             <button onclick="closeAdminModal(); playAudioEffect('click');" class="absolute top-5 right-5 text-gray-400 hover:text-white w-9 h-9 rounded-full bg-spk-dark flex items-center justify-center transition">
@@ -670,17 +664,18 @@
             </button>
             <div class="flex items-center gap-2 mb-4 border-b border-white/10 pb-3">
                 <i class="fa-solid fa-crown text-amber-400 text-xl"></i>
-                <h3 class="text-xl font-bold text-white">Painel do Dono</h3>
+                <h3 class="text-xl font-bold text-white">Painel do Dono (Administração Completa)</h3>
             </div>
 
+            <!-- Abas do Admin -->
             <div class="flex gap-2 mb-4 border-b border-white/10 pb-3">
                 <button onclick="switchAdminTab('general')" id="admTabGen" class="px-3.5 py-1.5 rounded-xl text-xs font-bold bg-spk-blue text-white">Geral & Bot</button>
                 <button onclick="switchAdminTab('products')" id="admTabProd" class="px-3.5 py-1.5 rounded-xl text-xs font-bold text-gray-400 hover:text-white">Gerenciar Produtos</button>
-                <button onclick="switchAdminTab('coupons')" id="admTabCoup" class="px-3.5 py-1.5 rounded-xl text-xs font-bold text-gray-400 hover:text-white">Cupons</button>
+                <button onclick="switchAdminTab('terms')" id="admTabTerms" class="px-3.5 py-1.5 rounded-xl text-xs font-bold text-gray-400 hover:text-white">Termos & Textos</button>
             </div>
 
             <form id="adminForm" onsubmit="saveAdminSettings(event)" class="space-y-4">
-                <!-- Aba Geral -->
+                <!-- Seção Geral & Webhook do Bot -->
                 <div id="admSecGeneral" class="space-y-4">
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>
@@ -692,31 +687,42 @@
                             <input id="cfgServerLogo" type="text" required class="w-full bg-spk-dark text-sm text-white px-3.5 py-2.5 rounded-xl border border-white/10 outline-none">
                         </div>
                     </div>
+
                     <div>
-                        <label class="block text-xs font-bold text-gray-300 mb-1">URL Webhook Bot (Discord)</label>
-                        <input id="cfgBotWebhook" type="text" placeholder="https://discord.com/api/webhooks/..." class="w-full bg-spk-dark text-sm text-white px-3.5 py-2.5 rounded-xl border border-white/10 outline-none">
+                        <label class="block text-xs font-bold text-blue-400 mb-1">URI / Webhook ID do Bot Discord (Notificação de Compras)</label>
+                        <input id="cfgBotWebhook" type="text" placeholder="https://discord.com/api/webhooks/..." class="w-full bg-spk-dark text-sm text-white px-3.5 py-2.5 rounded-xl border border-blue-500/30 outline-none">
+                        <p class="text-[10px] text-gray-400 mt-1">Quando um usuário comprar, os dados da compra e ID serão enviados para este Bot/Webhook.</p>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold text-gray-300 mb-1">Categorias do Site (separadas por vírgula)</label>
+                        <input id="cfgCategories" type="text" placeholder="iniciante, popular, elite" class="w-full bg-spk-dark text-sm text-white px-3.5 py-2.5 rounded-xl border border-white/10 outline-none">
                     </div>
                 </div>
 
-                <!-- Aba Produtos -->
+                <!-- Seção Gerenciar Produtos -->
                 <div id="admSecProducts" class="hidden space-y-4">
-                    <div class="flex justify-between items-center mb-2">
-                        <span class="text-xs text-gray-400 font-bold">Edite os valores e estoques dos seus VIPs:</span>
-                        <button type="button" onclick="addNewProduct()" class="bg-emerald-500 hover:bg-emerald-600 text-white font-bold px-3 py-1.5 rounded-xl text-xs transition">
-                            + Criar VIP
+                    <div class="flex justify-between items-center bg-spk-dark/60 p-3 rounded-xl border border-white/10">
+                        <span class="text-xs font-bold text-white">Adicionar / Criar Novo Produto VIP</span>
+                        <button type="button" onclick="addNewProductPrompt()" class="bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold px-3 py-1.5 rounded-lg transition">
+                            <i class="fa-solid fa-plus mr-1"></i> Criar VIP
                         </button>
                     </div>
-                    <div id="adminProductsList" class="space-y-3 max-h-[300px] overflow-y-auto pr-1"></div>
+                    <div id="adminProductsList" class="space-y-3 max-h-[300px] overflow-y-auto pr-1">
+                        <!-- Itens renderizados dinamicamente -->
+                    </div>
                 </div>
 
-                <!-- Aba Cupons -->
-                <div id="admSecCoupons" class="hidden space-y-4">
-                    <div class="flex gap-2">
-                        <input id="newCouponCode" type="text" placeholder="CÓDIGO" class="uppercase bg-spk-dark text-xs text-white px-3.5 py-2 rounded-xl border border-white/10 flex-grow">
-                        <input id="newCouponDiscount" type="number" placeholder="Desconto %" class="bg-spk-dark text-xs text-white px-3.5 py-2 rounded-xl border border-white/10 w-28">
-                        <button type="button" onclick="addAdminCoupon()" class="bg-spk-blue hover:bg-blue-600 text-white font-bold px-4 py-2 rounded-xl text-xs">Adicionar</button>
+                <!-- Seção Termos e Textos -->
+                <div id="admSecTerms" class="hidden space-y-4">
+                    <div>
+                        <label class="block text-xs font-bold text-gray-300 mb-1">Termos de Uso do Site</label>
+                        <textarea id="cfgTerms" rows="3" class="w-full bg-spk-dark text-xs text-white p-3 rounded-xl border border-white/10 outline-none"></textarea>
                     </div>
-                    <div id="couponsListContainer" class="space-y-2 max-h-[220px] overflow-y-auto"></div>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-300 mb-1">Política de Privacidade</label>
+                        <textarea id="cfgPrivacy" rows="3" class="w-full bg-spk-dark text-xs text-white p-3 rounded-xl border border-white/10 outline-none"></textarea>
+                    </div>
                 </div>
 
                 <div class="pt-4 flex justify-end gap-3 border-t border-white/10">
@@ -727,7 +733,7 @@
         </div>
     </div>
 
-    <!-- MODAL INFORMAÇÕES -->
+    <!-- MODAL INFORMAÇÕES (TERMOS / PRIVACIDADE) -->
     <div id="infoModal" class="fixed inset-0 bg-black/80 backdrop-blur-md z-50 hidden flex items-center justify-center p-4">
         <div class="bg-spk-card border border-spk-border w-full max-w-lg rounded-3xl p-6 relative shadow-2xl">
             <button onclick="closeInfoModal()" class="absolute top-5 right-5 text-gray-400 hover:text-white w-9 h-9 rounded-full bg-spk-dark flex items-center justify-center transition">
@@ -780,7 +786,7 @@
             privacy: "A sua privacidade é totalmente preservada em nosso sistema. Não compartilhamos dados sensíveis com terceiros."
         };
 
-        let validCoupons = {
+        const validCoupons = {
             "STORM10": 10,
             "VIPMASTER": 15,
             "LANCAMENTO": 20
@@ -895,9 +901,6 @@
             const savedPlans = localStorage.getItem("spk_shop_plans");
             if (savedPlans) { try { plansData = JSON.parse(savedPlans); } catch(e){} }
 
-            const savedCoupons = localStorage.getItem("spk_shop_coupons");
-            if (savedCoupons) { try { validCoupons = JSON.parse(savedCoupons); } catch(e){} }
-
             const savedUser = localStorage.getItem("spk_shop_user");
             if (savedUser) { try { currentUser = JSON.parse(savedUser); } catch(e){} }
 
@@ -913,126 +916,6 @@
             if (currentUser && window.listenToFirestorePurchases) window.listenToFirestorePurchases();
         };
 
-        function renderUserAuth() {
-            const authSection = document.getElementById("authSection");
-            const ownerLink = document.getElementById("ownerAdminLink");
-
-            if (currentUser) {
-                authSection.innerHTML = `
-                    <button onclick="playAudioEffect('modal'); openProfileModal('profile')" class="flex items-center gap-2.5 bg-spk-dark/80 hover:bg-spk-dark p-1.5 pr-4 rounded-2xl border border-spk-blue/40 transition">
-                        <img src="${currentUser.avatar || 'https://placehold.co/100x100/3b82f6/ffffff?text=U'}" class="w-8 h-8 rounded-xl border border-spk-blue object-cover">
-                        <span class="text-xs font-bold text-white truncate max-w-[100px] sm:max-w-[140px]">${currentUser.username}</span>
-                    </button>
-                `;
-
-                if (ownerLink && currentUser.email && currentUser.email.toLowerCase() === OWNER_EMAIL.toLowerCase()) {
-                    ownerLink.classList.remove("hidden");
-                } else if (ownerLink) {
-                    ownerLink.classList.add("hidden");
-                }
-            } else {
-                authSection.innerHTML = `
-                    <button onclick="playAudioEffect('modal'); openLoginModal();" class="bg-gradient-to-r from-blue-600 via-blue-500 to-cyan-500 hover:from-blue-500 hover:to-cyan-400 text-white font-extrabold px-5 py-2.5 rounded-2xl text-sm transition shadow-lg btn-glow flex items-center gap-2">
-                        <i class="fa-solid fa-user-large text-xs"></i>
-                        <span>Entrar</span>
-                    </button>
-                `;
-                if (ownerLink) ownerLink.classList.add("hidden");
-            }
-        }
-
-        function openProfileModal(tab = 'profile') {
-            if (!currentUser) {
-                openLoginModal();
-                return;
-            }
-
-            document.getElementById("profileUserName").innerHTML = `${currentUser.username} <span id="profileProviderBadge" class="text-[10px] px-2 py-0.5 rounded-full bg-spk-blue/20 text-spk-blue border border-spk-blue/30 font-bold uppercase">${currentUser.provider || 'Google'}</span>`;
-            document.getElementById("profileUserEmail").innerText = currentUser.email || "Sem e-mail cadastrado";
-            document.getElementById("profileUserId").innerText = `ID: ${currentUser.id || currentUser.uid || '000000'}`;
-            document.getElementById("profileUserAvatar").src = currentUser.avatar || 'https://placehold.co/100x100/3b82f6/ffffff?text=U';
-            document.getElementById("profDetailProvider").innerText = currentUser.provider || "Google";
-
-            switchProfileTab(tab);
-            document.getElementById("profileModal").classList.remove("hidden");
-        }
-
-        function closeProfileModal() {
-            document.getElementById("profileModal").classList.add("hidden");
-        }
-
-        function switchProfileTab(tab) {
-            const btnProf = document.getElementById("tabBtnProfile");
-            const btnPurch = document.getElementById("tabBtnPurchases");
-            const contentProf = document.getElementById("tabContentProfile");
-            const contentPurch = document.getElementById("tabContentPurchases");
-
-            if (tab === 'profile') {
-                btnProf.className = "px-4 py-2 rounded-xl text-xs font-bold transition bg-spk-blue text-white";
-                btnPurch.className = "px-4 py-2 rounded-xl text-xs font-bold transition text-gray-400 hover:text-white";
-                contentProf.classList.remove("hidden");
-                contentPurch.classList.add("hidden");
-            } else {
-                btnPurch.className = "px-4 py-2 rounded-xl text-xs font-bold transition bg-spk-blue text-white";
-                btnProf.className = "px-4 py-2 rounded-xl text-xs font-bold transition text-gray-400 hover:text-white";
-                contentPurch.classList.remove("hidden");
-                contentProf.classList.add("hidden");
-                renderPurchasesList();
-            }
-        }
-
-        function renderPurchasesList() {
-            const container = document.getElementById("purchasesListContainer");
-
-            if (!userPurchases || userPurchases.length === 0) {
-                container.innerHTML = `
-                    <div class="text-center py-8">
-                        <i class="fa-solid fa-box-open text-3xl text-gray-600 mb-2"></i>
-                        <p class="text-xs text-gray-400">Você ainda não adquiriu nenhum VIP.</p>
-                    </div>
-                `;
-                return;
-            }
-
-            let html = "";
-            userPurchases.forEach(item => {
-                html += `
-                    <div class="bg-spk-dark p-4 rounded-2xl border border-white/10 flex items-center justify-between gap-3">
-                        <div>
-                            <h4 class="font-bold text-white text-sm">${item.vipTitle || 'VIP Storm'}</h4>
-                            <p class="text-[11px] font-mono text-spk-blue mt-0.5">${item.txId || '#STORM-0000'}</p>
-                            <span class="text-[10px] text-gray-400 block mt-1">${item.date || 'Recente'}</span>
-                        </div>
-                        <div class="text-right">
-                            <span class="font-extrabold text-white text-sm">R$ ${item.price}</span>
-                            <span class="block text-[10px] font-bold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20 mt-1">Ativo</span>
-                        </div>
-                    </div>
-                `;
-            });
-            container.innerHTML = html;
-        }
-
-        async function logoutAccount() {
-            playAudioEffect('click');
-            if (window.firebaseSignOut) await window.firebaseSignOut();
-            currentUser = null;
-            userPurchases = [];
-            localStorage.removeItem("spk_shop_user");
-            localStorage.removeItem("spk_shop_purchases");
-            renderUserAuth();
-            closeProfileModal();
-            showToast("Você saiu da sua conta.", "info");
-        }
-
-        function openLoginModal() {
-            document.getElementById("loginModal").classList.remove("hidden");
-        }
-
-        function closeLoginModal() {
-            document.getElementById("loginModal").classList.add("hidden");
-        }
-
         function promptAdminAccess() {
             playAudioEffect('click');
             if (currentUser && currentUser.email && currentUser.email.toLowerCase() === OWNER_EMAIL.toLowerCase()) {
@@ -1040,163 +923,6 @@
             } else {
                 showToast("Acesso Negado.", "error");
             }
-        }
-
-        function openAdminModal() {
-            document.getElementById("cfgServerName").value = serverConfig.name;
-            document.getElementById("cfgServerLogo").value = serverConfig.logo;
-            document.getElementById("cfgBotWebhook").value = serverConfig.botWebhookUrl || "";
-            renderAdminProductsList();
-            renderAdminCouponsList();
-            document.getElementById("adminModal").classList.remove("hidden");
-        }
-
-        function closeAdminModal() {
-            document.getElementById("adminModal").classList.add("hidden");
-        }
-
-        function switchAdminTab(tab) {
-            playAudioEffect('click');
-            const genBtn = document.getElementById("admTabGen");
-            const prodBtn = document.getElementById("admTabProd");
-            const coupBtn = document.getElementById("admTabCoup");
-            const secGen = document.getElementById("admSecGeneral");
-            const secProd = document.getElementById("admSecProducts");
-            const secCoup = document.getElementById("admSecCoupons");
-
-            genBtn.className = "px-3.5 py-1.5 rounded-xl text-xs font-bold text-gray-400 hover:text-white";
-            prodBtn.className = "px-3.5 py-1.5 rounded-xl text-xs font-bold text-gray-400 hover:text-white";
-            coupBtn.className = "px-3.5 py-1.5 rounded-xl text-xs font-bold text-gray-400 hover:text-white";
-
-            secGen.classList.add("hidden");
-            secProd.classList.add("hidden");
-            secCoup.classList.add("hidden");
-
-            if (tab === 'general') {
-                genBtn.className = "px-3.5 py-1.5 rounded-xl text-xs font-bold bg-spk-blue text-white";
-                secGen.classList.remove("hidden");
-            } else if (tab === 'products') {
-                prodBtn.className = "px-3.5 py-1.5 rounded-xl text-xs font-bold bg-spk-blue text-white";
-                secProd.classList.remove("hidden");
-            } else if (tab === 'coupons') {
-                coupBtn.className = "px-3.5 py-1.5 rounded-xl text-xs font-bold bg-spk-blue text-white";
-                secCoup.classList.remove("hidden");
-            }
-        }
-
-        function renderAdminProductsList() {
-            const container = document.getElementById("adminProductsList");
-            let html = "";
-            plansData.forEach((plan, idx) => {
-                html += `
-                    <div class="bg-spk-dark p-3.5 rounded-2xl border border-white/10 space-y-2">
-                        <div class="flex items-center justify-between gap-2">
-                            <input type="text" value="${plan.title}" onchange="updateProductField(${idx}, 'title', this.value)" class="bg-spk-card text-xs text-white font-bold p-2 rounded-xl border border-white/10 w-1/2">
-                            <div class="flex items-center gap-1">
-                                <span class="text-xs text-gray-400">R$</span>
-                                <input type="number" step="0.01" value="${plan.price}" onchange="updateProductField(${idx}, 'price', parseFloat(this.value))" class="bg-spk-card text-xs text-white font-bold p-2 rounded-xl border border-white/10 w-24">
-                            </div>
-                            <button type="button" onclick="deleteProduct(${idx})" class="text-rose-400 hover:text-rose-300 p-2 text-xs"><i class="fa-solid fa-trash"></i></button>
-                        </div>
-                        <div class="flex gap-2">
-                            <input type="number" value="${plan.stock}" placeholder="Estoque" onchange="updateProductField(${idx}, 'stock', parseInt(this.value))" class="bg-spk-card text-xs text-white p-2 rounded-xl border border-white/10 w-28">
-                            <input type="text" value="${plan.badge || ''}" placeholder="Selo (Ex: Promoção)" onchange="updateProductField(${idx}, 'badge', this.value)" class="bg-spk-card text-xs text-white p-2 rounded-xl border border-white/10 flex-grow">
-                        </div>
-                    </div>
-                `;
-            });
-            container.innerHTML = html;
-        }
-
-        function updateProductField(idx, field, val) {
-            plansData[idx][field] = val;
-        }
-
-        function addNewProduct() {
-            const newId = "vip_" + Date.now();
-            plansData.push({
-                id: newId,
-                title: "Novo VIP Storm",
-                badge: "Novo",
-                category: "iniciante",
-                price: 20.00,
-                stock: 50,
-                description: "Descrição do novo VIP.",
-                benefits: ["Benefício exclusivo 1", "Benefício exclusivo 2"]
-            });
-            renderAdminProductsList();
-        }
-
-        function deleteProduct(idx) {
-            if (confirm("Deseja realmente excluir este VIP?")) {
-                plansData.splice(idx, 1);
-                renderAdminProductsList();
-            }
-        }
-
-        function renderAdminCouponsList() {
-            const container = document.getElementById("couponsListContainer");
-            let html = "";
-            for (let code in validCoupons) {
-                html += `
-                    <div class="bg-spk-dark p-2.5 rounded-xl border border-white/10 flex items-center justify-between text-xs">
-                        <span class="font-mono font-bold text-spk-blue">${code}</span>
-                        <span class="font-bold text-white">${validCoupons[code]}% OFF</span>
-                        <button type="button" onclick="deleteAdminCoupon('${code}')" class="text-rose-400 hover:text-rose-300 text-xs"><i class="fa-solid fa-trash"></i></button>
-                    </div>
-                `;
-            }
-            container.innerHTML = html;
-        }
-
-        function addAdminCoupon() {
-            const code = document.getElementById("newCouponCode").value.trim().toUpperCase();
-            const disc = parseInt(document.getElementById("newCouponDiscount").value);
-            if (code && disc > 0) {
-                validCoupons[code] = disc;
-                localStorage.setItem("spk_shop_coupons", JSON.stringify(validCoupons));
-                document.getElementById("newCouponCode").value = "";
-                document.getElementById("newCouponDiscount").value = "";
-                renderAdminCouponsList();
-                showToast(`Cupom ${code} adicionado!`, "success");
-            }
-        }
-
-        function deleteAdminCoupon(code) {
-            delete validCoupons[code];
-            localStorage.setItem("spk_shop_coupons", JSON.stringify(validCoupons));
-            renderAdminCouponsList();
-            showToast(`Cupom ${code} removido.`, "info");
-        }
-
-        function saveAdminSettings(e) {
-            e.preventDefault();
-            serverConfig.name = document.getElementById("cfgServerName").value.trim();
-            serverConfig.logo = document.getElementById("cfgServerLogo").value.trim();
-            serverConfig.botWebhookUrl = document.getElementById("cfgBotWebhook").value.trim();
-
-            localStorage.setItem("spk_shop_config", JSON.stringify(serverConfig));
-            localStorage.setItem("spk_shop_plans", JSON.stringify(plansData));
-            localStorage.setItem("spk_shop_coupons", JSON.stringify(validCoupons));
-
-            updateServerDisplay();
-            renderPlans();
-            closeAdminModal();
-            showToast("Configurações salvas com sucesso!", "success");
-        }
-
-        function updateServerDisplay() {
-            document.getElementById("serverNameDisplay").innerHTML = `${serverConfig.name} <i class="fa-solid fa-circle-check text-blue-400 text-xs"></i>`;
-            document.getElementById("footerServerName").innerHTML = `${serverConfig.name} <i class="fa-solid fa-circle-check text-blue-400 text-sm"></i>`;
-            document.getElementById("serverLogo").src = serverConfig.logo;
-            document.getElementById("footerLogo").src = serverConfig.logo;
-            document.getElementById("copyrightName").innerText = serverConfig.name;
-        }
-
-        function toggleMobileMenu() {
-            playAudioEffect('click');
-            const menu = document.getElementById("mobileMenu");
-            menu.classList.toggle("hidden");
         }
 
         function renderCategories() {
@@ -1280,99 +1006,82 @@
         }
 
         function openCheckoutModal(planId) {
-            selectedVip = plansData.find(p => p.id === planId);
-            if (!selectedVip) return;
+            const plan = plansData.find(p => p.id === planId);
+            if (!plan || plan.stock <= 0) return;
 
+            selectedVip = { ...plan, basePrice: Number(plan.price) || 0 };
             appliedDiscountPercent = 0;
+
+            document.getElementById("modalVipBadge").innerText = plan.badge || "VIP";
+            document.getElementById("modalVipTitle").innerText = plan.title;
+            document.getElementById("modalVipImage").src = plan.image;
+            document.getElementById("modalVipDescription").innerText = plan.description;
             document.getElementById("couponInput").value = "";
             document.getElementById("couponMsg").classList.add("hidden");
 
-            document.getElementById("modalVipBadge").innerText = selectedVip.badge || "VIP";
-            document.getElementById("modalVipTitle").innerText = selectedVip.title;
-            document.getElementById("modalVipImage").src = selectedVip.image || "https://placehold.co/600x300/0f172a/3b82f6?text=VIP";
-            document.getElementById("modalVipDescription").innerText = selectedVip.description;
-
-            updateCheckoutPriceDisplay();
+            updateCheckoutPrices();
 
             if (currentUser) {
                 document.getElementById("modalUserName").innerText = currentUser.username;
                 document.getElementById("modalUserId").innerText = `ID: ${currentUser.id || currentUser.uid}`;
-                document.getElementById("modalUserAvatar").src = currentUser.avatar || 'https://placehold.co/100x100/3b82f6/ffffff?text=U';
+                if (currentUser.avatar) document.getElementById("modalUserAvatar").src = currentUser.avatar;
             } else {
                 document.getElementById("modalUserName").innerText = "Visitante (Não Conectado)";
-                document.getElementById("modalUserId").innerText = "Clique para fazer login antes da compra";
-                document.getElementById("modalUserAvatar").src = "https://placehold.co/100x100/3b82f6/ffffff?text=U";
+                document.getElementById("modalUserId").innerText = "Clique para entrar antes de concluir";
             }
 
             document.getElementById("checkoutStep1").classList.remove("hidden");
             document.getElementById("checkoutStep2").classList.add("hidden");
             document.getElementById("checkoutStep3").classList.add("hidden");
-
             document.getElementById("checkoutModal").classList.remove("hidden");
         }
 
-        function closeCheckoutModal() {
-            document.getElementById("checkoutModal").classList.add("hidden");
-        }
-
         function applyCoupon() {
-            const input = document.getElementById("couponInput").value.trim().toUpperCase();
-            const msg = document.getElementById("couponMsg");
+            const code = document.getElementById("couponInput").value.trim().toUpperCase();
+            const msgEl = document.getElementById("couponMsg");
 
-            if (validCoupons[input]) {
-                appliedDiscountPercent = validCoupons[input];
-                msg.innerText = `Cupom aplicado! ${appliedDiscountPercent}% de desconto.`;
-                msg.className = "text-[11px] font-bold text-emerald-400";
-                msg.classList.remove("hidden");
-                updateCheckoutPriceDisplay();
-                showToast("Cupom de desconto aplicado!", "success");
+            if (validCoupons[code]) {
+                appliedDiscountPercent = validCoupons[code];
+                msgEl.innerText = `Cupom aplicado! ${appliedDiscountPercent}% de desconto ativado.`;
+                msgEl.className = "text-[11px] font-bold text-emerald-400 block";
+                updateCheckoutPrices();
+                playAudioEffect('click');
             } else {
-                msg.innerText = "Cupom inválido ou expirado.";
-                msg.className = "text-[11px] font-bold text-rose-400";
-                msg.classList.remove("hidden");
+                msgEl.innerText = "Cupom inválido ou expirado.";
+                msgEl.className = "text-[11px] font-bold text-rose-400 block";
             }
         }
 
-        function updateCheckoutPriceDisplay() {
+        function updateCheckoutPrices() {
             if (!selectedVip) return;
-            const original = Number(selectedVip.price);
-            const origElem = document.getElementById("modalVipOriginalPrice");
-            const priceElem = document.getElementById("modalVipPrice");
+            const original = selectedVip.basePrice;
+            const final = original * (1 - appliedDiscountPercent / 100);
+
+            const origEl = document.getElementById("modalVipOriginalPrice");
+            const priceEl = document.getElementById("modalVipPrice");
 
             if (appliedDiscountPercent > 0) {
-                const discounted = original * (1 - appliedDiscountPercent / 100);
-                origElem.innerText = `R$ ${original.toFixed(2).replace('.', ',')}`;
-                origElem.classList.remove("hidden");
-                priceElem.innerText = `R$ ${discounted.toFixed(2).replace('.', ',')}`;
+                origEl.innerText = `R$ ${original.toFixed(2).replace('.', ',')}`;
+                origEl.classList.remove("hidden");
             } else {
-                origElem.classList.add("hidden");
-                priceElem.innerText = `R$ ${original.toFixed(2).replace('.', ',')}`;
+                origEl.classList.add("hidden");
             }
+
+            priceEl.innerText = `R$ ${final.toFixed(2).replace('.', ',')}`;
+            selectedVip.calculatedFinal = final.toFixed(2);
         }
 
         function generatePixCode() {
             playAudioEffect('click');
-            if (!currentUser) {
-                showToast("Por favor, acesse sua conta antes de prosseguir com a compra.", "info");
-                openLoginModal();
-                return;
-            }
-
-            const randomTx = "STORM" + Math.floor(100000 + Math.random() * 900000);
-            const pixCode = `00020126580014BR.GOV.BCB.PIX0136spk-vips-${randomTx}5204000053039865802BR5910Storm VIPs6009SAO PAULO62070503***6304ABCD`;
-
-            document.getElementById("pixCopyInput").value = pixCode;
-
-            const qrContainer = document.getElementById("qrcodeCanvas");
-            qrContainer.innerHTML = "";
-            new QRCode(qrContainer, {
-                text: pixCode,
-                width: 180,
-                height: 180
-            });
-
             document.getElementById("checkoutStep1").classList.add("hidden");
             document.getElementById("checkoutStep2").classList.remove("hidden");
+
+            const pixPayload = `00020126580014br.gov.bcb.pix0136stormvips-${Date.now()}5204000053039865405${selectedVip.calculatedFinal}5802BR5910STORM VIPS6009SAO PAULO63041D2C`;
+            document.getElementById("pixCopyInput").value = pixPayload;
+            
+            const qrcodeContainer = document.getElementById("qrcodeCanvas");
+            qrcodeContainer.innerHTML = "";
+            new QRCode(qrcodeContainer, { text: pixPayload, width: 170, height: 170 });
         }
 
         function copyPixCode() {
@@ -1380,190 +1089,377 @@
             const input = document.getElementById("pixCopyInput");
             input.select();
             document.execCommand("copy");
-            showToast("Código PIX copiado para a área de transferência!", "success");
+            showToast("Código PIX copiado com sucesso!", "success");
         }
 
         async function simulatePaymentApproval() {
             playAudioEffect('click');
-            const txId = "#" + "STORM-" + Math.floor(100000 + Math.random() * 900000);
-            const finalPrice = appliedDiscountPercent > 0 
-                ? (selectedVip.price * (1 - appliedDiscountPercent / 100)).toFixed(2)
-                : selectedVip.price.toFixed(2);
+            document.getElementById("checkoutStep2").classList.add("hidden");
+            document.getElementById("checkoutStep3").classList.remove("hidden");
+
+            const txId = `#STORM-${Math.floor(100000 + Math.random() * 900000)}`;
+            document.getElementById("successRoleName").innerText = selectedVip ? selectedVip.title : "VIP Storm";
+            document.getElementById("successUserName").innerText = currentUser ? `@${currentUser.username}` : "Visitante";
+            document.getElementById("successTxId").innerText = txId;
+
+            // Reduz estoque
+            if (selectedVip) {
+                const targetIdx = plansData.findIndex(p => p.id === selectedVip.id);
+                if (targetIdx !== -1 && plansData[targetIdx].stock > 0) {
+                    plansData[targetIdx].stock -= 1;
+                    localStorage.setItem("spk_shop_plans", JSON.stringify(plansData));
+                    renderPlans();
+                }
+            }
 
             const newPurchase = {
-                vipId: selectedVip.id,
-                vipTitle: selectedVip.title,
-                price: finalPrice,
+                vipTitle: selectedVip ? selectedVip.title : "VIP Storm",
+                price: selectedVip ? selectedVip.calculatedFinal : "30.00",
                 txId: txId,
-                date: new Date().toLocaleDateString('pt-BR') + ' ' + new Date().toLocaleTimeString('pt-BR', {hour: '2-digit', minute:'2-digit'})
+                status: "Ativo",
+                date: new Date().toLocaleDateString('pt-BR')
             };
 
             userPurchases.unshift(newPurchase);
             localStorage.setItem("spk_shop_purchases", JSON.stringify(userPurchases));
+            if (window.savePurchaseToFirestore) await window.savePurchaseToFirestore(newPurchase);
 
-            if (window.savePurchaseToFirestore) {
-                await window.savePurchaseToFirestore(newPurchase);
+            // Envia dados da compra para o Bot Discord via Webhook caso cadastrado
+            if (serverConfig.botWebhookUrl && serverConfig.botWebhookUrl.trim() !== "") {
+                try {
+                    await fetch(serverConfig.botWebhookUrl.trim(), {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            content: `⚡ **NOVA COMPRA REALIZADA NA STORM VIPS!**`,
+                            embeds: [{
+                                title: `VIP Adquirido: ${newPurchase.vipTitle}`,
+                                color: 3887606,
+                                fields: [
+                                    { name: "Usuário", value: currentUser ? `${currentUser.username} (ID: ${currentUser.id})` : "Visitante", inline: true },
+                                    { name: "E-mail", value: currentUser ? currentUser.email : "Não fornecido", inline: true },
+                                    { name: "Valor", value: `R$ ${newPurchase.price}`, inline: true },
+                                    { name: "Transação ID", value: newPurchase.txId, inline: false }
+                                ],
+                                timestamp: new Date().toISOString()
+                            }]
+                        })
+                    });
+                    document.getElementById("botNotifyStatus").innerText = "Notificação enviada ao Bot!";
+                } catch(e) {
+                    console.warn("Erro ao notificar Bot Webhook:", e);
+                }
             }
 
-            if (selectedVip.stock > 0) {
-                selectedVip.stock--;
-                localStorage.setItem("spk_shop_plans", JSON.stringify(plansData));
-                renderPlans();
+            if (typeof confetti === 'function') confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
+        }
+
+        function closeCheckoutModal() { document.getElementById("checkoutModal").classList.add("hidden"); }
+        function openLoginModal() { document.getElementById("loginModal").classList.remove("hidden"); }
+        function closeLoginModal() { document.getElementById("loginModal").classList.add("hidden"); }
+
+        function renderUserAuth() {
+            const authSec = document.getElementById("authSection");
+            const ownerLink = document.getElementById("ownerAdminLink");
+
+            if (currentUser) {
+                authSec.innerHTML = `
+                    <div onclick="playAudioEffect('modal'); openProfileModal('profile');" class="flex items-center gap-2 bg-spk-card px-3 py-1.5 rounded-2xl border border-white/10 cursor-pointer hover:border-spk-blue/50 transition">
+                        <img src="${currentUser.avatar}" class="w-7 h-7 rounded-full border border-spk-blue object-cover">
+                        <span class="text-xs font-bold text-white max-w-[100px] truncate">${currentUser.username}</span>
+                    </div>
+                `;
+
+                if (currentUser.email && currentUser.email.toLowerCase() === OWNER_EMAIL.toLowerCase()) {
+                    if (ownerLink) ownerLink.classList.remove("hidden");
+                } else {
+                    if (ownerLink) ownerLink.classList.add("hidden");
+                }
+            } else {
+                authSec.innerHTML = `
+                    <button onclick="playAudioEffect('modal'); openLoginModal();" class="bg-gradient-to-r from-blue-600 to-cyan-500 text-white font-extrabold px-5 py-2.5 rounded-2xl text-sm shadow-lg btn-glow">
+                        Entrar
+                    </button>
+                `;
+                if (ownerLink) ownerLink.classList.add("hidden");
             }
+        }
 
-            document.getElementById("successRoleName").innerText = selectedVip.title;
-            document.getElementById("successUserName").innerText = currentUser.username;
-            document.getElementById("successTxId").innerText = txId;
+        function logoutAccount() {
+            currentUser = null;
+            userPurchases = [];
+            localStorage.removeItem("spk_shop_user");
+            localStorage.removeItem("spk_shop_purchases");
+            if (window.firebaseSignOut) window.firebaseSignOut();
+            renderUserAuth();
+            closeProfileModal();
+            showToast("Você saiu da conta.", "info");
+        }
 
-            document.getElementById("checkoutStep2").classList.add("hidden");
-            document.getElementById("checkoutStep3").classList.remove("hidden");
+        function openProfileModal(tab = 'profile') {
+            if (!currentUser) return openLoginModal();
+            document.getElementById("profileUserName").innerText = currentUser.username;
+            document.getElementById("profileUserEmail").innerText = currentUser.email || `${currentUser.username}`;
+            document.getElementById("profileUserId").innerText = `ID: ${currentUser.id || currentUser.uid}`;
+            document.getElementById("profileUserAvatar").src = currentUser.avatar;
+            document.getElementById("profileProviderBadge").innerText = currentUser.provider || "Google";
+            document.getElementById("profDetailProvider").innerText = currentUser.provider || "Google";
+            switchProfileTab(tab);
+            document.getElementById("profileModal").classList.remove("hidden");
+        }
 
-            try {
-                confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
-            } catch(e){}
+        function closeProfileModal() { document.getElementById("profileModal").classList.add("hidden"); }
 
-            showToast("Pagamento Aprovado com Sucesso!", "success");
+        function switchProfileTab(tab) {
+            const btnP = document.getElementById("tabBtnProfile");
+            const btnPu = document.getElementById("tabBtnPurchases");
+            const contentP = document.getElementById("tabContentProfile");
+            const contentPu = document.getElementById("tabContentPurchases");
+
+            if (tab === 'profile') {
+                btnP.className = "px-4 py-2 rounded-xl text-xs font-bold transition bg-spk-blue text-white";
+                btnPu.className = "px-4 py-2 rounded-xl text-xs font-bold transition text-gray-400 hover:text-white";
+                contentP.classList.remove("hidden"); contentPu.classList.add("hidden");
+            } else {
+                btnP.className = "px-4 py-2 rounded-xl text-xs font-bold transition text-gray-400 hover:text-white";
+                btnPu.className = "px-4 py-2 rounded-xl text-xs font-bold transition bg-spk-blue text-white";
+                contentP.classList.add("hidden"); contentPu.classList.remove("hidden");
+                renderPurchasesList();
+            }
+        }
+
+        function renderPurchasesList() {
+            const container = document.getElementById("purchasesListContainer");
+            if (userPurchases.length === 0) {
+                container.innerHTML = `<p class="text-center text-gray-400 text-xs py-6">Nenhum VIP resgatado ainda.</p>`;
+                return;
+            }
+            container.innerHTML = "";
+            userPurchases.forEach(p => {
+                container.innerHTML += `
+                    <div class="bg-spk-dark p-3.5 rounded-2xl border border-white/10 flex items-center justify-between text-xs">
+                        <div>
+                            <span class="font-bold text-white block">${p.vipTitle}</span>
+                            <span class="text-[11px] font-mono text-spk-blue">${p.txId}</span>
+                        </div>
+                        <div class="text-right">
+                            <span class="font-black text-white block">R$ ${p.price}</span>
+                            <span class="text-[10px] text-emerald-400 font-bold">${p.status || 'Ativo'}</span>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        function switchAdminTab(tab) {
+            document.getElementById("admSecGeneral").classList.add("hidden");
+            document.getElementById("admSecProducts").classList.add("hidden");
+            document.getElementById("admSecTerms").classList.add("hidden");
+
+            document.getElementById("admTabGen").className = "px-3.5 py-1.5 rounded-xl text-xs font-bold text-gray-400 hover:text-white";
+            document.getElementById("admTabProd").className = "px-3.5 py-1.5 rounded-xl text-xs font-bold text-gray-400 hover:text-white";
+            document.getElementById("admTabTerms").className = "px-3.5 py-1.5 rounded-xl text-xs font-bold text-gray-400 hover:text-white";
+
+            if (tab === 'general') {
+                document.getElementById("admSecGeneral").classList.remove("hidden");
+                document.getElementById("admTabGen").className = "px-3.5 py-1.5 rounded-xl text-xs font-bold bg-spk-blue text-white";
+            } else if (tab === 'products') {
+                document.getElementById("admSecProducts").classList.remove("hidden");
+                document.getElementById("admTabProd").className = "px-3.5 py-1.5 rounded-xl text-xs font-bold bg-spk-blue text-white";
+                renderAdminProductsList();
+            } else {
+                document.getElementById("admSecTerms").classList.remove("hidden");
+                document.getElementById("admTabTerms").className = "px-3.5 py-1.5 rounded-xl text-xs font-bold bg-spk-blue text-white";
+            }
+        }
+
+        function openAdminModal() {
+            document.getElementById("cfgServerName").value = serverConfig.name;
+            document.getElementById("cfgServerLogo").value = serverConfig.logo;
+            document.getElementById("cfgBotWebhook").value = serverConfig.botWebhookUrl || "";
+            document.getElementById("cfgCategories").value = (serverConfig.categories || []).join(", ");
+            document.getElementById("cfgTerms").value = serverConfig.terms || "";
+            document.getElementById("cfgPrivacy").value = serverConfig.privacy || "";
+            switchAdminTab('general');
+            document.getElementById("adminModal").classList.remove("hidden");
+        }
+
+        function closeAdminModal() { document.getElementById("adminModal").classList.add("hidden"); }
+
+        function renderAdminProductsList() {
+            const container = document.getElementById("adminProductsList");
+            container.innerHTML = "";
+            plansData.forEach((p, idx) => {
+                container.innerHTML += `
+                    <div class="bg-spk-dark p-3 rounded-xl border border-white/10 space-y-2 text-xs">
+                        <div class="flex justify-between items-center font-bold text-white">
+                            <span>#${idx+1} - ${p.title} (${p.id})</span>
+                            <button type="button" onclick="removeProduct(${idx})" class="text-rose-400 hover:text-rose-300"><i class="fa-solid fa-trash"></i> Excluir</button>
+                        </div>
+                        <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                            <div>
+                                <label class="text-[10px] text-gray-400">Título</label>
+                                <input type="text" value="${p.title}" onchange="updateProductField(${idx}, 'title', this.value)" class="w-full bg-spk-card px-2 py-1 rounded text-white border border-white/10">
+                            </div>
+                            <div>
+                                <label class="text-[10px] text-gray-400">Preço (R$)</label>
+                                <input type="number" step="0.01" value="${p.price}" onchange="updateProductField(${idx}, 'price', parseFloat(this.value))" class="w-full bg-spk-card px-2 py-1 rounded text-white border border-white/10">
+                            </div>
+                            <div>
+                                <label class="text-[10px] text-gray-400">Estoque</label>
+                                <input type="number" value="${p.stock}" onchange="updateProductField(${idx}, 'stock', parseInt(this.value))" class="w-full bg-spk-card px-2 py-1 rounded text-white border border-white/10">
+                            </div>
+                            <div>
+                                <label class="text-[10px] text-gray-400">Categoria</label>
+                                <input type="text" value="${p.category}" onchange="updateProductField(${idx}, 'category', this.value)" class="w-full bg-spk-card px-2 py-1 rounded text-white border border-white/10">
+                            </div>
+                        </div>
+                        <div>
+                            <label class="text-[10px] text-gray-400">Foto URL</label>
+                            <input type="text" value="${p.image}" onchange="updateProductField(${idx}, 'image', this.value)" class="w-full bg-spk-card px-2 py-1 rounded text-white border border-white/10">
+                        </div>
+                        <div>
+                            <label class="text-[10px] text-gray-400">Descrição</label>
+                            <textarea onchange="updateProductField(${idx}, 'description', this.value)" class="w-full bg-spk-card px-2 py-1 rounded text-white border border-white/10 h-12">${p.description}</textarea>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        function updateProductField(index, field, value) {
+            plansData[index][field] = value;
+        }
+
+        function addNewProductPrompt() {
+            const newId = "vip_" + Date.now();
+            plansData.push({
+                id: newId,
+                title: "Novo VIP Exclusivo",
+                badge: "Novo",
+                category: "iniciante",
+                price: 25.00,
+                stock: 10,
+                image: "https://placehold.co/600x300/1e293b/3b82f6?text=Novo+VIP",
+                description: "Descrição estendida do seu novo produto VIP.",
+                benefits: ["Benefício exclusivo 1", "Benefício exclusivo 2"]
+            });
+            renderAdminProductsList();
+        }
+
+        function removeProduct(index) {
+            plansData.splice(index, 1);
+            renderAdminProductsList();
+        }
+
+        function saveAdminSettings(e) {
+            e.preventDefault();
+            serverConfig.name = document.getElementById("cfgServerName").value.trim();
+            serverConfig.logo = document.getElementById("cfgServerLogo").value.trim();
+            serverConfig.botWebhookUrl = document.getElementById("cfgBotWebhook").value.trim();
+            
+            const catsInput = document.getElementById("cfgCategories").value;
+            serverConfig.categories = catsInput.split(',').map(c => c.trim()).filter(c => c !== "");
+
+            serverConfig.terms = document.getElementById("cfgTerms").value;
+            serverConfig.privacy = document.getElementById("cfgPrivacy").value;
+
+            localStorage.setItem("spk_shop_config", JSON.stringify(serverConfig));
+            localStorage.setItem("spk_shop_plans", JSON.stringify(plansData));
+
+            updateServerDisplay();
+            renderCategories();
+            renderPlans();
+            closeAdminModal();
+            showToast("Todas as configurações foram salvas!", "success");
+        }
+
+        function updateServerDisplay() {
+            document.getElementById("serverNameDisplay").innerHTML = `${serverConfig.name} <i class="fa-solid fa-circle-check text-blue-400 text-xs"></i>`;
+            document.getElementById("footerServerName").innerHTML = `${serverConfig.name} <i class="fa-solid fa-circle-check text-blue-400 text-sm"></i>`;
+            document.getElementById("copyrightName").innerText = serverConfig.name;
+            document.getElementById("serverLogo").src = serverConfig.logo;
+            document.getElementById("footerLogo").src = serverConfig.logo;
         }
 
         function showModalInfo(title, content) {
-            playAudioEffect('modal');
             document.getElementById("infoModalTitle").innerText = title;
-            document.getElementById("infoModalBody").innerText = content;
+            document.getElementById("infoModalBody").innerText = content || "Sem informações no momento.";
             document.getElementById("infoModal").classList.remove("hidden");
         }
-
-        function closeInfoModal() {
-            document.getElementById("infoModal").classList.add("hidden");
-        }
-
-        function openAiSupportModal() {
-            document.getElementById("aiSupportModal").classList.remove("hidden");
-        }
-
-        function closeAiSupportModal() {
-            document.getElementById("aiSupportModal").classList.add("hidden");
-        }
-
-        function sendAiMessage() {
-            const input = document.getElementById("aiChatInput");
-            const text = input.value.trim();
-            if (!text) return;
-
-            const chat = document.getElementById("aiChatHistory");
-            chat.innerHTML += `
-                <div class="bg-spk-blue/20 p-3.5 rounded-2xl border border-spk-blue/30 text-xs text-white text-right ml-8">
-                    ${text}
-                </div>
-            `;
-            input.value = "";
-
-            setTimeout(() => {
-                let response = "Nosso suporte atende 24h. Para ativar seu VIP, conclua o pagamento PIX e os cargos serão concedidos automaticamente!";
-                const lower = text.toLowerCase();
-                if (lower.includes("cupom") || lower.includes("desconto")) {
-                    response = "Você pode usar o cupom **STORM10** no checkout para garantir 10% de desconto na sua compra!";
-                } else if (lower.includes("free fire") || lower.includes("mapa")) {
-                    response = "Temos opções de VIPs grátis e pagos para mapas de Free Fire. Todos os arquivos são otimizados e de máxima segurança!";
-                }
-
-                chat.innerHTML += `
-                    <div class="bg-spk-dark p-3.5 rounded-2xl border border-white/10 text-xs text-gray-200 mr-8">
-                        ${response}
-                    </div>
-                `;
-                chat.scrollTop = chat.scrollHeight;
-            }, 600);
-        }
+        function closeInfoModal() { document.getElementById("infoModal").classList.add("hidden"); }
 
         function filterProducts() {
-            const q = document.getElementById("searchInput").value.toLowerCase();
+            const query = document.getElementById("searchInput").value.toLowerCase();
             const cards = document.querySelectorAll("#plansContainer > div");
-            plansData.forEach((plan, idx) => {
-                if (cards[idx]) {
-                    if (plan.title.toLowerCase().includes(q) || plan.description.toLowerCase().includes(q)) {
-                        cards[idx].style.display = "flex";
-                    } else {
-                        cards[idx].style.display = "none";
-                    }
-                }
+            cards.forEach(card => {
+                card.style.display = card.innerText.toLowerCase().includes(query) ? "flex" : "none";
             });
         }
 
         function focusSearchInput() {
-            const search = document.getElementById("searchInput");
-            search.focus();
-            search.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            const input = document.getElementById("searchInput");
+            input.focus(); input.scrollIntoView({ behavior: 'smooth', block: 'center' });
         }
 
-        function showToast(msg, type = 'info') {
+        function toggleMobileMenu() {}
+
+        function showToast(msg, type = "info") {
             const container = document.getElementById("toastContainer");
             const toast = document.createElement("div");
-            
-            let bg = "bg-spk-card text-white border-spk-blue";
-            if (type === 'success') bg = "bg-emerald-950 text-emerald-200 border-emerald-500";
-            if (type === 'error') bg = "bg-rose-950 text-rose-200 border-rose-500";
-
-            toast.className = `p-4 rounded-2xl border ${bg} shadow-2xl text-xs font-bold transition duration-300 transform translate-y-2 pointer-events-auto flex items-center gap-2`;
-            toast.innerHTML = `<i class="fa-solid fa-circle-info"></i> <span>${msg}</span>`;
-
+            let bg = type === "success" ? "bg-emerald-950/90 border-emerald-500 text-emerald-100" : (type === "error" ? "bg-rose-950/90 border-rose-500 text-rose-100" : "bg-spk-card border-spk-blue text-white");
+            toast.className = `${bg} border p-3.5 rounded-2xl shadow-xl flex items-center gap-2 text-xs font-bold transition-all duration-300`;
+            toast.innerHTML = `<span>${msg}</span>`;
             container.appendChild(toast);
+            setTimeout(() => toast.remove(), 3500);
+        }
+
+        function openAiSupportModal() { document.getElementById("aiSupportModal").classList.remove("hidden"); }
+        function closeAiSupportModal() { document.getElementById("aiSupportModal").classList.add("hidden"); }
+
+        function sendAiMessage() {
+            const input = document.getElementById("aiChatInput");
+            const val = input.value.trim();
+            if (!val) return;
+
+            const chat = document.getElementById("aiChatHistory");
+            chat.innerHTML += `<div class="bg-spk-blue p-3 rounded-2xl text-xs text-white text-right">${val}</div>`;
+            input.value = "";
+
             setTimeout(() => {
-                toast.classList.add("opacity-0", "translate-y-4");
-                setTimeout(() => toast.remove(), 300);
-            }, 3500);
+                chat.innerHTML += `<div class="bg-spk-dark p-3.5 rounded-2xl border border-white/10 text-xs text-gray-200">Suas compras VIP contam com ativação automática via PIX. Somos uma comunidade de mapas Free Fire confiável!</div>`;
+                chat.scrollTop = chat.scrollHeight;
+            }, 600);
         }
 
         function initConstellationCanvas() {
-            const canvas = document.getElementById("bgCanvas");
+            const canvas = document.getElementById('bgCanvas');
             if (!canvas) return;
-            const ctx = canvas.getContext("2d");
-            let width = canvas.width = window.innerWidth;
-            let height = canvas.height = window.innerHeight;
-
-            window.addEventListener("resize", () => {
-                width = canvas.width = window.innerWidth;
-                height = canvas.height = window.innerHeight;
-            });
-
+            const ctx = canvas.getContext('2d');
+            function resize() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
+            resize(); window.addEventListener('resize', resize);
             const particles = Array.from({ length: 45 }, () => ({
-                x: Math.random() * width,
-                y: Math.random() * height,
-                vx: (Math.random() - 0.5) * 0.4,
-                vy: (Math.random() - 0.5) * 0.4,
-                radius: Math.random() * 1.5 + 1
+                x: Math.random() * canvas.width, y: Math.random() * canvas.height,
+                vx: (Math.random() - 0.5) * 0.4, vy: (Math.random() - 0.5) * 0.4,
+                radius: Math.random() * 2 + 1
             }));
-
             function animate() {
-                ctx.clearRect(0, 0, width, height);
-                ctx.fillStyle = "rgba(59, 130, 246, 0.4)";
-                ctx.strokeStyle = "rgba(59, 130, 246, 0.08)";
-
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
                 particles.forEach((p, i) => {
-                    p.x += p.vx;
-                    p.y += p.vy;
-
-                    if (p.x < 0 || p.x > width) p.vx *= -1;
-                    if (p.y < 0 || p.y > height) p.vy *= -1;
-
-                    ctx.beginPath();
-                    ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
-                    ctx.fill();
-
+                    p.x += p.vx; p.y += p.vy;
+                    if (p.x < 0 || p.x > canvas.width) p.vx *= -1;
+                    if (p.y < 0 || p.y > canvas.height) p.vy *= -1;
+                    ctx.beginPath(); ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+                    ctx.fillStyle = "rgba(59, 130, 246, 0.4)"; ctx.fill();
                     for (let j = i + 1; j < particles.length; j++) {
-                        const p2 = particles[j];
-                        const dx = p.x - p2.x;
-                        const dy = p.y - p2.y;
-                        const dist = Math.sqrt(dx * dx + dy * dy);
-
+                        let p2 = particles[j];
+                        let dist = Math.hypot(p.x - p2.x, p.y - p2.y);
                         if (dist < 120) {
-                            ctx.beginPath();
-                            ctx.moveTo(p.x, p.y);
-                            ctx.lineTo(p2.x, p2.y);
-                            ctx.stroke();
+                            ctx.beginPath(); ctx.moveTo(p.x, p.y); ctx.lineTo(p2.x, p2.y);
+                            ctx.strokeStyle = `rgba(59, 130, 246, ${0.15 * (1 - dist / 120)})`; ctx.stroke();
                         }
                     }
                 });
-
                 requestAnimationFrame(animate);
             }
             animate();
