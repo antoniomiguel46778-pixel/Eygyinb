@@ -710,7 +710,7 @@
             </div>
 
             <form id="adminForm" onsubmit="saveAdminSettings(event)" class="space-y-4">
-                <!-- Aba Geral & Bot (Com Botão de Categorias e Webhook) -->
+                <!-- Aba Geral & Bot (Com Botão de Categorias, Webhook e URI) -->
                 <div id="admSecGeneral" class="space-y-4">
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>
@@ -725,6 +725,10 @@
                     <div>
                         <label class="block text-xs font-bold text-gray-300 mb-1">URL Webhook Bot (Discord)</label>
                         <input id="cfgBotWebhook" type="text" placeholder="https://discord.com/api/webhooks/..." class="w-full bg-spk-dark text-sm text-white px-3.5 py-2.5 rounded-xl border border-white/10 outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-300 mb-1">URI do Bot (Identificador Client ID)</label>
+                        <input id="cfgBotUri" type="text" value="uri 1329241513256030310" placeholder="uri ID_CLIENTE_BOT" class="w-full bg-spk-dark text-sm text-white px-3.5 py-2.5 rounded-xl border border-white/10 outline-none">
                     </div>
                     <div>
                         <label class="block text-xs font-bold text-gray-300 mb-1">Categorias do Bot (separadas por vírgula)</label>
@@ -821,6 +825,7 @@
             name: "Storm VIPs",
             logo: "https://placehold.co/180x180/0a1026/3b82f6?text=STORM",
             botWebhookUrl: "",
+            botUri: "uri 1329241513256030310",
             categories: ["iniciante", "popular", "elite"],
             terms: "Estes são os termos gerais de serviço e uso da plataforma Storm VIPs. Todos os bens digitais são entregues automaticamente de forma instantânea.",
             privacy: "A sua privacidade é totalmente preservada em nosso sistema. Não compartilhamos dados sensíveis com terceiros."
@@ -1370,6 +1375,7 @@
             document.getElementById("cfgServerName").value = serverConfig.name;
             document.getElementById("cfgServerLogo").value = serverConfig.logo;
             document.getElementById("cfgBotWebhook").value = serverConfig.botWebhookUrl || "";
+            document.getElementById("cfgBotUri").value = serverConfig.botUri || "uri 1329241513256030310";
             document.getElementById("cfgCategoriesInput").value = serverConfig.categories.join(", ");
             document.getElementById("cfgTerms").value = serverConfig.terms;
             document.getElementById("cfgPrivacy").value = serverConfig.privacy;
@@ -1536,6 +1542,7 @@
             serverConfig.name = document.getElementById("cfgServerName").value;
             serverConfig.logo = document.getElementById("cfgServerLogo").value;
             serverConfig.botWebhookUrl = document.getElementById("cfgBotWebhook").value;
+            serverConfig.botUri = document.getElementById("cfgBotUri").value;
             
             const catsRaw = document.getElementById("cfgCategoriesInput").value;
             if (catsRaw) {
