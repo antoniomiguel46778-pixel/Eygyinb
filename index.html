@@ -698,17 +698,19 @@
             </button>
             <div class="flex items-center gap-2 mb-4 border-b border-white/10 pb-3">
                 <i class="fa-solid fa-crown text-amber-400 text-xl"></i>
-                <h3 class="text-xl font-bold text-white">Painel do Dono</h3>
+                <h3 class="text-xl font-bold text-white">Painel do Dono (Administração Completa)</h3>
             </div>
 
-            <div class="flex gap-2 mb-4 border-b border-white/10 pb-3">
-                <button onclick="switchAdminTab('general')" id="admTabGen" class="px-3.5 py-1.5 rounded-xl text-xs font-bold bg-spk-blue text-white">Geral & Bot</button>
-                <button onclick="switchAdminTab('products')" id="admTabProd" class="px-3.5 py-1.5 rounded-xl text-xs font-bold text-gray-400 hover:text-white">Gerenciar Produtos</button>
-                <button onclick="switchAdminTab('coupons')" id="admTabCoup" class="px-3.5 py-1.5 rounded-xl text-xs font-bold text-gray-400 hover:text-white">Cupons</button>
+            <!-- Abas do Painel do Dono (Igualzinho à foto) -->
+            <div class="flex gap-2 mb-6 border-b border-white/10 pb-3 flex-wrap">
+                <button type="button" onclick="switchAdminTab('general')" id="admTabGen" class="px-3.5 py-1.5 rounded-xl text-xs font-bold bg-spk-blue text-white transition">Geral & Bot</button>
+                <button type="button" onclick="switchAdminTab('products')" id="admTabProd" class="px-3.5 py-1.5 rounded-xl text-xs font-bold text-gray-400 hover:text-white transition">Gerenciar Produtos</button>
+                <button type="button" onclick="switchAdminTab('terms')" id="admTabTerms" class="px-3.5 py-1.5 rounded-xl text-xs font-bold text-gray-400 hover:text-white transition">Termos & Textos</button>
+                <button type="button" onclick="switchAdminTab('coupons')" id="admTabCoup" class="px-3.5 py-1.5 rounded-xl text-xs font-bold text-gray-400 hover:text-white transition">Cupons</button>
             </div>
 
             <form id="adminForm" onsubmit="saveAdminSettings(event)" class="space-y-4">
-                <!-- Aba Geral -->
+                <!-- Aba Geral & Bot -->
                 <div id="admSecGeneral" class="space-y-4">
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>
@@ -737,10 +739,22 @@
                     <div id="adminProductsList" class="space-y-3 max-h-[300px] overflow-y-auto pr-1"></div>
                 </div>
 
+                <!-- Aba Termos & Textos (Igualzinho à foto) -->
+                <div id="admSecTerms" class="hidden space-y-4">
+                    <div>
+                        <label class="block text-xs font-bold text-gray-300 mb-1">Termos de Uso do Site</label>
+                        <textarea id="cfgTerms" rows="4" class="w-full bg-spk-dark text-xs text-white p-3.5 rounded-xl border border-white/10 outline-none leading-relaxed"></textarea>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-300 mb-1">Política de Privacidade</label>
+                        <textarea id="cfgPrivacy" rows="4" class="w-full bg-spk-dark text-xs text-white p-3.5 rounded-xl border border-white/10 outline-none leading-relaxed"></textarea>
+                    </div>
+                </div>
+
                 <!-- Aba Cupons -->
                 <div id="admSecCoupons" class="hidden space-y-4">
                     <div class="flex gap-2">
-                        <input id="newCouponCode" type="text" placeholder="CÓDIGO" class="uppercase bg-spk-dark text-xs text-white px-3.5 py-2 rounded-xl border border-white/10 flex-grow">
+                        <input id="newCouponCode" type="text" placeholder="CÓDIGO" class="uppercase bg-spk-dark text-xs text-white px-3.5 py-2 rounded-xl border border-white/10 flex-grow font-mono">
                         <input id="newCouponDiscount" type="number" placeholder="Desconto %" class="bg-spk-dark text-xs text-white px-3.5 py-2 rounded-xl border border-white/10 w-28">
                         <button type="button" onclick="addAdminCoupon()" class="bg-spk-blue hover:bg-blue-600 text-white font-bold px-4 py-2 rounded-xl text-xs">Adicionar</button>
                     </div>
@@ -1352,6 +1366,8 @@
             document.getElementById("cfgServerName").value = serverConfig.name;
             document.getElementById("cfgServerLogo").value = serverConfig.logo;
             document.getElementById("cfgBotWebhook").value = serverConfig.botWebhookUrl || "";
+            document.getElementById("cfgTerms").value = serverConfig.terms;
+            document.getElementById("cfgPrivacy").value = serverConfig.privacy;
 
             renderAdminProductsList();
             renderAdminCouponsList();
@@ -1366,28 +1382,35 @@
         window.switchAdminTab = function(tab) {
             const btnGen = document.getElementById("admTabGen");
             const btnProd = document.getElementById("admTabProd");
+            const btnTerms = document.getElementById("admTabTerms");
             const btnCoup = document.getElementById("admTabCoup");
 
             const secGen = document.getElementById("admSecGeneral");
             const secProd = document.getElementById("admSecProducts");
+            const secTerms = document.getElementById("admSecTerms");
             const secCoup = document.getElementById("admSecCoupons");
 
-            btnGen.className = "px-3.5 py-1.5 rounded-xl text-xs font-bold text-gray-400 hover:text-white";
-            btnProd.className = "px-3.5 py-1.5 rounded-xl text-xs font-bold text-gray-400 hover:text-white";
-            btnCoup.className = "px-3.5 py-1.5 rounded-xl text-xs font-bold text-gray-400 hover:text-white";
+            btnGen.className = "px-3.5 py-1.5 rounded-xl text-xs font-bold text-gray-400 hover:text-white transition";
+            btnProd.className = "px-3.5 py-1.5 rounded-xl text-xs font-bold text-gray-400 hover:text-white transition";
+            btnTerms.className = "px-3.5 py-1.5 rounded-xl text-xs font-bold text-gray-400 hover:text-white transition";
+            btnCoup.className = "px-3.5 py-1.5 rounded-xl text-xs font-bold text-gray-400 hover:text-white transition";
 
             secGen.classList.add("hidden");
             secProd.classList.add("hidden");
+            secTerms.classList.add("hidden");
             secCoup.classList.add("hidden");
 
             if (tab === 'general') {
-                btnGen.className = "px-3.5 py-1.5 rounded-xl text-xs font-bold bg-spk-blue text-white";
+                btnGen.className = "px-3.5 py-1.5 rounded-xl text-xs font-bold bg-spk-blue text-white transition";
                 secGen.classList.remove("hidden");
             } else if (tab === 'products') {
-                btnProd.className = "px-3.5 py-1.5 rounded-xl text-xs font-bold bg-spk-blue text-white";
+                btnProd.className = "px-3.5 py-1.5 rounded-xl text-xs font-bold bg-spk-blue text-white transition";
                 secProd.classList.remove("hidden");
-            } else {
-                btnCoup.className = "px-3.5 py-1.5 rounded-xl text-xs font-bold bg-spk-blue text-white";
+            } else if (tab === 'terms') {
+                btnTerms.className = "px-3.5 py-1.5 rounded-xl text-xs font-bold bg-spk-blue text-white transition";
+                secTerms.classList.remove("hidden");
+            } else if (tab === 'coupons') {
+                btnCoup.className = "px-3.5 py-1.5 rounded-xl text-xs font-bold bg-spk-blue text-white transition";
                 secCoup.classList.remove("hidden");
             }
         };
@@ -1481,6 +1504,8 @@
             serverConfig.name = document.getElementById("cfgServerName").value;
             serverConfig.logo = document.getElementById("cfgServerLogo").value;
             serverConfig.botWebhookUrl = document.getElementById("cfgBotWebhook").value;
+            serverConfig.terms = document.getElementById("cfgTerms").value;
+            serverConfig.privacy = document.getElementById("cfgPrivacy").value;
 
             localStorage.setItem("spk_shop_config", JSON.stringify(serverConfig));
             localStorage.setItem("spk_shop_plans", JSON.stringify(plansData));
