@@ -108,31 +108,7 @@
                     showToast("Login cancelado: a janela de autenticação foi fechada.", "error");
                     return;
                 }
-                
-                const userEmail = prompt("O navegador bloqueou o pop-up do Google. Digite seu E-mail Google para entrar:");
-                if (userEmail && userEmail.trim() !== "") {
-                    const cleanEmail = userEmail.trim();
-                    const username = cleanEmail.split('@')[0];
-                    const fakeUid = "g_" + Math.random().toString(36).substring(2, 11);
-                    const userData = {
-                        uid: fakeUid,
-                        id: fakeUid,
-                        username: username,
-                        email: cleanEmail,
-                        avatar: `https://placehold.co/100x100/4285F4/ffffff?text=${username[0].toUpperCase()}`,
-                        provider: 'google',
-                        createdAt: new Date().toISOString()
-                    };
-                    currentUser = userData;
-                    localStorage.setItem("spk_shop_user", JSON.stringify(currentUser));
-                    if (window.saveUserToFirestore) await window.saveUserToFirestore(userData);
-                    renderUserAuth();
-                    closeLoginModal();
-                    showToast(`Conectado com sucesso como ${currentUser.username}!`, "success");
-                    if (window.listenToFirestorePurchases) window.listenToFirestorePurchases();
-                } else {
-                    showToast("Autenticação cancelada.", "error");
-                }
+                showToast("Não foi possível abrir o login do Google. Verifique o bloqueador de pop-ups e tente novamente.", "error");
             }
         };
 
@@ -576,10 +552,10 @@
             </div>
 
             <h3 class="text-lg font-black text-white mb-1">Painel do Proprietário</h3>
-            <p class="text-xs text-gray-400 mb-4">Digite a senha para acessar as configurações. <br><span class="text-amber-400 font-semibold">(Senha Padrão: 1234)</span></p>
+            <p class="text-xs text-gray-400 mb-4">Digite a senha para acessar as configurações. <br><span class="text-amber-400 font-semibold">(PIN de demonstração configurável)</span></p>
 
             <form onsubmit="submitAdminPin(event)" class="space-y-4">
-                <input id="adminPinInput" type="password" placeholder="Digite a senha (1234)" class="w-full bg-spk-dark text-center text-lg font-mono tracking-widest text-white px-4 py-3 rounded-2xl border border-white/10 focus:border-amber-500 outline-none">
+                <input id="adminPinInput" type="password" placeholder="Digite o PIN do painel" class="w-full bg-spk-dark text-center text-lg font-mono tracking-widest text-white px-4 py-3 rounded-2xl border border-white/10 focus:border-amber-500 outline-none">
                 <button type="submit" class="w-full bg-amber-500 hover:bg-amber-600 text-black font-extrabold py-3 rounded-2xl transition shadow-lg text-xs uppercase tracking-wider">
                     Entrar no Painel
                 </button>
@@ -673,7 +649,7 @@
                     <i class="fa-solid fa-clock"></i> Aguardando Pagamento PIX
                 </span>
                 <h3 class="text-xl font-black text-white mb-1">Escaneie o QR Code PIX</h3>
-                <p class="text-xs text-gray-400 mb-6">Realize o pagamento no banco para entrega imediata no Discord</p>
+                <p class="text-xs text-gray-400 mb-6">Realize o pagamento no banco para entrega imediata no Discord</p><p class="text-[11px] text-amber-400 mb-4">Modo demonstração: este QR/código não confirma um pagamento real.</p>
 
                 <div class="bg-white p-4 rounded-3xl inline-block shadow-2xl mb-4 border-4 border-spk-dark">
                     <div id="qrcodeCanvas" class="flex justify-center"></div>
@@ -691,8 +667,8 @@
 
                 <div class="bg-spk-dark/90 p-3.5 rounded-2xl border border-white/10 mb-6 text-xs text-left text-gray-400 flex items-center justify-between">
                     <span>Aprovação automática e registro em nuvem</span>
-                    <button onclick="simulatePaymentApproval()" class="text-spk-blue font-extrabold hover:underline flex items-center gap-1">
-                        Simular Aprovação <i class="fa-solid fa-check-double"></i>
+                    <button onclick="simulatePaymentApproval()" class="text-amber-400 font-extrabold hover:underline flex items-center gap-1" title="Somente demonstração local">
+                        Aprovação de Demonstração <i class="fa-solid fa-flask"></i>
                     </button>
                 </div>
             </div>
@@ -768,7 +744,7 @@
                         </div>
                         <div>
                             <label class="block text-xs font-bold text-gray-300 mb-1">Senha/PIN de Acesso ao Painel</label>
-                            <input id="cfgAdminPin" type="password" placeholder="Definir PIN (Padrão: 1234)" class="w-full bg-spk-dark text-sm text-white px-3.5 py-2.5 rounded-xl border border-white/10 focus:border-spk-blue outline-none font-mono">
+                            <input id="cfgAdminPin" type="password" placeholder="Definir PIN do painel" class="w-full bg-spk-dark text-sm text-white px-3.5 py-2.5 rounded-xl border border-white/10 focus:border-spk-blue outline-none font-mono">
                         </div>
                     </div>
                     <div>
@@ -919,6 +895,130 @@
         let currentUser = null;
         let selectedVip = null;
         let userPurchases = [];
+        let cartItems = [];
+
+        function addToCart(planId) {
+            const plan = defaultPlans.find(p => p.id === planId);
+            if (!plan) return;
+
+            const existing = cartItems.find(item => item.id === planId);
+            if (existing) {
+                showToast("Esse plano já está no carrinho.", "info");
+                openCartDrawer();
+                return;
+            }
+
+            cartItems.push({
+                id: plan.id,
+                title: plan.title,
+                price: Number(serverConfig.prices[plan.id] ?? 0),
+                badge: plan.badge
+            });
+
+            saveCart();
+            renderCart();
+            showToast(`${plan.title} foi adicionado ao carrinho.`, "success");
+            playAudioEffect("click");
+        }
+
+        function removeFromCart(planId) {
+            cartItems = cartItems.filter(item => item.id !== planId);
+            saveCart();
+            renderCart();
+        }
+
+        function saveCart() {
+            localStorage.setItem("spk_shop_cart", JSON.stringify(cartItems));
+        }
+
+        function loadCart() {
+            try {
+                const saved = JSON.parse(localStorage.getItem("spk_shop_cart") || "[]");
+                cartItems = Array.isArray(saved) ? saved : [];
+            } catch {
+                cartItems = [];
+            }
+            renderCart();
+        }
+
+        function renderCart() {
+            const list = document.getElementById("cartItemsList");
+            const subtotal = document.getElementById("cartSubtotalPrice");
+            const checkoutBtn = document.getElementById("cartCheckoutBtn");
+            const badge = document.getElementById("cartCountBadge");
+
+            if (!list || !subtotal || !checkoutBtn || !badge) return;
+
+            badge.textContent = cartItems.length;
+            badge.classList.toggle("hidden", cartItems.length === 0);
+
+            if (cartItems.length === 0) {
+                list.innerHTML = '<p class="text-center text-gray-400 text-sm py-10">Seu carrinho está vazio.</p>';
+                subtotal.textContent = "R$ 0,00";
+                checkoutBtn.disabled = true;
+                checkoutBtn.classList.add("opacity-50", "cursor-not-allowed");
+                return;
+            }
+
+            let total = 0;
+            list.innerHTML = cartItems.map(item => {
+                total += Number(item.price) || 0;
+                return `
+                    <div class="bg-spk-dark/80 border border-white/10 rounded-2xl p-4 flex items-center gap-3">
+                        <div class="w-11 h-11 rounded-xl bg-spk-blue/15 text-spk-blue flex items-center justify-center">
+                            <i class="fa-solid fa-crown"></i>
+                        </div>
+                        <div class="flex-grow min-w-0">
+                            <p class="font-bold text-white text-sm truncate">${escapeHtml(item.title)}</p>
+                            <p class="text-xs text-gray-400">${escapeHtml(item.badge || "VIP")}</p>
+                        </div>
+                        <div class="text-right">
+                            <p class="font-black text-spk-blue">R$ ${Number(item.price).toFixed(2).replace(".", ",")}</p>
+                            <button onclick="removeFromCart('${item.id}')" class="text-[11px] text-rose-400 hover:underline">Remover</button>
+                        </div>
+                    </div>
+                `;
+            }).join("");
+
+            subtotal.textContent = `R$ ${total.toFixed(2).replace(".", ",")}`;
+            checkoutBtn.disabled = false;
+            checkoutBtn.classList.remove("opacity-50", "cursor-not-allowed");
+        }
+
+        function escapeHtml(value) {
+            return String(value ?? "").replace(/[&<>"']/g, ch => ({
+                "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#039;"
+            }[ch]));
+        }
+
+        function openCartDrawer() {
+            renderCart();
+            document.getElementById("cartDrawer")?.classList.remove("hidden");
+        }
+
+        function closeCartDrawer() {
+            document.getElementById("cartDrawer")?.classList.add("hidden");
+        }
+
+        function checkoutFromCart() {
+            if (!cartItems.length) {
+                showToast("Adicione um plano ao carrinho primeiro.", "info");
+                return;
+            }
+
+            if (!currentUser) {
+                closeCartDrawer();
+                openLoginModal();
+                showToast("Entre na sua conta antes de continuar.", "info");
+                return;
+            }
+
+            // Checkout deste projeto suporta um item por pedido.
+            selectedVip = cartItems[0].id;
+            openCheckoutModal(selectedVip);
+            closeCartDrawer();
+        }
+
 
         let serverConfig = {
             name: "Storm VIPs",
@@ -1746,6 +1846,7 @@
             }, 800);
         }
     </script>
+<script>window.addEventListener("load", loadCart);</script>
 </body>
 </html>
 ```
