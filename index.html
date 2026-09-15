@@ -732,7 +732,7 @@
                     </div>
                 </div>
 
-                <!-- Aba Produtos (Layout Atualizado: Título/Preço em cima, Estoque/Categoria embaixo, Foto e Descrição) -->
+                <!-- Aba Produtos -->
                 <div id="admSecProducts" class="hidden space-y-4">
                     <div class="flex justify-between items-center mb-2">
                         <span class="text-xs text-gray-400 font-bold">Edite os produtos e estoques dos seus VIPs:</span>
@@ -743,7 +743,7 @@
                     <div id="adminProductsList" class="space-y-4 max-h-[380px] overflow-y-auto pr-1"></div>
                 </div>
 
-                <!-- Aba Termos & Textos (Mantido Intacto) -->
+                <!-- Aba Termos & Textos -->
                 <div id="admSecTerms" class="hidden space-y-4">
                     <div>
                         <label class="block text-xs font-bold text-gray-300 mb-1">Termos de Uso do Site</label>
@@ -1430,7 +1430,7 @@
                         <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
                             <div class="sm:col-span-2">
                                 <label class="block text-[11px] font-bold text-gray-400 mb-1">Título do Produto</label>
-                                type="text" value="${p.title}" onchange="updatePlanField(${index}, 'title', this.value)" class="w-full bg-spk-card text-xs text-white p-2.5 rounded-xl border border-white/10 outline-none">
+                                <input type="text" value="${p.title}" onchange="updatePlanField(${index}, 'title', this.value)" class="w-full bg-spk-card text-xs text-white p-2.5 rounded-xl border border-white/10 outline-none">
                             </div>
                             <div>
                                 <label class="block text-[11px] font-bold text-gray-400 mb-1">Preço (R$)</label>
