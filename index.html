@@ -13,13 +13,14 @@
     <!-- Canvas Confetti -->
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
 
-    <!-- Firebase 11.6.1 Web SDK Imports -->
+    <!-- Firebase SDK Imports -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { 
             getAuth, 
             signInWithPopup, 
             GoogleAuthProvider, 
+            OAuthProvider,
             signOut, 
             onAuthStateChanged,
             signInWithCustomToken,
@@ -71,6 +72,8 @@
 
         const googleProvider = new GoogleAuthProvider();
         googleProvider.setCustomParameters({ prompt: 'select_account' });
+        
+        const discordProvider = new OAuthProvider('oidc.discord');
 
         window.loginWithGoogle = async function() {
             if (typeof playAudioEffect === 'function') playAudioEffect('click');
@@ -85,8 +88,7 @@
                     email: user.email,
                     avatar: user.photoURL || `https://placehold.co/100x100/3b82f6/ffffff?text=${user.displayName ? user.displayName[0] : 'U'}`,
                     provider: 'google',
-                    createdAt: new Date().toISOString(),
-                    lastLogin: new Date().toISOString()
+                    createdAt: new Date().toISOString()
                 };
 
                 await window.saveUserToFirestore(userData);
@@ -94,28 +96,52 @@
                 localStorage.setItem("spk_shop_user", JSON.stringify(currentUser));
                 renderUserAuth();
                 closeLoginModal();
-                showToast(`Bem-vindo, ${currentUser.username}! Autenticado com sucesso.`, "success");
+                showToast(`Bem-vindo, ${currentUser.username}!`, "success");
                 if (window.listenToFirestorePurchases) window.listenToFirestorePurchases();
             } catch (error) {
-                console.error("Erro na Autenticação Google:", error);
-                if (error.code === 'auth/popup-closed-by-user') {
-                    showToast("Login cancelado: a janela de autenticação foi fechada.", "error");
-                    return;
-                }
+                console.error("Erro no Google Login:", error);
+                showToast("Erro ao conectar via Google.", "error");
+            }
+        };
+
+        window.loginWithDiscord = async function() {
+            if (typeof playAudioEffect === 'function') playAudioEffect('click');
+            try {
+                const result = await signInWithPopup(auth, discordProvider);
+                const user = result.user;
                 
-                const userEmail = prompt("Navegador bloqueou o pop-up. Digite seu E-mail Google para entrar:");
-                if (userEmail && userEmail.trim() !== "") {
-                    const cleanEmail = userEmail.trim();
-                    const username = cleanEmail.split('@')[0];
-                    const fakeUid = "g_" + Math.abs(cleanEmail.split('').reduce((acc, char) => (acc << 5) - acc + char.charCodeAt(0), 0));
+                const userData = {
+                    uid: user.uid,
+                    id: user.uid,
+                    username: user.displayName || "Usuário Discord",
+                    email: user.email || "",
+                    avatar: user.photoURL || `https://placehold.co/100x100/5865F2/ffffff?text=D`,
+                    provider: 'discord',
+                    createdAt: new Date().toISOString()
+                };
+
+                await window.saveUserToFirestore(userData);
+                currentUser = userData;
+                localStorage.setItem("spk_shop_user", JSON.stringify(currentUser));
+                renderUserAuth();
+                closeLoginModal();
+                showToast(`Conectado como ${currentUser.username} via Discord!`, "success");
+                if (window.listenToFirestorePurchases) window.listenToFirestorePurchases();
+            } catch (error) {
+                console.error("Erro no Discord Login:", error);
+                // Fallback simples para simulação de username/Tag Discord
+                const discordTag = prompt("Digite seu usuário do Discord (Ex: Nick#0000 ou @usuario):");
+                if (discordTag && discordTag.trim() !== "") {
+                    const tagClean = discordTag.trim();
+                    const fakeUid = "dc_" + Math.abs(tagClean.split('').reduce((acc, char) => (acc << 5) - acc + char.charCodeAt(0), 0));
                     
                     const userData = {
                         uid: fakeUid,
                         id: fakeUid,
-                        username: username.charAt(0).toUpperCase() + username.slice(1),
-                        email: cleanEmail,
-                        avatar: `https://placehold.co/100x100/4285F4/ffffff?text=${username[0].toUpperCase()}`,
-                        provider: 'google',
+                        username: tagClean,
+                        email: "",
+                        avatar: `https://placehold.co/100x100/5865F2/ffffff?text=D`,
+                        provider: 'discord',
                         createdAt: new Date().toISOString()
                     };
                     currentUser = userData;
@@ -126,7 +152,7 @@
                     showToast(`Conectado como ${currentUser.username}!`, "success");
                     if (window.listenToFirestorePurchases) window.listenToFirestorePurchases();
                 } else {
-                    showToast("Autenticação Google cancelada.", "error");
+                    showToast("Login do Discord cancelado.", "error");
                 }
             }
         };
@@ -138,7 +164,7 @@
                 const userDocRef = doc(db, 'artifacts', appId, 'users', targetUid, 'profile', 'data');
                 await setDoc(userDocRef, { ...userObj, updatedAt: new Date().toISOString() }, { merge: true });
             } catch (err) {
-                console.warn("Persistência de Usuário Firestore:", err);
+                console.warn("Persistência Firestore:", err);
             }
         };
 
@@ -149,16 +175,14 @@
                 const purchaseColRef = collection(db, 'artifacts', appId, 'users', targetUid, 'purchases');
                 await addDoc(purchaseColRef, { ...purchaseObj, userId: targetUid, createdAt: new Date().toISOString() });
             } catch (err) {
-                console.warn("Erro ao registrar compra no Firestore:", err);
+                console.warn("Erro ao registrar compra:", err);
             }
         };
 
         let purchaseUnsubscribe = null;
-
         window.listenToFirestorePurchases = function() {
             const targetUid = auth.currentUser ? auth.currentUser.uid : (currentUser ? currentUser.uid : null);
             if (!targetUid) return;
-
             if (purchaseUnsubscribe) purchaseUnsubscribe();
 
             try {
@@ -166,7 +190,6 @@
                 purchaseUnsubscribe = onSnapshot(purchaseColRef, (snapshot) => {
                     const fetched = [];
                     snapshot.forEach(docSnap => fetched.push({ id: docSnap.id, ...docSnap.data() }));
-                    
                     if (fetched.length > 0) {
                         const uniqueMap = new Map();
                         [...fetched, ...userPurchases].forEach(item => { if (item.txId) uniqueMap.set(item.txId, item); });
@@ -322,7 +345,7 @@
     <!-- GRID DE PLANOS VIP -->
     <section class="py-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full z-10 relative flex-grow">
         <div id="plansContainer" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 items-stretch">
-            <!-- Cards Renderizados via Javascript -->
+            <!-- Cards Renderizados via JS -->
         </div>
     </section>
 
@@ -396,10 +419,15 @@
                 </div>
 
                 <div>
-                    <h4 class="font-bold text-white text-sm mb-4">Administração</h4>
+                    <h4 class="font-bold text-white text-sm mb-4">Minha Conta</h4>
                     <ul class="space-y-2 text-xs text-gray-400">
                         <li><button onclick="playAudioEffect('modal'); openProfileModal('profile')" class="hover:text-spk-blue transition">Meu Perfil</button></li>
-                        <li><button onclick="promptAdminAccess()" class="text-amber-400 hover:text-amber-300 transition font-bold flex items-center gap-1.5"><i class="fa-solid fa-crown text-xs"></i> Painel do Dono</button></li>
+                        <!-- BOTÃO PAINEL DO DONO: Invisível por padrão, visível APENAS para antoniomiguel46779@gmail.com -->
+                        <li id="ownerAdminLink" class="hidden">
+                            <button onclick="promptAdminAccess()" class="text-amber-400 hover:text-amber-300 transition font-bold flex items-center gap-1.5">
+                                <i class="fa-solid fa-crown text-xs"></i> Painel do Dono
+                            </button>
+                        </li>
                     </ul>
                 </div>
             </div>
@@ -531,7 +559,7 @@
         </div>
     </div>
 
-    <!-- MODAL DE LOGIN -->
+    <!-- MODAL DE LOGIN (GOOGLE E DISCORD DISPONÍVEIS) -->
     <div id="loginModal" class="fixed inset-0 bg-black/80 backdrop-blur-md z-50 hidden flex items-center justify-center p-4">
         <div class="bg-spk-card border border-spk-border w-full max-w-md rounded-3xl p-6 sm:p-8 relative shadow-2xl text-center">
             <button onclick="closeLoginModal(); playAudioEffect('click');" class="absolute top-5 right-5 text-gray-400 hover:text-white w-9 h-9 rounded-full bg-spk-dark flex items-center justify-center transition">
@@ -543,9 +571,10 @@
             </div>
 
             <h3 class="text-2xl font-black text-white mb-2">Acessar Conta</h3>
-            <p class="text-xs text-gray-400 mb-6">Conecte sua conta do Google para validar suas permissões e compras.</p>
+            <p class="text-xs text-gray-400 mb-6">Escolha um método para se autenticar e receber suas recompensas.</p>
 
-            <div class="space-y-4">
+            <div class="space-y-3">
+                <!-- BOTÃO GOOGLE -->
                 <button onclick="loginWithGoogle()" class="w-full bg-white hover:bg-gray-100 text-gray-900 font-bold py-3.5 px-4 rounded-2xl transition flex items-center justify-center gap-3 shadow-lg text-sm">
                     <svg class="w-5 h-5" viewBox="0 0 24 24">
                         <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
@@ -554,6 +583,12 @@
                         <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
                     </svg>
                     <span>Entrar com Conta Google</span>
+                </button>
+
+                <!-- BOTÃO DISCORD -->
+                <button onclick="loginWithDiscord()" class="w-full bg-[#5865F2] hover:bg-[#4752C4] text-white font-bold py-3.5 px-4 rounded-2xl transition flex items-center justify-center gap-3 shadow-lg text-sm">
+                    <i class="fa-brands fa-discord text-lg"></i>
+                    <span>Entrar com Discord</span>
                 </button>
             </div>
         </div>
@@ -655,7 +690,7 @@
 
                 <div class="pt-4 flex justify-end gap-3">
                     <button type="button" onclick="closeAdminModal()" class="px-5 py-2.5 rounded-xl text-xs font-bold text-gray-400 bg-spk-dark">Cancelar</button>
-                    <button type="submit" class="bg-amber-500 hover:bg-amber-600 text-black font-extrabold px-6 py-2.5 rounded-xl text-xs transition">Salvar Alteraçoes</button>
+                    <button type="submit" class="bg-amber-500 hover:bg-amber-600 text-black font-extrabold px-6 py-2.5 rounded-xl text-xs transition">Salvar Alterações</button>
                 </div>
             </form>
         </div>
@@ -686,7 +721,6 @@
 
     <!-- JAVASCRIPT PRINCIPAL -->
     <script>
-        // E-mail configurado com acesso exclusivo de Dono
         const OWNER_EMAIL = "antoniomiguel46779@gmail.com";
 
         let currentUser = null;
@@ -824,21 +858,12 @@
             if (currentUser && window.listenToFirestorePurchases) window.listenToFirestorePurchases();
         };
 
-        // Validação de acesso ao Painel do Dono por E-mail
         function promptAdminAccess() {
             playAudioEffect('click');
-
-            if (!currentUser) {
-                showToast("Faça login com sua conta do Google de Dono.", "error");
-                openLoginModal();
-                return;
-            }
-
-            if (currentUser.email && currentUser.email.toLowerCase() === OWNER_EMAIL.toLowerCase()) {
+            if (currentUser && currentUser.email && currentUser.email.toLowerCase() === OWNER_EMAIL.toLowerCase()) {
                 openAdminModal();
-                showToast("Acesso concedido: Bem-vindo ao Painel do Dono!", "success");
             } else {
-                showToast(`Acesso Negado: Apenas ${OWNER_EMAIL} pode acessar este painel.`, "error");
+                showToast("Acesso Negado.", "error");
             }
         }
 
@@ -856,7 +881,6 @@
         function renderPlans() {
             const container = document.getElementById("plansContainer");
             container.innerHTML = "";
-
             const filtered = defaultPlans.filter(p => activeCategory === 'all' || p.category === activeCategory);
 
             filtered.forEach(plan => {
@@ -1019,6 +1043,8 @@
 
         function renderUserAuth() {
             const authSec = document.getElementById("authSection");
+            const ownerLink = document.getElementById("ownerAdminLink");
+
             if (currentUser) {
                 authSec.innerHTML = `
                     <div onclick="playAudioEffect('modal'); openProfileModal('profile');" class="flex items-center gap-2 bg-spk-card px-3 py-1.5 rounded-2xl border border-white/10 cursor-pointer hover:border-spk-blue/50 transition">
@@ -1026,12 +1052,20 @@
                         <span class="text-xs font-bold text-white max-w-[100px] truncate">${currentUser.username}</span>
                     </div>
                 `;
+
+                // EXIBE O BOTÃO DO DONO SOMENTE SE FOR O SEU E-MAIL
+                if (currentUser.email && currentUser.email.toLowerCase() === OWNER_EMAIL.toLowerCase()) {
+                    if (ownerLink) ownerLink.classList.remove("hidden");
+                } else {
+                    if (ownerLink) ownerLink.classList.add("hidden");
+                }
             } else {
                 authSec.innerHTML = `
                     <button onclick="playAudioEffect('modal'); openLoginModal();" class="bg-gradient-to-r from-blue-600 to-cyan-500 text-white font-extrabold px-5 py-2.5 rounded-2xl text-sm shadow-lg btn-glow">
                         Entrar
                     </button>
                 `;
+                if (ownerLink) ownerLink.classList.add("hidden");
             }
         }
 
@@ -1049,9 +1083,11 @@
         function openProfileModal(tab = 'profile') {
             if (!currentUser) return openLoginModal();
             document.getElementById("profileUserName").innerText = currentUser.username;
-            document.getElementById("profileUserEmail").innerText = currentUser.email || `${currentUser.username}@gmail.com`;
+            document.getElementById("profileUserEmail").innerText = currentUser.email || `${currentUser.username}`;
             document.getElementById("profileUserId").innerText = `ID: ${currentUser.id || currentUser.uid}`;
             document.getElementById("profileUserAvatar").src = currentUser.avatar;
+            document.getElementById("profileProviderBadge").innerText = currentUser.provider || "Google";
+            document.getElementById("profDetailProvider").innerText = currentUser.provider || "Google";
             switchProfileTab(tab);
             document.getElementById("profileModal").classList.remove("hidden");
         }
@@ -1170,7 +1206,7 @@
             input.value = "";
 
             setTimeout(() => {
-                chat.innerHTML += `<div class="bg-spk-dark p-3.5 rounded-2xl border border-white/10 text-xs text-gray-200">Suas compras VIP contam com ativamento automático PIX e cupons como <b>STORM10</b>.</div>`;
+                chat.innerHTML += `<div class="bg-spk-dark p-3.5 rounded-2xl border border-white/10 text-xs text-gray-200">Suas compras VIP contam com ativação automática via PIX.</div>`;
                 chat.scrollTop = chat.scrollHeight;
             }, 600);
         }
