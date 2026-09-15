@@ -277,6 +277,9 @@
                 <a href="#vantagens" onclick="playAudioEffect('click')" class="text-gray-300 hover:text-spk-blue transition flex items-center gap-2">
                     <i class="fa-solid fa-shield-halved text-emerald-400"></i> Garantia
                 </a>
+                <a href="#quem-somos" onclick="playAudioEffect('click')" class="text-gray-300 hover:text-spk-blue transition flex items-center gap-2">
+                    <i class="fa-solid fa-users text-purple-400"></i> Quem Somos
+                </a>
                 <button onclick="playAudioEffect('modal'); openAiSupportModal();" class="text-spk-blue hover:text-blue-300 transition flex items-center gap-2 bg-spk-blue/10 px-3.5 py-1.5 rounded-full border border-spk-blue/30">
                     <i class="fa-solid fa-wand-magic-sparkles"></i> Suporte IA
                 </button>
@@ -325,19 +328,8 @@
 
     <!-- SELETOR DE CATEGORIAS -->
     <section id="catalogo" class="pt-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full z-10 relative">
-        <div class="flex items-center justify-center gap-3 flex-wrap">
-            <button onclick="setCategory('all')" id="catBtn-all" class="cat-btn px-5 py-2.5 rounded-2xl text-xs font-bold transition bg-spk-blue text-white border border-spk-blue">
-                <i class="fa-solid fa-border-all mr-1.5"></i> Todos os Planos
-            </button>
-            <button onclick="setCategory('iniciante')" id="catBtn-iniciante" class="cat-btn px-5 py-2.5 rounded-2xl text-xs font-bold transition bg-spk-dark text-gray-300 border border-white/10 hover:border-spk-blue">
-                <i class="fa-solid fa-shield-cat mr-1.5 text-amber-500"></i> Iniciantes
-            </button>
-            <button onclick="setCategory('popular')" id="catBtn-popular" class="cat-btn px-5 py-2.5 rounded-2xl text-xs font-bold transition bg-spk-dark text-gray-300 border border-white/10 hover:border-spk-blue">
-                <i class="fa-solid fa-fire mr-1.5 text-blue-400"></i> Mais Populares
-            </button>
-            <button onclick="setCategory('elite')" id="catBtn-elite" class="cat-btn px-5 py-2.5 rounded-2xl text-xs font-bold transition bg-spk-dark text-gray-300 border border-white/10 hover:border-spk-blue">
-                <i class="fa-solid fa-crown mr-1.5 text-purple-400"></i> Elite & Mestre
-            </button>
+        <div id="categoryContainer" class="flex items-center justify-center gap-3 flex-wrap">
+            <!-- Categorias dinâmicas -->
         </div>
     </section>
 
@@ -385,6 +377,19 @@
         </div>
     </section>
 
+    <!-- QUEM SOMOS NÓS -->
+    <section id="quem-somos" class="py-12 border-t border-white/5 bg-spk-card/40 z-10 relative">
+        <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+            <div class="inline-block p-3 rounded-2xl bg-spk-blue/10 text-spk-blue border border-spk-blue/20 mb-3">
+                <i class="fa-solid fa-fire text-2xl"></i>
+            </div>
+            <h2 class="text-2xl sm:text-3xl font-black text-white mb-3">Quem Somos Nós</h2>
+            <p class="text-sm sm:text-base text-gray-300 max-w-3xl mx-auto leading-relaxed">
+                Somos uma comunidade dedicada de <strong class="text-white">mapas de Free Fire</strong> com opções de <strong class="text-spk-blue">VIPs grátis e pagos</strong>. Oferecemos a maior confiança e segurança para os nossos jogadores, entregando mapas exclusivos, otimizados e suporte ágil 24 horas por dia!
+            </p>
+        </div>
+    </section>
+
     <!-- FOOTER -->
     <footer class="bg-spk-darker border-t border-white/5 py-12 z-10 relative">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -406,14 +411,15 @@
                     <ul class="space-y-2 text-xs text-gray-400">
                         <li><a href="#catalogo" onclick="playAudioEffect('click')" class="hover:text-spk-blue transition">Catálogo Completo</a></li>
                         <li><a href="#vantagens" onclick="playAudioEffect('click')" class="hover:text-spk-blue transition">Central de Garantia</a></li>
+                        <li><a href="#quem-somos" onclick="playAudioEffect('click')" class="hover:text-spk-blue transition">Quem Somos Nós</a></li>
                     </ul>
                 </div>
 
                 <div>
                     <h4 class="font-bold text-white text-sm mb-4">Termos & Ajuda</h4>
                     <ul class="space-y-2 text-xs text-gray-400">
-                        <li><button onclick="showToast('Termos operacionais em dia.', 'info')" class="hover:text-spk-blue transition">Termos de Uso</button></li>
-                        <li><button onclick="showToast('Privacidade 100% preservada.', 'info')" class="hover:text-spk-blue transition">Política de Privacidade</button></li>
+                        <li><button onclick="showModalInfo('Termos de Uso', serverConfig.terms)" class="hover:text-spk-blue transition">Termos de Uso</button></li>
+                        <li><button onclick="showModalInfo('Política de Privacidade', serverConfig.privacy)" class="hover:text-spk-blue transition">Política de Privacidade</button></li>
                     </ul>
                 </div>
 
@@ -421,6 +427,7 @@
                     <h4 class="font-bold text-white text-sm mb-4">Minha Conta</h4>
                     <ul class="space-y-2 text-xs text-gray-400">
                         <li><button onclick="playAudioEffect('modal'); openProfileModal('profile')" class="hover:text-spk-blue transition">Meu Perfil</button></li>
+                        <!-- BOTÃO PAINEL DO DONO: Invisível por padrão, visível APENAS para antoniomiguel46779@gmail.com -->
                         <li id="ownerAdminLink" class="hidden">
                             <button onclick="promptAdminAccess()" class="text-amber-400 hover:text-amber-300 transition font-bold flex items-center gap-1.5">
                                 <i class="fa-solid fa-crown text-xs"></i> Painel do Dono
@@ -548,6 +555,7 @@
                     <p><strong class="text-white">Titular:</strong> <span id="successUserName">@User</span></p>
                     <p><strong class="text-white">Identificador:</strong> <span id="successTxId" class="font-mono text-spk-blue">#STORM-0000</span></p>
                     <p><strong class="text-white">Nuvem Firestore:</strong> <span class="text-emerald-400 font-bold"><i class="fa-solid fa-cloud-check"></i> Sincronizado</span></p>
+                    <p><strong class="text-white">Bot Discord:</strong> <span id="botNotifyStatus" class="text-blue-400 font-bold"><i class="fa-solid fa-paper-plane"></i> Enviado</span></p>
                 </div>
                 
                 <button onclick="closeCheckoutModal(); playAudioEffect('click'); openProfileModal('purchases');" class="bg-spk-blue hover:bg-blue-600 text-white font-bold px-8 py-3.5 rounded-2xl transition">
@@ -572,7 +580,6 @@
             <p class="text-xs text-gray-400 mb-6">Escolha um método para se autenticar e receber suas recompensas.</p>
 
             <div class="space-y-3">
-                <!-- BOTÃO GOOGLE -->
                 <button onclick="loginWithGoogle()" class="w-full bg-white hover:bg-gray-100 text-gray-900 font-bold py-3.5 px-4 rounded-2xl transition flex items-center justify-center gap-3 shadow-lg text-sm">
                     <svg class="w-5 h-5" viewBox="0 0 24 24">
                         <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
@@ -583,7 +590,6 @@
                     <span>Entrar com Conta Google</span>
                 </button>
 
-                <!-- BOTÃO DISCORD -->
                 <button onclick="loginWithDiscord()" class="w-full bg-[#5865F2] hover:bg-[#4752C4] text-white font-bold py-3.5 px-4 rounded-2xl transition flex items-center justify-center gap-3 shadow-lg text-sm">
                     <i class="fa-brands fa-discord text-lg"></i>
                     <span>Entrar com Discord</span>
@@ -646,51 +652,89 @@
 
     <!-- MODAL DO PAINEL ADMIN DO DONO -->
     <div id="adminModal" class="fixed inset-0 bg-black/80 backdrop-blur-md z-50 hidden flex items-center justify-center p-4">
-        <div class="bg-spk-card border border-spk-border w-full max-w-2xl rounded-3xl p-6 sm:p-8 relative shadow-2xl max-h-[90vh] overflow-y-auto">
+        <div class="bg-spk-card border border-spk-border w-full max-w-3xl rounded-3xl p-6 sm:p-8 relative shadow-2xl max-h-[90vh] overflow-y-auto">
             <button onclick="closeAdminModal(); playAudioEffect('click');" class="absolute top-5 right-5 text-gray-400 hover:text-white w-9 h-9 rounded-full bg-spk-dark flex items-center justify-center transition">
                 <i class="fa-solid fa-xmark text-lg"></i>
             </button>
-            <div class="flex items-center gap-2 mb-4">
+            <div class="flex items-center gap-2 mb-4 border-b border-white/10 pb-3">
                 <i class="fa-solid fa-crown text-amber-400 text-xl"></i>
-                <h3 class="text-xl font-bold text-white">Painel do Dono (Administração)</h3>
+                <h3 class="text-xl font-bold text-white">Painel do Dono (Administração Completa)</h3>
+            </div>
+
+            <!-- Abas do Admin -->
+            <div class="flex gap-2 mb-4 border-b border-white/10 pb-3">
+                <button onclick="switchAdminTab('general')" id="admTabGen" class="px-3.5 py-1.5 rounded-xl text-xs font-bold bg-spk-blue text-white">Geral & Bot</button>
+                <button onclick="switchAdminTab('products')" id="admTabProd" class="px-3.5 py-1.5 rounded-xl text-xs font-bold text-gray-400 hover:text-white">Gerenciar Produtos</button>
+                <button onclick="switchAdminTab('terms')" id="admTabTerms" class="px-3.5 py-1.5 rounded-xl text-xs font-bold text-gray-400 hover:text-white">Termos & Textos</button>
             </div>
 
             <form id="adminForm" onsubmit="saveAdminSettings(event)" class="space-y-4">
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div>
-                        <label class="block text-xs font-bold text-gray-300 mb-1">Nome da Loja</label>
-                        <input id="cfgServerName" type="text" required class="w-full bg-spk-dark text-sm text-white px-3.5 py-2.5 rounded-xl border border-white/10 outline-none">
+                <!-- Seção Geral & Webhook do Bot -->
+                <div id="admSecGeneral" class="space-y-4">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-bold text-gray-300 mb-1">Nome da Loja</label>
+                            <input id="cfgServerName" type="text" required class="w-full bg-spk-dark text-sm text-white px-3.5 py-2.5 rounded-xl border border-white/10 outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-gray-300 mb-1">Logo URL</label>
+                            <input id="cfgServerLogo" type="text" required class="w-full bg-spk-dark text-sm text-white px-3.5 py-2.5 rounded-xl border border-white/10 outline-none">
+                        </div>
                     </div>
+
                     <div>
-                        <label class="block text-xs font-bold text-gray-300 mb-1">Logo URL</label>
-                        <input id="cfgServerLogo" type="text" required class="w-full bg-spk-dark text-sm text-white px-3.5 py-2.5 rounded-xl border border-white/10 outline-none">
+                        <label class="block text-xs font-bold text-blue-400 mb-1">URI / Webhook ID do Bot Discord (Notificação de Compras)</label>
+                        <input id="cfgBotWebhook" type="text" placeholder="https://discord.com/api/webhooks/..." class="w-full bg-spk-dark text-sm text-white px-3.5 py-2.5 rounded-xl border border-blue-500/30 outline-none">
+                        <p class="text-[10px] text-gray-400 mt-1">Quando um usuário comprar, os dados da compra e ID serão enviados para este Bot/Webhook.</p>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold text-gray-300 mb-1">Categorias do Site (separadas por vírgula)</label>
+                        <input id="cfgCategories" type="text" placeholder="iniciante, popular, elite" class="w-full bg-spk-dark text-sm text-white px-3.5 py-2.5 rounded-xl border border-white/10 outline-none">
                     </div>
                 </div>
 
-                <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                    <div>
-                        <label class="block text-xs font-bold text-amber-500 mb-1">Bronze (R$)</label>
-                        <input id="cfgPriceBronze" type="number" step="0.01" required class="w-full bg-spk-dark text-sm text-white px-3 py-2 rounded-xl border border-white/10 outline-none">
+                <!-- Seção Gerenciar Produtos -->
+                <div id="admSecProducts" class="hidden space-y-4">
+                    <div class="flex justify-between items-center bg-spk-dark/60 p-3 rounded-xl border border-white/10">
+                        <span class="text-xs font-bold text-white">Adicionar / Criar Novo Produto VIP</span>
+                        <button type="button" onclick="addNewProductPrompt()" class="bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold px-3 py-1.5 rounded-lg transition">
+                            <i class="fa-solid fa-plus mr-1"></i> Criar VIP
+                        </button>
                     </div>
-                    <div>
-                        <label class="block text-xs font-bold text-blue-400 mb-1">Ouro (R$)</label>
-                        <input id="cfgPriceGold" type="number" step="0.01" required class="w-full bg-spk-dark text-sm text-white px-3 py-2 rounded-xl border border-white/10 outline-none">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-bold text-cyan-400 mb-1">Diamante (R$)</label>
-                        <input id="cfgPriceDiamond" type="number" step="0.01" required class="w-full bg-spk-dark text-sm text-white px-3 py-2 rounded-xl border border-white/10 outline-none">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-bold text-purple-400 mb-1">Mestre (R$)</label>
-                        <input id="cfgPriceMaster" type="number" step="0.01" required class="w-full bg-spk-dark text-sm text-white px-3 py-2 rounded-xl border border-white/10 outline-none">
+                    <div id="adminProductsList" class="space-y-3 max-h-[300px] overflow-y-auto pr-1">
+                        <!-- Itens renderizados dinamicamente -->
                     </div>
                 </div>
 
-                <div class="pt-4 flex justify-end gap-3">
+                <!-- Seção Termos e Textos -->
+                <div id="admSecTerms" class="hidden space-y-4">
+                    <div>
+                        <label class="block text-xs font-bold text-gray-300 mb-1">Termos de Uso do Site</label>
+                        <textarea id="cfgTerms" rows="3" class="w-full bg-spk-dark text-xs text-white p-3 rounded-xl border border-white/10 outline-none"></textarea>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-300 mb-1">Política de Privacidade</label>
+                        <textarea id="cfgPrivacy" rows="3" class="w-full bg-spk-dark text-xs text-white p-3 rounded-xl border border-white/10 outline-none"></textarea>
+                    </div>
+                </div>
+
+                <div class="pt-4 flex justify-end gap-3 border-t border-white/10">
                     <button type="button" onclick="closeAdminModal()" class="px-5 py-2.5 rounded-xl text-xs font-bold text-gray-400 bg-spk-dark">Cancelar</button>
                     <button type="submit" class="bg-amber-500 hover:bg-amber-600 text-black font-extrabold px-6 py-2.5 rounded-xl text-xs transition">Salvar Alterações</button>
                 </div>
             </form>
+        </div>
+    </div>
+
+    <!-- MODAL INFORMAÇÕES (TERMOS / PRIVACIDADE) -->
+    <div id="infoModal" class="fixed inset-0 bg-black/80 backdrop-blur-md z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-spk-card border border-spk-border w-full max-w-lg rounded-3xl p-6 relative shadow-2xl">
+            <button onclick="closeInfoModal()" class="absolute top-5 right-5 text-gray-400 hover:text-white w-9 h-9 rounded-full bg-spk-dark flex items-center justify-center transition">
+                <i class="fa-solid fa-xmark text-lg"></i>
+            </button>
+            <h3 id="infoModalTitle" class="text-lg font-bold text-white mb-3">Informações</h3>
+            <div id="infoModalBody" class="text-xs text-gray-300 leading-relaxed bg-spk-dark p-4 rounded-2xl max-h-[60vh] overflow-y-auto whitespace-pre-wrap"></div>
         </div>
     </div>
 
@@ -730,12 +774,10 @@
         let serverConfig = {
             name: "Storm VIPs",
             logo: "https://placehold.co/180x180/0a1026/3b82f6?text=STORM",
-            prices: {
-                bronze: 15.00,
-                gold: 30.00,
-                diamond: 60.00,
-                master: 100.00
-            }
+            botWebhookUrl: "",
+            categories: ["iniciante", "popular", "elite"],
+            terms: "Estes são os termos gerais de serviço e uso da plataforma Storm VIPs. Todos os bens digitais são entregues automaticamente de forma instantânea.",
+            privacy: "A sua privacidade é totalmente preservada em nosso sistema. Não compartilhamos dados sensíveis com terceiros."
         };
 
         const validCoupons = {
@@ -744,12 +786,14 @@
             "LANCAMENTO": 20
         };
 
-        const defaultPlans = [
+        let plansData = [
             {
                 id: "bronze",
                 title: "VIP Storm Bronze",
                 badge: "Bronze",
                 category: "iniciante",
+                price: 15.00,
+                stock: 99,
                 image: "https://placehold.co/600x300/1e293b/f59e0b?text=Painel+VIP+Bronze",
                 description: "O plano de entrada ideal para quem quer experimentar vantagens sem gastar muito. Acesso a comandos utilitários e cargo exclusivo.",
                 badgeStyle: "bg-amber-500/20 text-amber-400 border border-amber-500/30",
@@ -766,6 +810,8 @@
                 title: "VIP Storm Ouro",
                 badge: "Mais Popular",
                 category: "popular",
+                price: 30.00,
+                stock: 50,
                 featured: true,
                 image: "https://placehold.co/600x300/0f172a/3b82f6?text=Painel+VIP+Ouro",
                 description: "Nosso plano mais procurado. Oferece o equilíbrio perfeito entre custo e benefício com multiplicadores de recompensas ativados.",
@@ -784,6 +830,8 @@
                 title: "VIP Storm Diamante",
                 badge: "Elite",
                 category: "elite",
+                price: 60.00,
+                stock: 20,
                 image: "https://placehold.co/600x300/082f49/06b6d4?text=Painel+VIP+Diamante",
                 description: "Criado para jogadores exigentes. Garante acesso liberado a eventos VIP e itens raros direto na conta.",
                 badgeStyle: "bg-cyan-500/20 text-cyan-300 border border-cyan-500/30",
@@ -801,6 +849,8 @@
                 title: "VIP Storm Mestre",
                 badge: "Supremo Mestre",
                 category: "elite",
+                price: 100.00,
+                stock: 10,
                 featured: true,
                 image: "https://placehold.co/600x300/2e1065/8b5cf6?text=Painel+VIP+Mestre",
                 description: "O nível definitivo da Storm VIPs. Acesso completo a todas as ferramentas do painel, canal VIP direto com os Donos e itens lendários.",
@@ -842,6 +892,9 @@
             const savedConfig = localStorage.getItem("spk_shop_config");
             if (savedConfig) { try { serverConfig = { ...serverConfig, ...JSON.parse(savedConfig) }; } catch(e){} }
 
+            const savedPlans = localStorage.getItem("spk_shop_plans");
+            if (savedPlans) { try { plansData = JSON.parse(savedPlans); } catch(e){} }
+
             const savedUser = localStorage.getItem("spk_shop_user");
             if (savedUser) { try { currentUser = JSON.parse(savedUser); } catch(e){} }
 
@@ -850,6 +903,7 @@
 
             renderUserAuth();
             updateServerDisplay();
+            renderCategories();
             renderPlans();
             initConstellationCanvas();
 
@@ -865,31 +919,50 @@
             }
         }
 
+        function renderCategories() {
+            const catContainer = document.getElementById("categoryContainer");
+            let html = `
+                <button onclick="setCategory('all')" id="catBtn-all" class="cat-btn px-5 py-2.5 rounded-2xl text-xs font-bold transition bg-spk-blue text-white border border-spk-blue">
+                    <i class="fa-solid fa-border-all mr-1.5"></i> Todos os Planos
+                </button>
+            `;
+            serverConfig.categories.forEach(c => {
+                const catClean = c.trim().toLowerCase();
+                html += `
+                    <button onclick="setCategory('${catClean}')" id="catBtn-${catClean}" class="cat-btn px-5 py-2.5 rounded-2xl text-xs font-bold transition bg-spk-dark text-gray-300 border border-white/10 hover:border-spk-blue capitalize">
+                        <i class="fa-solid fa-tag mr-1.5 text-spk-blue"></i> ${catClean}
+                    </button>
+                `;
+            });
+            catContainer.innerHTML = html;
+        }
+
         function setCategory(cat) {
             playAudioEffect('click');
             activeCategory = cat;
             document.querySelectorAll('.cat-btn').forEach(btn => {
-                btn.className = "cat-btn px-5 py-2.5 rounded-2xl text-xs font-bold transition bg-spk-dark text-gray-300 border border-white/10 hover:border-spk-blue";
+                btn.className = "cat-btn px-5 py-2.5 rounded-2xl text-xs font-bold transition bg-spk-dark text-gray-300 border border-white/10 hover:border-spk-blue capitalize";
             });
             const activeBtn = document.getElementById(`catBtn-${cat}`);
-            if (activeBtn) activeBtn.className = "cat-btn px-5 py-2.5 rounded-2xl text-xs font-bold transition bg-spk-blue text-white border border-spk-blue";
+            if (activeBtn) activeBtn.className = "cat-btn px-5 py-2.5 rounded-2xl text-xs font-bold transition bg-spk-blue text-white border border-spk-blue capitalize";
             renderPlans();
         }
 
         function renderPlans() {
             const container = document.getElementById("plansContainer");
             container.innerHTML = "";
-            const filtered = defaultPlans.filter(p => activeCategory === 'all' || p.category === activeCategory);
+            const filtered = plansData.filter(p => activeCategory === 'all' || p.category === activeCategory);
 
             filtered.forEach(plan => {
-                let basePrice = Number(serverConfig.prices[plan.id]) || 30;
+                let basePrice = Number(plan.price) || 0;
                 let finalPrice = basePrice.toFixed(2);
                 const cardBorder = plan.featured ? 'border-2 border-spk-blue shadow-xl shadow-spk-blue/15' : 'border border-white/10';
+                const isOutOfStock = plan.stock <= 0;
 
                 const html = `
                     <div class="glass-card rounded-3xl p-6 flex flex-col justify-between relative ${cardBorder}">
                         ${plan.badge ? `
-                            <div class="absolute -top-3.5 left-1/2 -translate-x-1/2 px-4 py-1 rounded-full ${plan.badgeStyle} text-[10px] uppercase font-black tracking-wider">
+                            <div class="absolute -top-3.5 left-1/2 -translate-x-1/2 px-4 py-1 rounded-full ${plan.badgeStyle || 'bg-spk-blue text-white'} text-[10px] uppercase font-black tracking-wider">
                                 ${plan.badge}
                             </div>
                         ` : ''}
@@ -902,10 +975,13 @@
                                     <span class="text-3xl font-black text-white">${finalPrice.replace('.', ',')}</span>
                                     <span class="text-xs text-gray-400 font-semibold">/mês</span>
                                 </div>
+                                <div class="mt-2 text-[11px] font-bold ${isOutOfStock ? 'text-rose-400' : 'text-emerald-400'}">
+                                    ${isOutOfStock ? 'Estoque Esgotado' : `Estoque: ${plan.stock} unidades`}
+                                </div>
                             </div>
 
                             <ul class="py-5 space-y-3 text-xs text-gray-300">
-                                ${plan.benefits.map(b => `
+                                ${(plan.benefits || []).map(b => `
                                     <li class="flex items-center gap-2">
                                         <i class="fa-solid fa-circle-check text-spk-blue text-xs flex-shrink-0"></i>
                                         <span>${b}</span>
@@ -914,8 +990,8 @@
                             </ul>
                         </div>
 
-                        <button onclick="playAudioEffect('modal'); openCheckoutModal('${plan.id}')" class="w-full py-3.5 rounded-2xl text-xs uppercase tracking-wider transition shadow-lg ${plan.btnBg} flex items-center justify-center gap-2 mt-4">
-                            <i class="fa-solid fa-cart-shopping"></i> Adquirir VIP
+                        <button onclick="playAudioEffect('modal'); openCheckoutModal('${plan.id}')" ${isOutOfStock ? 'disabled' : ''} class="w-full py-3.5 rounded-2xl text-xs uppercase tracking-wider transition shadow-lg ${isOutOfStock ? 'bg-gray-700 text-gray-400 cursor-not-allowed' : (plan.btnBg || 'bg-spk-blue text-white')} flex items-center justify-center gap-2 mt-4">
+                            <i class="fa-solid fa-cart-shopping"></i> ${isOutOfStock ? 'Indisponível' : 'Adquirir VIP'}
                         </button>
                     </div>
                 `;
@@ -924,13 +1000,13 @@
         }
 
         function openCheckoutModal(planId) {
-            const plan = defaultPlans.find(p => p.id === planId);
-            if (!plan) return;
+            const plan = plansData.find(p => p.id === planId);
+            if (!plan || plan.stock <= 0) return;
 
-            selectedVip = { ...plan, basePrice: Number(serverConfig.prices[plan.id]) || 30 };
+            selectedVip = { ...plan, basePrice: Number(plan.price) || 0 };
             appliedDiscountPercent = 0;
 
-            document.getElementById("modalVipBadge").innerText = plan.badge;
+            document.getElementById("modalVipBadge").innerText = plan.badge || "VIP";
             document.getElementById("modalVipTitle").innerText = plan.title;
             document.getElementById("modalVipImage").src = plan.image;
             document.getElementById("modalVipDescription").innerText = plan.description;
@@ -1020,6 +1096,16 @@
             document.getElementById("successUserName").innerText = currentUser ? `@${currentUser.username}` : "Visitante";
             document.getElementById("successTxId").innerText = txId;
 
+            // Reduz estoque
+            if (selectedVip) {
+                const targetIdx = plansData.findIndex(p => p.id === selectedVip.id);
+                if (targetIdx !== -1 && plansData[targetIdx].stock > 0) {
+                    plansData[targetIdx].stock -= 1;
+                    localStorage.setItem("spk_shop_plans", JSON.stringify(plansData));
+                    renderPlans();
+                }
+            }
+
             const newPurchase = {
                 vipTitle: selectedVip ? selectedVip.title : "VIP Storm",
                 price: selectedVip ? selectedVip.calculatedFinal : "30.00",
@@ -1031,6 +1117,33 @@
             userPurchases.unshift(newPurchase);
             localStorage.setItem("spk_shop_purchases", JSON.stringify(userPurchases));
             if (window.savePurchaseToFirestore) await window.savePurchaseToFirestore(newPurchase);
+
+            // Envia dados da compra para o Bot Discord via Webhook caso cadastrado
+            if (serverConfig.botWebhookUrl && serverConfig.botWebhookUrl.trim() !== "") {
+                try {
+                    await fetch(serverConfig.botWebhookUrl.trim(), {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            content: `⚡ **NOVA COMPRA REALIZADA NA STORM VIPS!**`,
+                            embeds: [{
+                                title: `VIP Adquirido: ${newPurchase.vipTitle}`,
+                                color: 3887606,
+                                fields: [
+                                    { name: "Usuário", value: currentUser ? `${currentUser.username} (ID: ${currentUser.id})` : "Visitante", inline: true },
+                                    { name: "E-mail", value: currentUser ? currentUser.email : "Não fornecido", inline: true },
+                                    { name: "Valor", value: `R$ ${newPurchase.price}`, inline: true },
+                                    { name: "Transação ID", value: newPurchase.txId, inline: false }
+                                ],
+                                timestamp: new Date().toISOString()
+                            }]
+                        })
+                    });
+                    document.getElementById("botNotifyStatus").innerText = "Notificação enviada ao Bot!";
+                } catch(e) {
+                    console.warn("Erro ao notificar Bot Webhook:", e);
+                }
+            }
 
             if (typeof confetti === 'function') confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
         }
@@ -1129,32 +1242,127 @@
             });
         }
 
+        function switchAdminTab(tab) {
+            document.getElementById("admSecGeneral").classList.add("hidden");
+            document.getElementById("admSecProducts").classList.add("hidden");
+            document.getElementById("admSecTerms").classList.add("hidden");
+
+            document.getElementById("admTabGen").className = "px-3.5 py-1.5 rounded-xl text-xs font-bold text-gray-400 hover:text-white";
+            document.getElementById("admTabProd").className = "px-3.5 py-1.5 rounded-xl text-xs font-bold text-gray-400 hover:text-white";
+            document.getElementById("admTabTerms").className = "px-3.5 py-1.5 rounded-xl text-xs font-bold text-gray-400 hover:text-white";
+
+            if (tab === 'general') {
+                document.getElementById("admSecGeneral").classList.remove("hidden");
+                document.getElementById("admTabGen").className = "px-3.5 py-1.5 rounded-xl text-xs font-bold bg-spk-blue text-white";
+            } else if (tab === 'products') {
+                document.getElementById("admSecProducts").classList.remove("hidden");
+                document.getElementById("admTabProd").className = "px-3.5 py-1.5 rounded-xl text-xs font-bold bg-spk-blue text-white";
+                renderAdminProductsList();
+            } else {
+                document.getElementById("admSecTerms").classList.remove("hidden");
+                document.getElementById("admTabTerms").className = "px-3.5 py-1.5 rounded-xl text-xs font-bold bg-spk-blue text-white";
+            }
+        }
+
         function openAdminModal() {
             document.getElementById("cfgServerName").value = serverConfig.name;
             document.getElementById("cfgServerLogo").value = serverConfig.logo;
-            document.getElementById("cfgPriceBronze").value = serverConfig.prices.bronze;
-            document.getElementById("cfgPriceGold").value = serverConfig.prices.gold;
-            document.getElementById("cfgPriceDiamond").value = serverConfig.prices.diamond;
-            document.getElementById("cfgPriceMaster").value = serverConfig.prices.master;
+            document.getElementById("cfgBotWebhook").value = serverConfig.botWebhookUrl || "";
+            document.getElementById("cfgCategories").value = (serverConfig.categories || []).join(", ");
+            document.getElementById("cfgTerms").value = serverConfig.terms || "";
+            document.getElementById("cfgPrivacy").value = serverConfig.privacy || "";
+            switchAdminTab('general');
             document.getElementById("adminModal").classList.remove("hidden");
         }
 
         function closeAdminModal() { document.getElementById("adminModal").classList.add("hidden"); }
 
+        function renderAdminProductsList() {
+            const container = document.getElementById("adminProductsList");
+            container.innerHTML = "";
+            plansData.forEach((p, idx) => {
+                container.innerHTML += `
+                    <div class="bg-spk-dark p-3 rounded-xl border border-white/10 space-y-2 text-xs">
+                        <div class="flex justify-between items-center font-bold text-white">
+                            <span>#${idx+1} - ${p.title} (${p.id})</span>
+                            <button type="button" onclick="removeProduct(${idx})" class="text-rose-400 hover:text-rose-300"><i class="fa-solid fa-trash"></i> Excluir</button>
+                        </div>
+                        <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                            <div>
+                                <label class="text-[10px] text-gray-400">Título</label>
+                                <input type="text" value="${p.title}" onchange="updateProductField(${idx}, 'title', this.value)" class="w-full bg-spk-card px-2 py-1 rounded text-white border border-white/10">
+                            </div>
+                            <div>
+                                <label class="text-[10px] text-gray-400">Preço (R$)</label>
+                                <input type="number" step="0.01" value="${p.price}" onchange="updateProductField(${idx}, 'price', parseFloat(this.value))" class="w-full bg-spk-card px-2 py-1 rounded text-white border border-white/10">
+                            </div>
+                            <div>
+                                <label class="text-[10px] text-gray-400">Estoque</label>
+                                <input type="number" value="${p.stock}" onchange="updateProductField(${idx}, 'stock', parseInt(this.value))" class="w-full bg-spk-card px-2 py-1 rounded text-white border border-white/10">
+                            </div>
+                            <div>
+                                <label class="text-[10px] text-gray-400">Categoria</label>
+                                <input type="text" value="${p.category}" onchange="updateProductField(${idx}, 'category', this.value)" class="w-full bg-spk-card px-2 py-1 rounded text-white border border-white/10">
+                            </div>
+                        </div>
+                        <div>
+                            <label class="text-[10px] text-gray-400">Foto URL</label>
+                            <input type="text" value="${p.image}" onchange="updateProductField(${idx}, 'image', this.value)" class="w-full bg-spk-card px-2 py-1 rounded text-white border border-white/10">
+                        </div>
+                        <div>
+                            <label class="text-[10px] text-gray-400">Descrição</label>
+                            <textarea onchange="updateProductField(${idx}, 'description', this.value)" class="w-full bg-spk-card px-2 py-1 rounded text-white border border-white/10 h-12">${p.description}</textarea>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        function updateProductField(index, field, value) {
+            plansData[index][field] = value;
+        }
+
+        function addNewProductPrompt() {
+            const newId = "vip_" + Date.now();
+            plansData.push({
+                id: newId,
+                title: "Novo VIP Exclusivo",
+                badge: "Novo",
+                category: "iniciante",
+                price: 25.00,
+                stock: 10,
+                image: "https://placehold.co/600x300/1e293b/3b82f6?text=Novo+VIP",
+                description: "Descrição estendida do seu novo produto VIP.",
+                benefits: ["Benefício exclusivo 1", "Benefício exclusivo 2"]
+            });
+            renderAdminProductsList();
+        }
+
+        function removeProduct(index) {
+            plansData.splice(index, 1);
+            renderAdminProductsList();
+        }
+
         function saveAdminSettings(e) {
             e.preventDefault();
             serverConfig.name = document.getElementById("cfgServerName").value.trim();
             serverConfig.logo = document.getElementById("cfgServerLogo").value.trim();
-            serverConfig.prices.bronze = parseFloat(document.getElementById("cfgPriceBronze").value) || 15;
-            serverConfig.prices.gold = parseFloat(document.getElementById("cfgPriceGold").value) || 30;
-            serverConfig.prices.diamond = parseFloat(document.getElementById("cfgPriceDiamond").value) || 60;
-            serverConfig.prices.master = parseFloat(document.getElementById("cfgPriceMaster").value) || 100;
+            serverConfig.botWebhookUrl = document.getElementById("cfgBotWebhook").value.trim();
+            
+            const catsInput = document.getElementById("cfgCategories").value;
+            serverConfig.categories = catsInput.split(',').map(c => c.trim()).filter(c => c !== "");
+
+            serverConfig.terms = document.getElementById("cfgTerms").value;
+            serverConfig.privacy = document.getElementById("cfgPrivacy").value;
 
             localStorage.setItem("spk_shop_config", JSON.stringify(serverConfig));
+            localStorage.setItem("spk_shop_plans", JSON.stringify(plansData));
+
             updateServerDisplay();
+            renderCategories();
             renderPlans();
             closeAdminModal();
-            showToast("Preços atualizados com sucesso!", "success");
+            showToast("Todas as configurações foram salvas!", "success");
         }
 
         function updateServerDisplay() {
@@ -1164,6 +1372,13 @@
             document.getElementById("serverLogo").src = serverConfig.logo;
             document.getElementById("footerLogo").src = serverConfig.logo;
         }
+
+        function showModalInfo(title, content) {
+            document.getElementById("infoModalTitle").innerText = title;
+            document.getElementById("infoModalBody").innerText = content || "Sem informações no momento.";
+            document.getElementById("infoModal").classList.remove("hidden");
+        }
+        function closeInfoModal() { document.getElementById("infoModal").classList.add("hidden"); }
 
         function filterProducts() {
             const query = document.getElementById("searchInput").value.toLowerCase();
@@ -1203,7 +1418,7 @@
             input.value = "";
 
             setTimeout(() => {
-                chat.innerHTML += `<div class="bg-spk-dark p-3.5 rounded-2xl border border-white/10 text-xs text-gray-200">Suas compras VIP contam com ativação automática via PIX.</div>`;
+                chat.innerHTML += `<div class="bg-spk-dark p-3.5 rounded-2xl border border-white/10 text-xs text-gray-200">Suas compras VIP contam com ativação automática via PIX. Somos uma comunidade de mapas Free Fire confiável!</div>`;
                 chat.scrollTop = chat.scrollHeight;
             }, 600);
         }
@@ -1243,3 +1458,4 @@
     </script>
 </body>
 </html>
+
