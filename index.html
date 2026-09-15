@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Storm VIPs - Sua Loja de Qualidade e Segurança</title>
+    <title>Storm VIPs - Loja Oficial & VIPs Exclusivos</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- FontAwesome Icons -->
@@ -48,7 +48,6 @@
 
         const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
 
-        // Initialize Firebase
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
@@ -70,13 +69,9 @@
         }
         authenticateFirebase();
 
-        // Configurar Provedor Google para obrigatoriamente solicitar seleção de conta
         const googleProvider = new GoogleAuthProvider();
-        googleProvider.setCustomParameters({
-            prompt: 'select_account'
-        });
+        googleProvider.setCustomParameters({ prompt: 'select_account' });
 
-        // Autenticação Real com Conta Google Ajustada & Robusta
         window.loginWithGoogle = async function() {
             if (typeof playAudioEffect === 'function') playAudioEffect('click');
             try {
@@ -108,8 +103,7 @@
                     return;
                 }
                 
-                // Fallback amigável caso o ambiente de visualização bloqueie o pop-up do Google
-                const userEmail = prompt("O navegador ou as políticas do Firebase bloquearam o pop-up direto. Digite seu E-mail Google para entrar:");
+                const userEmail = prompt("Navegador bloqueou o pop-up. Digite seu E-mail Google para entrar:");
                 if (userEmail && userEmail.trim() !== "") {
                     const cleanEmail = userEmail.trim();
                     const username = cleanEmail.split('@')[0];
@@ -129,7 +123,7 @@
                     if (window.saveUserToFirestore) await window.saveUserToFirestore(userData);
                     renderUserAuth();
                     closeLoginModal();
-                    showToast(`Conectado com sucesso como ${currentUser.username}!`, "success");
+                    showToast(`Conectado como ${currentUser.username}!`, "success");
                     if (window.listenToFirestorePurchases) window.listenToFirestorePurchases();
                 } else {
                     showToast("Autenticação Google cancelada.", "error");
@@ -142,10 +136,7 @@
                 const targetUid = auth.currentUser ? auth.currentUser.uid : (userObj ? userObj.uid : null);
                 if (!targetUid) return;
                 const userDocRef = doc(db, 'artifacts', appId, 'users', targetUid, 'profile', 'data');
-                await setDoc(userDocRef, {
-                    ...userObj,
-                    updatedAt: new Date().toISOString()
-                }, { merge: true });
+                await setDoc(userDocRef, { ...userObj, updatedAt: new Date().toISOString() }, { merge: true });
             } catch (err) {
                 console.warn("Persistência de Usuário Firestore:", err);
             }
@@ -156,11 +147,7 @@
                 const targetUid = auth.currentUser ? auth.currentUser.uid : (currentUser ? currentUser.uid : null);
                 if (!targetUid) return;
                 const purchaseColRef = collection(db, 'artifacts', appId, 'users', targetUid, 'purchases');
-                await addDoc(purchaseColRef, {
-                    ...purchaseObj,
-                    userId: targetUid,
-                    createdAt: new Date().toISOString()
-                });
+                await addDoc(purchaseColRef, { ...purchaseObj, userId: targetUid, createdAt: new Date().toISOString() });
             } catch (err) {
                 console.warn("Erro ao registrar compra no Firestore:", err);
             }
@@ -172,51 +159,34 @@
             const targetUid = auth.currentUser ? auth.currentUser.uid : (currentUser ? currentUser.uid : null);
             if (!targetUid) return;
 
-            if (purchaseUnsubscribe) {
-                purchaseUnsubscribe();
-            }
+            if (purchaseUnsubscribe) purchaseUnsubscribe();
 
             try {
                 const purchaseColRef = collection(db, 'artifacts', appId, 'users', targetUid, 'purchases');
                 purchaseUnsubscribe = onSnapshot(purchaseColRef, (snapshot) => {
                     const fetched = [];
-                    snapshot.forEach(docSnap => {
-                        fetched.push({ id: docSnap.id, ...docSnap.data() });
-                    });
+                    snapshot.forEach(docSnap => fetched.push({ id: docSnap.id, ...docSnap.data() }));
                     
                     if (fetched.length > 0) {
                         const uniqueMap = new Map();
-                        [...fetched, ...userPurchases].forEach(item => {
-                            if (item.txId) uniqueMap.set(item.txId, item);
-                        });
+                        [...fetched, ...userPurchases].forEach(item => { if (item.txId) uniqueMap.set(item.txId, item); });
                         userPurchases = Array.from(uniqueMap.values());
                         localStorage.setItem("spk_shop_purchases", JSON.stringify(userPurchases));
-                        
                         if (document.getElementById("profileModal") && !document.getElementById("profileModal").classList.contains("hidden")) {
                             renderPurchasesList();
                         }
                     }
-                }, (error) => {
-                    console.warn("Erro no listener de compras Firestore:", error);
                 });
             } catch(e) {}
         };
 
-        onAuthStateChanged(auth, (user) => {
-            if (user && currentUser) {
-                window.listenToFirestorePurchases();
-            }
-        });
-
+        onAuthStateChanged(auth, (user) => { if (user && currentUser) window.listenToFirestorePurchases(); });
         window.firebaseSignOut = async function() {
-            try {
-                if (purchaseUnsubscribe) purchaseUnsubscribe();
-                await signOut(auth);
-            } catch(e){}
+            try { if (purchaseUnsubscribe) purchaseUnsubscribe(); await signOut(auth); } catch(e){}
         };
     </script>
 
-    <!-- Tailwind Custom Config -->
+    <!-- Tailwind Config -->
     <script>
         tailwind.config = {
             darkMode: 'class',
@@ -225,105 +195,51 @@
                     colors: {
                         spk: {
                             blue: '#3b82f6',
+                            purple: '#8b5cf6',
                             cyan: '#06b6d4',
-                            indigo: '#4f46e5',
-                            dark: '#0a0d1a',
-                            darker: '#04060d',
-                            card: '#0f152a',
-                            cardHover: '#16203e',
-                            border: 'rgba(59, 130, 246, 0.22)'
+                            emerald: '#10b981',
+                            amber: '#f59e0b',
+                            rose: '#f43f5e',
+                            dark: '#080c1a',
+                            darker: '#03050a',
+                            card: '#0e162d',
+                            border: 'rgba(59, 130, 246, 0.25)'
                         }
-                    },
-                    fontFamily: {
-                        sans: ['Inter', 'Segoe UI', 'sans-serif'],
                     }
                 }
             }
         }
     </script>
     <style>
-        body {
-            background-color: #04060d;
-            color: #f3f4f6;
-            overflow-x: hidden;
-        }
-
-        .glass-spk {
-            background: rgba(15, 21, 42, 0.85);
-            backdrop-filter: blur(16px);
-            -webkit-backdrop-filter: blur(16px);
-            border: 1px solid rgba(59, 130, 246, 0.2);
-        }
-
-        .glass-card {
-            background: rgba(15, 21, 42, 0.7);
-            backdrop-filter: blur(12px);
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-
-        .glass-card:hover {
-            border-color: rgba(59, 130, 246, 0.5);
-            box-shadow: 0 0 25px rgba(59, 130, 246, 0.25);
-            transform: translateY(-3px);
-        }
-
-        .text-glow-blue {
-            text-shadow: 0 0 16px rgba(59, 130, 246, 0.8);
-        }
-
-        .blue-glow-btn {
-            box-shadow: 0 0 20px rgba(37, 99, 235, 0.45);
-        }
-
-        .blue-glow-btn:hover {
-            box-shadow: 0 0 30px rgba(37, 99, 235, 0.8);
-        }
-
-        #bgCanvas {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100vw;
-            height: 100vh;
-            z-index: 0;
-            pointer-events: none;
-        }
-
-        ::-webkit-scrollbar {
-            width: 6px;
-        }
-        ::-webkit-scrollbar-track {
-            background: #04060d;
-        }
-        ::-webkit-scrollbar-thumb {
-            background: #1e293b;
-            border-radius: 4px;
-        }
-        ::-webkit-scrollbar-thumb:hover {
-            background: #3b82f6;
-        }
+        body { background-color: #03050a; color: #f3f4f6; overflow-x: hidden; }
+        .glass-spk { background: rgba(14, 22, 45, 0.85); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); border-bottom: 1px solid rgba(59, 130, 246, 0.2); }
+        .glass-card { background: rgba(14, 22, 45, 0.75); backdrop-filter: blur(14px); border: 1px solid rgba(255, 255, 255, 0.08); transition: all 0.3s ease; }
+        .glass-card:hover { border-color: rgba(59, 130, 246, 0.5); box-shadow: 0 0 30px rgba(59, 130, 246, 0.25); transform: translateY(-4px); }
+        .text-glow { text-shadow: 0 0 20px rgba(59, 130, 246, 0.75); }
+        .btn-glow { box-shadow: 0 0 20px rgba(59, 130, 246, 0.4); }
+        .btn-glow:hover { box-shadow: 0 0 30px rgba(59, 130, 246, 0.75); }
+        #bgCanvas { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: 0; pointer-events: none; }
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: #03050a; }
+        ::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #3b82f6; }
     </style>
 </head>
 <body class="min-h-screen flex flex-col font-sans selection:bg-spk-blue selection:text-white relative">
 
     <canvas id="bgCanvas"></canvas>
-
     <div class="fixed top-[-10%] left-[-10%] w-[500px] h-[500px] bg-spk-blue/15 rounded-full blur-[140px] pointer-events-none z-0"></div>
-    <div class="fixed bottom-[-10%] right-[-10%] w-[600px] h-[600px] bg-spk-cyan/10 rounded-full blur-[160px] pointer-events-none z-0"></div>
+    <div class="fixed bottom-[-10%] right-[-10%] w-[600px] h-[600px] bg-spk-purple/15 rounded-full blur-[160px] pointer-events-none z-0"></div>
 
     <!-- HEADER NAVBAR -->
-    <header class="sticky top-0 z-40 w-full glass-spk border-b border-spk-border/40">
+    <header class="sticky top-0 z-40 w-full glass-spk">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between relative z-10">
-            
             <div class="flex items-center space-x-3">
                 <button onclick="toggleMobileMenu()" class="md:hidden text-gray-300 hover:text-white p-2 text-xl">
                     <i class="fa-solid fa-bars"></i>
                 </button>
                 <div class="flex items-center space-x-3 cursor-pointer select-none" onclick="playAudioEffect('click'); openProfileModal('profile');">
-                    <div class="relative group">
-                        <img id="serverLogo" src="https://placehold.co/120x120/0a1026/3b82f6?text=STORM" alt="Storm VIPs Logo" class="w-11 h-11 rounded-2xl object-cover border-2 border-spk-blue/70 shadow-lg shadow-spk-blue/30 group-hover:scale-105 transition">
-                    </div>
+                    <img id="serverLogo" src="https://placehold.co/120x120/0a1026/3b82f6?text=STORM" alt="Storm VIPs Logo" class="w-11 h-11 rounded-2xl object-cover border-2 border-spk-blue shadow-lg shadow-spk-blue/30">
                     <div class="flex flex-col">
                         <h1 id="serverNameDisplay" class="font-black text-xl tracking-wider text-white flex items-center gap-1.5">
                             Storm VIPs <i class="fa-solid fa-circle-check text-blue-400 text-xs" title="Loja Verificada"></i>
@@ -333,8 +249,8 @@
             </div>
 
             <nav class="hidden md:flex items-center space-x-8 text-sm font-semibold">
-                <a href="#planos" onclick="playAudioEffect('click')" class="text-gray-300 hover:text-spk-blue transition flex items-center gap-2">
-                    <i class="fa-solid fa-store text-spk-blue"></i> Catálogo VIP
+                <a href="#catalogo" onclick="playAudioEffect('click')" class="text-gray-300 hover:text-spk-blue transition flex items-center gap-2">
+                    <i class="fa-solid fa-gem text-spk-blue"></i> Planos VIP
                 </a>
                 <a href="#vantagens" onclick="playAudioEffect('click')" class="text-gray-300 hover:text-spk-blue transition flex items-center gap-2">
                     <i class="fa-solid fa-shield-halved text-emerald-400"></i> Garantia
@@ -344,18 +260,13 @@
                 </button>
             </nav>
 
-            <div class="flex items-center space-x-2 sm:space-x-3">
+            <div class="flex items-center space-x-3">
                 <button onclick="playAudioEffect('click'); focusSearchInput();" class="w-10 h-10 rounded-full bg-white/5 hover:bg-white/10 text-gray-300 flex items-center justify-center transition border border-white/10" title="Pesquisar">
                     <i class="fa-solid fa-magnifying-glass text-sm"></i>
                 </button>
 
-                <button onclick="playAudioEffect('modal'); openCartDrawer();" class="relative w-10 h-10 rounded-full bg-white/5 hover:bg-white/10 text-gray-300 flex items-center justify-center transition border border-white/10" title="Carrinho">
-                    <i class="fa-solid fa-cart-shopping text-sm"></i>
-                    <span id="cartCountBadge" class="absolute -top-1 -right-1 bg-spk-blue text-white text-[10px] font-bold w-5 h-5 rounded-full flex items-center justify-center hidden">0</span>
-                </button>
-
                 <div id="authSection">
-                    <button onclick="playAudioEffect('modal'); openLoginModal();" class="bg-gradient-to-r from-blue-600 via-blue-500 to-cyan-500 hover:from-blue-500 hover:to-cyan-400 text-white font-extrabold px-5 py-2.5 rounded-2xl text-sm transition shadow-lg blue-glow-btn flex items-center gap-2">
+                    <button onclick="playAudioEffect('modal'); openLoginModal();" class="bg-gradient-to-r from-blue-600 via-blue-500 to-cyan-500 hover:from-blue-500 hover:to-cyan-400 text-white font-extrabold px-5 py-2.5 rounded-2xl text-sm transition shadow-lg btn-glow flex items-center gap-2">
                         <i class="fa-solid fa-user-large text-xs"></i>
                         <span>Entrar</span>
                     </button>
@@ -364,20 +275,268 @@
         </div>
     </header>
 
-    <!-- MOBILE NAVIGATION MENU -->
-    <div id="mobileMenu" class="hidden md:hidden z-30 bg-spk-dark/95 border-b border-spk-border/40 p-4 space-y-3 relative">
-        <a href="#planos" onclick="toggleMobileMenu(); playAudioEffect('click');" class="block text-gray-200 font-semibold py-2 px-3 rounded-lg hover:bg-spk-blue/10 hover:text-spk-blue">
-            <i class="fa-solid fa-store mr-2 text-spk-blue"></i> Catálogo VIP
-        </a>
-        <a href="#vantagens" onclick="toggleMobileMenu(); playAudioEffect('click');" class="block text-gray-200 font-semibold py-2 px-3 rounded-lg hover:bg-spk-blue/10 hover:text-spk-blue">
-            <i class="fa-solid fa-shield-halved mr-2 text-emerald-400"></i> Garantia
-        </a>
-        <button onclick="openAiSupportModal(); toggleMobileMenu(); playAudioEffect('modal');" class="w-full text-left text-spk-blue font-semibold py-2 px-3 rounded-lg bg-spk-blue/10 border border-spk-blue/30">
-            <i class="fa-solid fa-wand-magic-sparkles mr-2"></i> Assistente IA
-        </button>
+    <!-- HERO SECTION -->
+    <section class="relative py-12 md:py-16 overflow-hidden z-10 border-b border-white/5">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center relative">
+            <div class="flex flex-wrap justify-center items-center gap-3 mb-6">
+                <span class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-semibold bg-spk-blue/10 text-blue-400 border border-spk-blue/30">
+                    <i class="fa-solid fa-bolt text-spk-blue"></i> Entrega Automática via Bot
+                </span>
+                <span class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">
+                    <i class="fa-solid fa-database text-emerald-400"></i> Salvamento em Nuvem
+                </span>
+            </div>
+
+            <h1 class="text-4xl sm:text-6xl font-black tracking-tight text-white max-w-4xl mx-auto leading-tight">
+                Domine o Servidor com <span class="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-purple-400 to-cyan-400 text-glow">Storm VIPs</span>
+            </h1>
+            <p class="mt-4 text-base sm:text-lg text-gray-300 max-w-2xl mx-auto font-medium leading-relaxed">
+                Adquira vantagens exclusivas, kits supremos e acessos antecipados com segurança e instantaneidade.
+            </p>
+
+            <div class="mt-8 max-w-md mx-auto relative">
+                <input id="searchInput" type="text" placeholder="Buscar VIP (Bronze, Ouro, Diamante, Mestre)..." onkeyup="filterProducts()" class="w-full bg-spk-dark/80 text-white placeholder-gray-400 px-5 py-3.5 pl-12 rounded-2xl border border-white/10 focus:border-spk-blue outline-none shadow-xl transition text-sm">
+                <i class="fa-solid fa-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"></i>
+            </div>
+        </div>
+    </section>
+
+    <!-- SELETOR DE CATEGORIAS -->
+    <section id="catalogo" class="pt-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full z-10 relative">
+        <div class="flex items-center justify-center gap-3 flex-wrap">
+            <button onclick="setCategory('all')" id="catBtn-all" class="cat-btn px-5 py-2.5 rounded-2xl text-xs font-bold transition bg-spk-blue text-white border border-spk-blue">
+                <i class="fa-solid fa-border-all mr-1.5"></i> Todos os Planos
+            </button>
+            <button onclick="setCategory('iniciante')" id="catBtn-iniciante" class="cat-btn px-5 py-2.5 rounded-2xl text-xs font-bold transition bg-spk-dark text-gray-300 border border-white/10 hover:border-spk-blue">
+                <i class="fa-solid fa-shield-cat mr-1.5 text-amber-500"></i> Iniciantes
+            </button>
+            <button onclick="setCategory('popular')" id="catBtn-popular" class="cat-btn px-5 py-2.5 rounded-2xl text-xs font-bold transition bg-spk-dark text-gray-300 border border-white/10 hover:border-spk-blue">
+                <i class="fa-solid fa-fire mr-1.5 text-blue-400"></i> Mais Populares
+            </button>
+            <button onclick="setCategory('elite')" id="catBtn-elite" class="cat-btn px-5 py-2.5 rounded-2xl text-xs font-bold transition bg-spk-dark text-gray-300 border border-white/10 hover:border-spk-blue">
+                <i class="fa-solid fa-crown mr-1.5 text-purple-400"></i> Elite & Mestre
+            </button>
+        </div>
+    </section>
+
+    <!-- GRID DE PLANOS VIP -->
+    <section class="py-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full z-10 relative flex-grow">
+        <div id="plansContainer" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 items-stretch">
+            <!-- Cards Renderizados via Javascript -->
+        </div>
+    </section>
+
+    <!-- GARANTIA & RECURSOS -->
+    <section id="vantagens" class="py-12 border-t border-white/5 bg-spk-darker/60 z-10 relative">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div class="glass-card p-6 rounded-2xl flex items-start gap-4">
+                    <div class="w-12 h-12 rounded-2xl bg-blue-500/10 text-blue-400 flex items-center justify-center text-xl flex-shrink-0 border border-blue-500/20">
+                        <i class="fa-solid fa-bolt"></i>
+                    </div>
+                    <div>
+                        <h4 class="font-bold text-white text-base">Entrega Expressa</h4>
+                        <p class="text-xs text-gray-400 mt-1 leading-relaxed">Assim que a transferência PIX é aprovada, seus cargos e benefícios entram instantaneamente.</p>
+                    </div>
+                </div>
+
+                <div class="glass-card p-6 rounded-2xl flex items-start gap-4">
+                    <div class="w-12 h-12 rounded-2xl bg-emerald-500/10 text-emerald-400 flex items-center justify-center text-xl flex-shrink-0 border border-emerald-500/20">
+                        <i class="fa-solid fa-shield-halved"></i>
+                    </div>
+                    <div>
+                        <h4 class="font-bold text-white text-base">Garantia total de 7 dias</h4>
+                        <p class="text-xs text-gray-400 mt-1 leading-relaxed">Transparência total. Caso enfrente qualquer complicação, nosso suporte resolve em minutos.</p>
+                    </div>
+                </div>
+
+                <div class="glass-card p-6 rounded-2xl flex items-start gap-4">
+                    <div class="w-12 h-12 rounded-2xl bg-purple-500/10 text-purple-400 flex items-center justify-center text-xl flex-shrink-0 border border-purple-500/20">
+                        <i class="fa-solid fa-cloud-check"></i>
+                    </div>
+                    <div>
+                        <h4 class="font-bold text-white text-base">Nuvem Firestore</h4>
+                        <p class="text-xs text-gray-400 mt-1 leading-relaxed">Seu histórico de compras e perfil sincronizados para você nunca perder suas vantagens.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- FOOTER -->
+    <footer class="bg-spk-darker border-t border-white/5 py-12 z-10 relative">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-8 pb-10 border-b border-white/5">
+                <div class="space-y-3">
+                    <div class="flex items-center space-x-3">
+                        <img id="footerLogo" src="https://placehold.co/120x120/0a1026/3b82f6?text=STORM" alt="Logo Footer" class="w-10 h-10 rounded-2xl border border-spk-blue/50">
+                        <h3 class="font-black text-xl text-white flex items-center gap-1.5" id="footerServerName">
+                            Storm VIPs <i class="fa-solid fa-circle-check text-blue-400 text-sm"></i>
+                        </h3>
+                    </div>
+                    <p class="text-xs text-gray-400 flex items-center gap-1 font-medium pt-1">
+                        Sua loja confiável de vantagens digitais <span class="text-emerald-400">✅</span>
+                    </p>
+                </div>
+
+                <div>
+                    <h4 class="font-bold text-white text-sm mb-4">Navegação rápida</h4>
+                    <ul class="space-y-2 text-xs text-gray-400">
+                        <li><a href="#catalogo" onclick="playAudioEffect('click')" class="hover:text-spk-blue transition">Catálogo Completo</a></li>
+                        <li><a href="#vantagens" onclick="playAudioEffect('click')" class="hover:text-spk-blue transition">Central de Garantia</a></li>
+                    </ul>
+                </div>
+
+                <div>
+                    <h4 class="font-bold text-white text-sm mb-4">Termos & Ajuda</h4>
+                    <ul class="space-y-2 text-xs text-gray-400">
+                        <li><button onclick="showToast('Termos operacionais em dia.', 'info')" class="hover:text-spk-blue transition">Termos de Uso</button></li>
+                        <li><button onclick="showToast('Privacidade 100% preservada.', 'info')" class="hover:text-spk-blue transition">Política de Privacidade</button></li>
+                    </ul>
+                </div>
+
+                <div>
+                    <h4 class="font-bold text-white text-sm mb-4">Administração</h4>
+                    <ul class="space-y-2 text-xs text-gray-400">
+                        <li><button onclick="playAudioEffect('modal'); openProfileModal('profile')" class="hover:text-spk-blue transition">Meu Perfil</button></li>
+                        <li><button onclick="promptAdminAccess()" class="text-amber-400 hover:text-amber-300 transition font-bold flex items-center gap-1.5"><i class="fa-solid fa-lock text-xs"></i> Painel do Dono</button></li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="pt-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-gray-500">
+                <p>Copyright © <span id="copyrightName">Storm VIPs</span> — Todos os direitos reservados</p>
+                <button onclick="playAudioEffect('modal'); openAiSupportModal()" class="hover:text-spk-blue transition flex items-center gap-1.5 text-gray-400">
+                    <i class="fa-solid fa-robot text-spk-blue"></i> Suporte IA 24h
+                </button>
+            </div>
+        </div>
+    </footer>
+
+    <!-- MODAL DE DETALHES & CHECKOUT DO VIP -->
+    <div id="checkoutModal" class="fixed inset-0 bg-black/85 backdrop-blur-md z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-spk-card border border-spk-border w-full max-w-2xl rounded-3xl p-6 sm:p-8 relative shadow-2xl max-h-[92vh] overflow-y-auto">
+            <button onclick="closeCheckoutModal(); playAudioEffect('click');" class="absolute top-5 right-5 text-gray-400 hover:text-white w-9 h-9 rounded-full bg-spk-dark flex items-center justify-center transition z-10">
+                <i class="fa-solid fa-xmark text-lg"></i>
+            </button>
+
+            <!-- Passo 1: Detalhes, Foto, Cupom e Dados de Ativação -->
+            <div id="checkoutStep1">
+                <div class="flex items-center gap-3 mb-5">
+                    <span id="modalVipBadge" class="px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider bg-spk-blue text-white">VIP</span>
+                    <h3 id="modalVipTitle" class="text-2xl font-black text-white">VIP Storm</h3>
+                </div>
+
+                <!-- Foto Demonstrativa do Painel/Vantagem -->
+                <div class="relative w-full h-48 sm:h-56 rounded-2xl overflow-hidden mb-5 border border-white/10 group">
+                    <img id="modalVipImage" src="https://placehold.co/600x300/0f172a/3b82f6?text=Demonstrativo+Painel+VIP" alt="Demonstração do VIP" class="w-full h-full object-cover group-hover:scale-105 transition duration-500">
+                    <div class="absolute inset-0 bg-gradient-to-t from-spk-card via-transparent to-transparent"></div>
+                    <span class="absolute bottom-3 left-3 bg-black/70 backdrop-blur-md text-white text-[11px] font-bold px-3 py-1 rounded-lg border border-white/10">
+                        <i class="fa-solid fa-display text-spk-blue mr-1"></i> Preview do Painel Exclusivo
+                    </span>
+                </div>
+
+                <!-- Descrição Detalhada -->
+                <div class="bg-spk-dark/70 p-4 rounded-2xl border border-white/10 mb-5">
+                    <h4 class="text-xs font-bold text-gray-300 uppercase tracking-wider mb-2 flex items-center gap-2">
+                        <i class="fa-solid fa-circle-info text-spk-blue"></i> Descrição & Recursos Ativados
+                    </h4>
+                    <p id="modalVipDescription" class="text-xs text-gray-300 leading-relaxed"></p>
+                </div>
+
+                <!-- Campo de Cupom de Desconto -->
+                <div class="bg-spk-dark/70 p-4 rounded-2xl border border-white/10 mb-5 space-y-3">
+                    <label class="block text-xs font-bold text-gray-300 uppercase tracking-wider">Possui Cupom de Desconto?</label>
+                    <div class="flex gap-2">
+                        <input id="couponInput" type="text" placeholder="Digite seu cupom (Ex: STORM10)" class="uppercase bg-spk-card text-xs text-white px-4 py-3 rounded-xl border border-white/10 focus:border-spk-blue outline-none flex-grow font-mono">
+                        <button onclick="applyCoupon()" class="bg-spk-blue hover:bg-blue-600 text-white font-bold px-4 py-3 rounded-xl text-xs transition flex-shrink-0">
+                            Aplicar
+                        </button>
+                    </div>
+                    <p id="couponMsg" class="text-[11px] font-bold hidden"></p>
+                </div>
+
+                <!-- Conta Vinculada -->
+                <div class="mb-6">
+                    <label class="block text-xs font-bold text-gray-300 uppercase tracking-wider mb-2">Conta Vinculada para Recebimento</label>
+                    <div onclick="playAudioEffect('modal'); openLoginModal();" class="flex items-center gap-3 bg-spk-dark p-3.5 rounded-2xl border border-white/10 cursor-pointer hover:border-spk-blue/50 transition">
+                        <img id="modalUserAvatar" src="https://placehold.co/100x100/3b82f6/ffffff?text=U" class="w-10 h-10 rounded-full border border-spk-blue object-cover">
+                        <div class="flex-grow overflow-hidden">
+                            <h5 id="modalUserName" class="font-bold text-sm text-white truncate">Visitante (Não Conectado)</h5>
+                            <p id="modalUserId" class="text-xs text-gray-400 truncate">Clique para fazer login antes da compra</p>
+                        </div>
+                        <span class="text-xs text-spk-blue font-bold flex-shrink-0">Alterar</span>
+                    </div>
+                </div>
+
+                <!-- Resumo de Valor -->
+                <div class="flex items-center justify-between bg-spk-dark/90 p-4 rounded-2xl border border-white/10 mb-5">
+                    <div>
+                        <span class="text-xs text-gray-400 block font-medium">Preço Final:</span>
+                        <div class="flex items-baseline gap-2">
+                            <span id="modalVipOriginalPrice" class="text-xs text-gray-500 line-through hidden">R$ 0,00</span>
+                            <span id="modalVipPrice" class="text-2xl font-black text-white">R$ 0,00</span>
+                        </div>
+                    </div>
+                    <button onclick="generatePixCode()" class="bg-gradient-to-r from-blue-600 via-blue-500 to-cyan-500 hover:from-blue-500 hover:to-cyan-400 text-white font-black px-6 py-3.5 rounded-2xl transition flex items-center gap-2 text-sm shadow-xl btn-glow">
+                        <i class="fa-solid fa-qrcode"></i> Pagar via PIX
+                    </button>
+                </div>
+            </div>
+
+            <!-- Passo 2: QR Code PIX -->
+            <div id="checkoutStep2" class="hidden text-center">
+                <span class="inline-block px-3 py-1 rounded-full bg-amber-500/10 text-amber-400 text-xs font-bold border border-amber-500/20 mb-3 animate-pulse">
+                    <i class="fa-solid fa-clock"></i> Aguardando Confirmação do Pagamento PIX
+                </span>
+                <h3 class="text-xl font-black text-white mb-1">Pagamento via QR Code</h3>
+                <p class="text-xs text-gray-400 mb-5">Abra seu aplicativo do banco e escaneie o código abaixo</p>
+
+                <div class="bg-white p-4 rounded-3xl inline-block shadow-2xl mb-4 border-4 border-spk-dark">
+                    <div id="qrcodeCanvas" class="flex justify-center"></div>
+                </div>
+
+                <div class="mb-6 max-w-md mx-auto">
+                    <label class="block text-xs font-semibold text-gray-400 mb-1 text-left">Código PIX Copia e Cola:</label>
+                    <div class="flex items-center gap-2">
+                        <input id="pixCopyInput" type="text" readonly value="" class="bg-spk-dark text-xs text-gray-300 p-3 rounded-xl w-full font-mono border border-white/10 select-all truncate">
+                        <button onclick="copyPixCode()" class="bg-spk-blue hover:bg-blue-600 text-white font-bold px-4 py-3 rounded-xl text-xs transition flex-shrink-0">
+                            <i class="fa-solid fa-copy"></i> Copiar
+                        </button>
+                    </div>
+                </div>
+
+                <div class="bg-spk-dark/90 p-3.5 rounded-2xl border border-white/10 mb-6 text-xs text-left text-gray-400 flex items-center justify-between max-w-md mx-auto">
+                    <span>Ativação em ambiente de testes:</span>
+                    <button onclick="simulatePaymentApproval()" class="text-spk-blue font-extrabold hover:underline flex items-center gap-1">
+                        Confirmar Pagamento <i class="fa-solid fa-check-double"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Passo 3: Sucesso da Compra -->
+            <div id="checkoutStep3" class="hidden text-center py-6">
+                <div class="w-20 h-20 bg-emerald-500/20 text-emerald-400 rounded-full flex items-center justify-center mx-auto mb-4 border-2 border-emerald-400 animate-bounce">
+                    <i class="fa-solid fa-check text-4xl"></i>
+                </div>
+                <h3 class="text-2xl font-black text-white mb-2">Compra Concluída!</h3>
+                <p class="text-sm text-gray-300 mb-6">Seu VIP já foi ativado e os dados salvos com segurança.</p>
+
+                <div class="bg-spk-dark p-4 rounded-2xl border border-white/10 text-left text-xs text-gray-300 space-y-2 mb-6 max-w-md mx-auto">
+                    <p><strong class="text-white">Plano Adquirido:</strong> <span id="successRoleName">VIP Storm</span></p>
+                    <p><strong class="text-white">Titular:</strong> <span id="successUserName">@User</span></p>
+                    <p><strong class="text-white">Identificador:</strong> <span id="successTxId" class="font-mono text-spk-blue">#STORM-0000</span></p>
+                    <p><strong class="text-white">Nouvem Firestore:</strong> <span class="text-emerald-400 font-bold"><i class="fa-solid fa-cloud-check"></i> Sincronizado</span></p>
+                </div>
+                
+                <button onclick="closeCheckoutModal(); playAudioEffect('click'); openProfileModal('purchases');" class="bg-spk-blue hover:bg-blue-600 text-white font-bold px-8 py-3.5 rounded-2xl transition">
+                    Ver Minhas Compras
+                </button>
+            </div>
+        </div>
     </div>
 
-    <!-- MODAL DE LOGIN (GOOGLE OU DISCORD OFICIAL) -->
+    <!-- MODAL DE LOGIN -->
     <div id="loginModal" class="fixed inset-0 bg-black/80 backdrop-blur-md z-50 hidden flex items-center justify-center p-4">
         <div class="bg-spk-card border border-spk-border w-full max-w-md rounded-3xl p-6 sm:p-8 relative shadow-2xl text-center">
             <button onclick="closeLoginModal(); playAudioEffect('click');" class="absolute top-5 right-5 text-gray-400 hover:text-white w-9 h-9 rounded-full bg-spk-dark flex items-center justify-center transition">
@@ -388,11 +547,11 @@
                 <i class="fa-solid fa-user-check"></i>
             </div>
 
-            <h3 class="text-2xl font-black text-white mb-2">Entrar na Storm VIPs</h3>
-            <p class="text-xs text-gray-400 mb-6">Conecte sua conta para vincular seus VIPs e registrar no histórico da nuvem.</p>
+            <h3 class="text-2xl font-black text-white mb-2">Acessar Conta</h3>
+            <p class="text-xs text-gray-400 mb-6">Conecte sua conta para vincular seus VIPs ao seu perfil.</p>
 
             <div class="space-y-4">
-                <button onclick="loginWithGoogle()" class="w-full bg-white hover:bg-gray-100 text-gray-900 font-bold py-3.5 px-4 rounded-2xl transition flex items-center justify-center gap-3 shadow-lg hover:shadow-white/10 text-sm">
+                <button onclick="loginWithGoogle()" class="w-full bg-white hover:bg-gray-100 text-gray-900 font-bold py-3.5 px-4 rounded-2xl transition flex items-center justify-center gap-3 shadow-lg text-sm">
                     <svg class="w-5 h-5" viewBox="0 0 24 24">
                         <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
                         <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
@@ -404,408 +563,19 @@
 
                 <div class="flex items-center my-4">
                     <div class="flex-grow border-t border-white/10"></div>
-                    <span class="px-3 text-xs text-gray-500 font-bold uppercase tracking-wider">ou</span>
+                    <span class="px-3 text-xs text-gray-500 font-bold uppercase">ou</span>
                     <div class="flex-grow border-t border-white/10"></div>
                 </div>
 
                 <button onclick="loginWithDiscord()" class="w-full bg-[#5865F2] hover:bg-[#4752C4] text-white font-bold py-3.5 px-4 rounded-2xl transition flex items-center justify-center gap-3 shadow-lg text-sm">
                     <i class="fa-brands fa-discord text-lg"></i>
-                    <span>Conectar com Discord</span>
-                </button>
-            </div>
-
-            <div class="mt-6 pt-4 border-t border-white/5 text-[11px] text-gray-500 flex items-center justify-center gap-1.5">
-                <i class="fa-solid fa-lock text-emerald-400"></i> Autenticação direta e segura
-            </div>
-        </div>
-    </div>
-
-    <!-- HERO SECTION -->
-    <section class="relative py-12 md:py-20 overflow-hidden z-10 border-b border-white/5">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center relative">
-            
-            <div class="flex flex-wrap justify-center items-center gap-3 mb-6">
-                <span class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-semibold bg-spk-blue/10 text-blue-400 border border-spk-blue/30">
-                    <i class="fa-solid fa-bolt text-spk-blue"></i> Entrega Automática Via Discord
-                </span>
-                <span class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">
-                    <i class="fa-solid fa-database text-emerald-400"></i> Histórico Firestore em Nuvem
-                </span>
-            </div>
-
-            <div class="mb-6 flex justify-center">
-                <div class="relative group cursor-pointer" onclick="playAudioEffect('click'); openProfileModal('profile');">
-                    <div class="absolute -inset-1.5 bg-gradient-to-r from-blue-600 to-cyan-400 rounded-3xl blur opacity-75 group-hover:opacity-100 transition duration-700"></div>
-                    <img id="heroLogoImage" src="https://placehold.co/180x180/0a1026/3b82f6?text=STORM" alt="Storm VIPs Logo" class="relative w-28 h-28 sm:w-36 sm:h-36 rounded-3xl object-cover border-2 border-spk-blue shadow-2xl">
-                </div>
-            </div>
-
-            <h1 class="text-4xl sm:text-6xl font-black tracking-tight text-white max-w-4xl mx-auto leading-tight">
-                Bem-vindo à <span class="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-cyan-300 to-blue-600 text-glow-blue">Storm VIPs</span>
-            </h1>
-            <p class="mt-4 text-base sm:text-lg text-gray-300 max-w-2xl mx-auto font-medium leading-relaxed">
-                Storm VIPs sua loja de qualidade e segurança! Os melhores VIPs e vantagens exclusivas no Discord com salvamento automático do seu perfil e histórico de compras.
-            </p>
-
-            <div class="mt-8 max-w-md mx-auto relative">
-                <input id="searchInput" type="text" placeholder="Pesquisar produto ou plano VIP..." onkeyup="filterProducts()" class="w-full bg-spk-dark/80 text-white placeholder-gray-400 px-5 py-3.5 pl-12 rounded-2xl border border-white/10 focus:border-spk-blue outline-none shadow-xl transition text-sm">
-                <i class="fa-solid fa-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"></i>
-            </div>
-
-            <div id="planos" class="mt-10 inline-flex items-center bg-spk-dark px-6 py-2.5 rounded-2xl border border-white/10 shadow-2xl font-bold text-xs sm:text-sm text-white">
-                <i class="fa-solid fa-calendar-days text-spk-blue mr-2"></i> Plano Mensal
-            </div>
-        </div>
-    </section>
-
-    <!-- PRODUCTS & VIP PLANS GRID SECTION -->
-    <section class="py-12 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full z-10 relative flex-grow">
-        <div class="text-center mb-10">
-            <h2 class="text-3xl font-black text-white">Nossos Planos VIP</h2>
-            <p class="text-gray-400 text-sm mt-2">Selecione o plano desejado para vincular e resgatar no Discord</p>
-        </div>
-
-        <div id="plansContainer" class="grid grid-cols-1 md:grid-cols-3 gap-8 items-stretch">
-            <!-- Cards dinamicos -->
-        </div>
-    </section>
-
-    <!-- GARANTIA & VANTAGENS SECTION -->
-    <section id="vantagens" class="py-12 border-t border-white/5 bg-spk-darker/60 z-10 relative">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div class="glass-card p-6 rounded-2xl flex items-start gap-4">
-                    <div class="w-12 h-12 rounded-2xl bg-blue-500/10 text-blue-400 flex items-center justify-center text-xl flex-shrink-0 border border-blue-500/20">
-                        <i class="fa-solid fa-bolt"></i>
-                    </div>
-                    <div>
-                        <h4 class="font-bold text-white text-base">Ativação Imediata</h4>
-                        <p class="text-xs text-gray-400 mt-1 leading-relaxed">Assim que o pagamento PIX for confirmado, o robô da Storm VIPs concede suas vantagens automaticamente.</p>
-                    </div>
-                </div>
-
-                <div class="glass-card p-6 rounded-2xl flex items-start gap-4">
-                    <div class="w-12 h-12 rounded-2xl bg-emerald-500/10 text-emerald-400 flex items-center justify-center text-xl flex-shrink-0 border border-emerald-500/20">
-                        <i class="fa-solid fa-shield-halved"></i>
-                    </div>
-                    <div>
-                        <h4 class="font-bold text-white text-base">Garantia & Reembolso</h4>
-                        <p class="text-xs text-gray-400 mt-1 leading-relaxed">Garantia total de suporte e satisfação. Atendimento rápido e direto com a equipe oficial.</p>
-                    </div>
-                </div>
-
-                <div class="glass-card p-6 rounded-2xl flex items-start gap-4">
-                    <div class="w-12 h-12 rounded-2xl bg-cyan-500/10 text-cyan-400 flex items-center justify-center text-xl flex-shrink-0 border border-cyan-500/20">
-                        <i class="fa-solid fa-headset"></i>
-                    </div>
-                    <div>
-                        <h4 class="font-bold text-white text-base">Suporte 24/7 & IA</h4>
-                        <p class="text-xs text-gray-400 mt-1 leading-relaxed">Tire suas dúvidas instantaneamente com nossa Inteligência Artificial ou abrindo um ticket.</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- FOOTER SECTION -->
-    <footer class="bg-spk-darker border-t border-white/5 py-12 z-10 relative">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="grid grid-cols-1 md:grid-cols-4 gap-8 pb-10 border-b border-white/5">
-                
-                <div class="space-y-3 md:col-span-1">
-                    <div class="flex items-center space-x-3">
-                        <img id="footerLogo" src="https://placehold.co/120x120/0a1026/3b82f6?text=STORM" alt="Storm VIPs Logo" class="w-10 h-10 rounded-2xl object-cover border border-spk-blue/50">
-                        <h3 class="font-black text-xl text-white flex items-center gap-1.5" id="footerServerName">
-                            Storm VIPs <i class="fa-solid fa-circle-check text-blue-400 text-sm"></i>
-                        </h3>
-                    </div>
-                    <p class="text-xs text-gray-400 flex items-center gap-1 font-medium pt-1">
-                        Storm VIPs sua loja de qualidade e segurança! <span class="text-emerald-400">✅</span>
-                    </p>
-                </div>
-
-                <div>
-                    <h4 class="font-bold text-white text-sm mb-4">Navegação</h4>
-                    <ul class="space-y-2 text-xs text-gray-400">
-                        <li><a href="#planos" onclick="playAudioEffect('click')" class="hover:text-spk-blue transition">Início</a></li>
-                        <li><a href="#planos" onclick="playAudioEffect('click')" class="hover:text-spk-blue transition">Categorias</a></li>
-                        <li><a href="#planos" onclick="playAudioEffect('click')" class="hover:text-spk-blue transition">Catálogo VIP</a></li>
-                    </ul>
-                </div>
-
-                <div>
-                    <h4 class="font-bold text-white text-sm mb-4">Empresa</h4>
-                    <ul class="space-y-2 text-xs text-gray-400">
-                        <li><button onclick="showToast('Termos de serviço atualizados e em conformidade.', 'info'); playAudioEffect('click');" class="hover:text-spk-blue transition">Termos e Serviços</button></li>
-                        <li><button onclick="showToast('Garantia de privacidade e proteção de dados.', 'info'); playAudioEffect('click');" class="hover:text-spk-blue transition">Política de Privacidade</button></li>
-                    </ul>
-                </div>
-
-                <div>
-                    <h4 class="font-bold text-white text-sm mb-4">Conta & Nuvem</h4>
-                    <ul class="space-y-2 text-xs text-gray-400">
-                        <li><button onclick="playAudioEffect('modal'); openProfileModal('profile')" class="hover:text-spk-blue transition">Minha conta</button></li>
-                        <li><button onclick="playAudioEffect('modal'); openProfileModal('purchases')" class="hover:text-spk-blue transition">Minhas compras & VIPs</button></li>
-                    </ul>
-                </div>
-            </div>
-
-            <div class="pt-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-gray-500">
-                <p>Copyright © <span id="copyrightName">Storm VIPs</span> — Todos os direitos reservados</p>
-                <div class="flex items-center space-x-4">
-                    <button onclick="playAudioEffect('modal'); openAiSupportModal()" class="hover:text-spk-blue transition flex items-center gap-1">
-                        <i class="fa-solid fa-robot text-spk-blue"></i> Suporte IA
-                    </button>
-                    <!-- Acesso ao Painel do Proprietário no rodapé -->
-                    <button onclick="promptAdminAccess()" class="text-gray-600 hover:text-gray-400 transition flex items-center gap-1 text-[11px]" title="Área Restrita">
-                        <i class="fa-solid fa-lock text-[10px]"></i> Área Administrativa
-                    </button>
-                </div>
-            </div>
-        </div>
-    </footer>
-
-    <!-- MODAL DE SENHA DO PAINEL ADMIN -->
-    <div id="adminPinModal" class="fixed inset-0 bg-black/80 backdrop-blur-md z-50 hidden flex items-center justify-center p-4">
-        <div class="bg-spk-card border border-spk-border w-full max-w-sm rounded-3xl p-6 relative shadow-2xl text-center">
-            <button onclick="closeAdminPinModal(); playAudioEffect('click');" class="absolute top-4 right-4 text-gray-400 hover:text-white w-8 h-8 rounded-full bg-spk-dark flex items-center justify-center transition">
-                <i class="fa-solid fa-xmark text-sm"></i>
-            </button>
-
-            <div class="w-12 h-12 rounded-2xl bg-amber-500/20 text-amber-400 flex items-center justify-center font-bold text-xl mx-auto mb-3 border border-amber-500/30">
-                <i class="fa-solid fa-lock"></i>
-            </div>
-
-            <h3 class="text-lg font-black text-white mb-1">Painel do Proprietário</h3>
-            <p class="text-xs text-gray-400 mb-4">Digite a senha para acessar as configurações. <br><span class="text-amber-400 font-semibold">(Senha Padrão: 1234)</span></p>
-
-            <form onsubmit="submitAdminPin(event)" class="space-y-4">
-                <input id="adminPinInput" type="password" placeholder="Digite a senha (1234)" class="w-full bg-spk-dark text-center text-lg font-mono tracking-widest text-white px-4 py-3 rounded-2xl border border-white/10 focus:border-amber-500 outline-none">
-                <button type="submit" class="w-full bg-amber-500 hover:bg-amber-600 text-black font-extrabold py-3 rounded-2xl transition shadow-lg text-xs uppercase tracking-wider">
-                    Entrar no Painel
-                </button>
-            </form>
-        </div>
-    </div>
-
-    <!-- SHOPPING CART DRAWER MODAL -->
-    <div id="cartDrawer" class="fixed inset-0 bg-black/80 backdrop-blur-md z-50 hidden flex justify-end transition-all">
-        <div class="bg-spk-card border-l border-white/10 w-full max-w-md h-full p-6 flex flex-col justify-between shadow-2xl">
-            <div>
-                <div class="flex items-center justify-between pb-4 border-b border-white/10">
-                    <h3 class="font-black text-lg text-white flex items-center gap-2">
-                        <i class="fa-solid fa-cart-shopping text-spk-blue"></i> Seu Carrinho
-                    </h3>
-                    <button onclick="closeCartDrawer(); playAudioEffect('click');" class="text-gray-400 hover:text-white text-lg">
-                        <i class="fa-solid fa-xmark"></i>
-                    </button>
-                </div>
-
-                <div id="cartItemsList" class="py-6 space-y-4">
-                    <p class="text-center text-gray-400 text-sm py-10">Seu carrinho está vazio.</p>
-                </div>
-            </div>
-
-            <div class="border-t border-white/10 pt-4 space-y-4">
-                <div class="flex justify-between items-center text-sm font-bold text-white">
-                    <span>Subtotal</span>
-                    <span id="cartSubtotalPrice" class="text-spk-blue text-xl font-black">R$ 0,00</span>
-                </div>
-                <button id="cartCheckoutBtn" onclick="checkoutFromCart()" disabled class="w-full bg-blue-600 opacity-50 cursor-not-allowed text-white font-black py-3.5 rounded-2xl transition text-center shadow-lg">
-                    Ir para o Pagamento
+                    <span>Entrar com Discord</span>
                 </button>
             </div>
         </div>
     </div>
 
-    <!-- MODAL DE CHECKOUT PIX & PAGAMENTO -->
-    <div id="checkoutModal" class="fixed inset-0 bg-black/80 backdrop-blur-md z-50 hidden flex items-center justify-center p-4">
-        <div class="bg-spk-card border border-spk-border w-full max-w-lg rounded-3xl p-6 sm:p-8 relative shadow-2xl overflow-hidden">
-            <button onclick="closeCheckoutModal(); playAudioEffect('click');" class="absolute top-5 right-5 text-gray-400 hover:text-white w-9 h-9 rounded-full bg-spk-dark flex items-center justify-center transition">
-                <i class="fa-solid fa-xmark text-lg"></i>
-            </button>
-
-            <!-- Step 1: VIP Review & Account -->
-            <div id="checkoutStep1">
-                <div class="flex items-center gap-3 mb-6">
-                    <div class="w-10 h-10 rounded-2xl bg-spk-blue/20 text-spk-blue flex items-center justify-center font-bold text-lg">
-                        <i class="fa-solid fa-bag-shopping"></i>
-                    </div>
-                    <div>
-                        <h3 class="text-xl font-black text-white">Finalizar Pedido</h3>
-                        <p class="text-xs text-gray-400">Verifique os dados antes de gerar o PIX</p>
-                    </div>
-                </div>
-
-                <div class="bg-spk-dark/80 rounded-2xl p-4 border border-white/10 mb-6 flex items-center justify-between">
-                    <div>
-                        <span id="modalVipBadge" class="text-[10px] font-black uppercase px-2.5 py-0.5 rounded-md bg-spk-blue text-white mb-1 inline-block">VIP GOLD</span>
-                        <h4 id="modalVipTitle" class="font-extrabold text-white text-lg">VIP Storm Ouro</h4>
-                        <p id="modalVipCycle" class="text-xs text-gray-400">Cobrança Mensal</p>
-                    </div>
-                    <div class="text-right">
-                        <span class="text-xs text-gray-400 block">Total</span>
-                        <span id="modalVipPrice" class="text-2xl font-black text-spk-blue">R$ 30,00</span>
-                    </div>
-                </div>
-
-                <div class="mb-6">
-                    <label class="block text-xs font-bold text-gray-300 uppercase tracking-wider mb-2">Conta Vinculada para Ativação & Nuvem</label>
-                    <div onclick="playAudioEffect('modal'); openLoginModal();" class="flex items-center gap-3 bg-spk-dark p-3 rounded-2xl border border-white/10 cursor-pointer hover:border-spk-blue/50 transition">
-                        <img id="modalUserAvatar" src="https://placehold.co/100x100/3b82f6/ffffff?text=U" class="w-10 h-10 rounded-full border border-spk-blue object-cover">
-                        <div class="flex-grow overflow-hidden">
-                            <h5 id="modalUserName" class="font-bold text-sm text-white truncate">Conta Não Conectada</h5>
-                            <p id="modalUserId" class="text-xs text-gray-400 truncate">Clique aqui para selecionar/conectar sua conta</p>
-                        </div>
-                        <button onclick="event.stopPropagation(); playAudioEffect('modal'); openLoginModal();" class="text-xs text-spk-blue font-bold hover:underline flex-shrink-0">
-                            Alterar
-                        </button>
-                    </div>
-                </div>
-
-                <button onclick="generatePixCode()" class="w-full bg-gradient-to-r from-blue-600 via-blue-500 to-cyan-500 hover:from-blue-500 hover:to-cyan-400 text-white font-black py-4 rounded-2xl transition flex items-center justify-center gap-2 text-base shadow-xl blue-glow-btn">
-                    <i class="fa-solid fa-qrcode"></i> Gerar QR Code PIX Instantâneo
-                </button>
-            </div>
-
-            <!-- Step 2: PIX QR Code View -->
-            <div id="checkoutStep2" class="hidden text-center">
-                <span class="inline-block px-3 py-1 rounded-full bg-amber-500/10 text-amber-400 text-xs font-bold border border-amber-500/20 mb-3 animate-pulse">
-                    <i class="fa-solid fa-clock"></i> Aguardando Pagamento PIX
-                </span>
-                <h3 class="text-xl font-black text-white mb-1">Escaneie o QR Code PIX</h3>
-                <p class="text-xs text-gray-400 mb-6">Realize o pagamento no banco para entrega imediata no Discord</p>
-
-                <div class="bg-white p-4 rounded-3xl inline-block shadow-2xl mb-4 border-4 border-spk-dark">
-                    <div id="qrcodeCanvas" class="flex justify-center"></div>
-                </div>
-
-                <div class="mb-6">
-                    <label class="block text-xs font-semibold text-gray-400 mb-1 text-left">Código PIX Copia e Cola:</label>
-                    <div class="flex items-center gap-2">
-                        <input id="pixCopyInput" type="text" readonly value="" class="bg-spk-dark text-xs text-gray-300 p-3 rounded-xl w-full font-mono border border-white/10 select-all truncate">
-                        <button onclick="copyPixCode()" class="bg-spk-blue hover:bg-blue-600 text-white font-bold px-4 py-3 rounded-xl text-xs transition flex-shrink-0">
-                            <i class="fa-solid fa-copy"></i> Copiar
-                        </button>
-                    </div>
-                </div>
-
-                <div class="bg-spk-dark/90 p-3.5 rounded-2xl border border-white/10 mb-6 text-xs text-left text-gray-400 flex items-center justify-between">
-                    <span>Aprovação automática e registro em nuvem</span>
-                    <button onclick="simulatePaymentApproval()" class="text-spk-blue font-extrabold hover:underline flex items-center gap-1">
-                        Simular Aprovação <i class="fa-solid fa-check-double"></i>
-                    </button>
-                </div>
-            </div>
-
-            <!-- Step 3: Success Screen -->
-            <div id="checkoutStep3" class="hidden text-center py-6">
-                <div class="w-20 h-20 bg-emerald-500/20 text-emerald-400 rounded-full flex items-center justify-center mx-auto mb-4 border-2 border-emerald-400 animate-bounce">
-                    <i class="fa-solid fa-check text-4xl"></i>
-                </div>
-                <h3 class="text-2xl font-black text-white mb-2">Pagamento Confirmado!</h3>
-                <p class="text-sm text-gray-300 mb-6">Seu VIP foi ativado com sucesso e gravado na sua conta Firestore.</p>
-                <div class="bg-spk-dark p-4 rounded-2xl border border-white/10 text-left text-xs text-gray-300 space-y-2 mb-6">
-                    <p><strong class="text-white">Produto:</strong> <span id="successRoleName">VIP Storm Ouro</span></p>
-                    <p><strong class="text-white">Usuário:</strong> <span id="successUserName">@User</span></p>
-                    <p><strong class="text-white">ID Transação:</strong> <span id="successTxId" class="font-mono text-spk-blue">#STORM-892137</span></p>
-                    <p><strong class="text-white">Status Nuvem:</strong> <span class="text-emerald-400 font-bold"><i class="fa-solid fa-cloud-check"></i> Salvo na conta</span></p>
-                </div>
-                <button onclick="closeCheckoutModal(); playAudioEffect('click'); openProfileModal('purchases');" class="w-full bg-spk-blue hover:bg-blue-600 text-white font-bold py-3.5 rounded-2xl transition">
-                    Ver Minhas Compras & VIPs
-                </button>
-            </div>
-        </div>
-    </div>
-
-    <!-- MODAL PAINEL DO DONO (ADMIN PANEL) -->
-    <div id="adminModal" class="fixed inset-0 bg-black/80 backdrop-blur-md z-50 hidden flex items-center justify-center p-4">
-        <div class="bg-spk-card border border-spk-border w-full max-w-2xl rounded-3xl p-6 sm:p-8 relative shadow-2xl max-h-[90vh] overflow-y-auto">
-            <button onclick="closeAdminModal(); playAudioEffect('click');" class="absolute top-5 right-5 text-gray-400 hover:text-white w-9 h-9 rounded-full bg-spk-dark flex items-center justify-center transition">
-                <i class="fa-solid fa-xmark text-lg"></i>
-            </button>
-
-            <div class="flex items-center gap-3 mb-6">
-                <div class="w-10 h-10 rounded-2xl bg-amber-500/20 text-amber-400 flex items-center justify-center font-bold text-lg">
-                    <i class="fa-solid fa-sliders"></i>
-                </div>
-                <div>
-                    <h3 class="text-xl font-bold text-white">Painel do Proprietário</h3>
-                    <p class="text-xs text-gray-400">Configure as IDs do Discord, entregas, webhook, logo e preços dos VIPs</p>
-                </div>
-            </div>
-
-            <form id="adminForm" onsubmit="saveAdminSettings(event)" class="space-y-5">
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div>
-                        <label class="block text-xs font-bold text-gray-300 mb-1">Nome da Loja</label>
-                        <input id="cfgServerName" type="text" required class="w-full bg-spk-dark text-sm text-white px-3.5 py-2.5 rounded-xl border border-white/10 focus:border-spk-blue outline-none">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-bold text-gray-300 mb-1">URL do Logo (Imagem)</label>
-                        <input id="cfgServerLogo" type="text" required class="w-full bg-spk-dark text-sm text-white px-3.5 py-2.5 rounded-xl border border-white/10 focus:border-spk-blue outline-none">
-                    </div>
-                </div>
-
-                <!-- DISCORD SPECIFIC CONFIGURATION FIELDS -->
-                <div class="bg-spk-dark/60 p-4 rounded-2xl border border-white/10 space-y-4">
-                    <h4 class="text-xs font-bold text-spk-blue uppercase tracking-wider flex items-center gap-1.5">
-                        <i class="fa-brands fa-discord"></i> Parâmetros de Integração Discord
-                    </h4>
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <div>
-                            <label class="block text-xs font-bold text-gray-300 mb-1">ID do Servidor Discord (Guild ID)</label>
-                            <input id="cfgGuildId" type="text" placeholder="Ex: 123456789012345678" class="w-full bg-spk-dark text-sm text-white px-3.5 py-2.5 rounded-xl border border-white/10 focus:border-spk-blue outline-none font-mono">
-                        </div>
-                        <div>
-                            <label class="block text-xs font-bold text-gray-300 mb-1">ID do Canal de Mensagens (Channel ID)</label>
-                            <input id="cfgChannelId" type="text" placeholder="Ex: 987654321098765432" class="w-full bg-spk-dark text-sm text-white px-3.5 py-2.5 rounded-xl border border-white/10 focus:border-spk-blue outline-none font-mono">
-                        </div>
-                    </div>
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <div>
-                            <label class="block text-xs font-bold text-gray-300 mb-1">Discord OAuth2 Client ID (Login)</label>
-                            <input id="cfgDiscordClientId" type="text" placeholder="Ex: 109876543210987654" class="w-full bg-spk-dark text-sm text-white px-3.5 py-2.5 rounded-xl border border-white/10 focus:border-spk-blue outline-none font-mono">
-                        </div>
-                        <div>
-                            <label class="block text-xs font-bold text-gray-300 mb-1">Senha/PIN de Acesso ao Painel</label>
-                            <input id="cfgAdminPin" type="password" placeholder="Definir PIN (Padrão: 1234)" class="w-full bg-spk-dark text-sm text-white px-3.5 py-2.5 rounded-xl border border-white/10 focus:border-spk-blue outline-none font-mono">
-                        </div>
-                    </div>
-                    <div>
-                        <label class="block text-xs font-bold text-gray-300 mb-1">Discord Webhook URL (Notificações de Venda)</label>
-                        <input id="cfgWebhookUrl" type="url" placeholder="https://discord.com/api/webhooks/..." class="w-full bg-spk-dark text-sm text-white px-3.5 py-2.5 rounded-xl border border-white/10 focus:border-spk-blue outline-none font-mono text-xs">
-                    </div>
-                </div>
-
-                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                    <div>
-                        <label class="block text-xs font-bold text-amber-400 mb-1">Preço VIP Bronze (R$)</label>
-                        <input id="cfgPriceBronze" type="number" step="0.01" required class="w-full bg-spk-dark text-sm text-white px-3.5 py-2.5 rounded-xl border border-white/10 focus:border-spk-blue outline-none">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-bold text-blue-400 mb-1">Preço VIP Ouro (R$)</label>
-                        <input id="cfgPriceGold" type="number" step="0.01" required class="w-full bg-spk-dark text-sm text-white px-3.5 py-2.5 rounded-xl border border-white/10 focus:border-spk-blue outline-none">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-bold text-cyan-400 mb-1">Preço VIP Diamante (R$)</label>
-                        <input id="cfgPriceDiamond" type="number" step="0.01" required class="w-full bg-spk-dark text-sm text-white px-3.5 py-2.5 rounded-xl border border-white/10 focus:border-spk-blue outline-none">
-                    </div>
-                </div>
-
-                <div class="pt-4 flex justify-end gap-3 border-t border-white/10">
-                    <button type="button" onclick="closeAdminModal()" class="px-5 py-2.5 rounded-xl text-xs font-bold text-gray-400 hover:text-white bg-spk-dark">
-                        Cancelar
-                    </button>
-                    <button type="submit" class="bg-amber-500 hover:bg-amber-600 text-black font-extrabold px-6 py-2.5 rounded-xl text-xs transition shadow-lg">
-                        Salvar Configurações
-                    </button>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <!-- MODAL DE PERFIL DO USUÁRIO E MINHAS COMPRAS -->
+    <!-- MODAL PERFIL DO USUÁRIO -->
     <div id="profileModal" class="fixed inset-0 bg-black/80 backdrop-blur-md z-50 hidden flex items-center justify-center p-4">
         <div class="bg-spk-card border border-spk-border w-full max-w-2xl rounded-3xl p-6 sm:p-8 relative shadow-2xl flex flex-col max-h-[90vh]">
             <button onclick="closeProfileModal(); playAudioEffect('click');" class="absolute top-5 right-5 text-gray-400 hover:text-white w-9 h-9 rounded-full bg-spk-dark flex items-center justify-center transition">
@@ -813,181 +583,238 @@
             </button>
 
             <div class="flex items-center gap-4 pb-6 border-b border-white/10">
-                <img id="profileUserAvatar" src="https://placehold.co/100x100/3b82f6/ffffff?text=U" class="w-16 h-16 rounded-2xl border-2 border-spk-blue object-cover shadow-lg">
+                <img id="profileUserAvatar" src="https://placehold.co/100x100/3b82f6/ffffff?text=U" class="w-16 h-16 rounded-2xl border-2 border-spk-blue object-cover">
                 <div>
                     <h3 id="profileUserName" class="text-xl font-black text-white flex items-center gap-2">
-                        Nome do Usuário <span id="profileProviderBadge" class="text-[10px] px-2 py-0.5 rounded-full bg-spk-blue/20 text-spk-blue border border-spk-blue/30 font-bold uppercase">Google</span>
+                        Usuário <span id="profileProviderBadge" class="text-[10px] px-2 py-0.5 rounded-full bg-spk-blue/20 text-spk-blue border border-spk-blue/30 font-bold uppercase">Google</span>
                     </h3>
                     <p id="profileUserEmail" class="text-xs text-gray-400 mt-0.5">email@exemplo.com</p>
-                    <p id="profileUserId" class="text-[11px] font-mono text-gray-500 mt-1">ID: 123456789</p>
+                    <p id="profileUserId" class="text-[11px] font-mono text-gray-500 mt-1">ID: 000000</p>
                 </div>
             </div>
 
             <div class="flex items-center gap-3 my-4 border-b border-white/10 pb-3">
-                <button id="tabBtnProfile" onclick="switchProfileTab('profile'); playAudioEffect('click');" class="px-4 py-2 rounded-xl text-xs font-bold transition bg-spk-blue text-white shadow-md">
-                    <i class="fa-solid fa-user mr-1.5"></i> Meu Perfil
+                <button id="tabBtnProfile" onclick="switchProfileTab('profile'); playAudioEffect('click');" class="px-4 py-2 rounded-xl text-xs font-bold transition bg-spk-blue text-white">
+                    <i class="fa-solid fa-user mr-1.5"></i> Perfil
                 </button>
                 <button id="tabBtnPurchases" onclick="switchProfileTab('purchases'); playAudioEffect('click');" class="px-4 py-2 rounded-xl text-xs font-bold transition text-gray-400 hover:text-white">
-                    <i class="fa-solid fa-bag-shopping mr-1.5"></i> Minhas Compras & VIPs
+                    <i class="fa-solid fa-bag-shopping mr-1.5"></i> Minhas Compras
                 </button>
             </div>
 
             <div id="tabContentProfile" class="space-y-4 py-2 overflow-y-auto">
                 <div class="bg-spk-dark p-4 rounded-2xl border border-white/10 space-y-3 text-xs text-gray-300">
                     <div class="flex justify-between items-center pb-2 border-b border-white/5">
-                        <span class="text-gray-400">Provedor de Login:</span>
+                        <span class="text-gray-400">Autenticação:</span>
                         <span id="profDetailProvider" class="font-bold text-white capitalize">Google</span>
                     </div>
                     <div class="flex justify-between items-center pb-2 border-b border-white/5">
-                        <span class="text-gray-400">Status da Conta:</span>
-                        <span class="font-bold text-emerald-400 flex items-center gap-1"><i class="fa-solid fa-circle-check"></i> Verificada & Ativa</span>
-                    </div>
-                    <div class="flex justify-between items-center pb-2 border-b border-white/5">
-                        <span class="text-gray-400">Salvamento em Nuvem:</span>
-                        <span class="font-bold text-emerald-400 flex items-center gap-1"><i class="fa-solid fa-cloud-arrow-up"></i> Firestore Sincronizado</span>
-                    </div>
-                    <div class="flex justify-between items-center">
-                        <span class="text-gray-400">Assinatura Atual:</span>
-                        <span id="profActiveVipBadge" class="font-extrabold text-spk-blue">Nenhum VIP Ativo</span>
+                        <span class="text-gray-400">Status Nuvem:</span>
+                        <span class="font-bold text-emerald-400 flex items-center gap-1"><i class="fa-solid fa-cloud-arrow-up"></i> Conectado com Firestore</span>
                     </div>
                 </div>
 
                 <button onclick="logoutAccount()" class="w-full bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/30 font-bold py-3 rounded-2xl transition text-xs flex items-center justify-center gap-2">
-                    <i class="fa-solid fa-right-from-bracket"></i> Encerrar Sessão
+                    <i class="fa-solid fa-right-from-bracket"></i> Sair da Conta
                 </button>
             </div>
 
             <div id="tabContentPurchases" class="hidden py-2 overflow-y-auto flex-grow">
                 <div id="purchasesListContainer" class="space-y-3">
-                    <p class="text-center text-gray-400 text-xs py-8">Carregando histórico de compras...</p>
+                    <p class="text-center text-gray-400 text-xs py-8">Carregando histórico...</p>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- MODAL ASSISTENTE VIRTUAL IA -->
+    <!-- MODAL DO PAINEL ADMIN DO DONO -->
+    <div id="adminPinModal" class="fixed inset-0 bg-black/80 backdrop-blur-md z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-spk-card border border-spk-border w-full max-w-sm rounded-3xl p-6 relative shadow-2xl text-center">
+            <button onclick="closeAdminPinModal(); playAudioEffect('click');" class="absolute top-4 right-4 text-gray-400 hover:text-white w-8 h-8 rounded-full bg-spk-dark flex items-center justify-center transition">
+                <i class="fa-solid fa-xmark text-sm"></i>
+            </button>
+            <div class="w-12 h-12 rounded-2xl bg-amber-500/20 text-amber-400 flex items-center justify-center font-bold text-xl mx-auto mb-3 border border-amber-500/30">
+                <i class="fa-solid fa-lock"></i>
+            </div>
+            <h3 class="text-lg font-black text-white mb-1">Painel do Dono</h3>
+            <p class="text-xs text-gray-400 mb-4">Digite a senha para gerenciar preços e loja. <br><span class="text-amber-400 font-semibold">(Senha Padrão: 1234)</span></p>
+
+            <form onsubmit="submitAdminPin(event)" class="space-y-4">
+                <input id="adminPinInput" type="password" placeholder="Digite 1234" class="w-full bg-spk-dark text-center text-lg font-mono text-white px-4 py-3 rounded-2xl border border-white/10 focus:border-amber-500 outline-none">
+                <button type="submit" class="w-full bg-amber-500 hover:bg-amber-600 text-black font-extrabold py-3 rounded-2xl transition text-xs uppercase tracking-wider">
+                    Acessar Painel
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <div id="adminModal" class="fixed inset-0 bg-black/80 backdrop-blur-md z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-spk-card border border-spk-border w-full max-w-2xl rounded-3xl p-6 sm:p-8 relative shadow-2xl max-h-[90vh] overflow-y-auto">
+            <button onclick="closeAdminModal(); playAudioEffect('click');" class="absolute top-5 right-5 text-gray-400 hover:text-white w-9 h-9 rounded-full bg-spk-dark flex items-center justify-center transition">
+                <i class="fa-solid fa-xmark text-lg"></i>
+            </button>
+            <h3 class="text-xl font-bold text-white mb-4">Configuração Geral dos Preços VIPs</h3>
+
+            <form id="adminForm" onsubmit="saveAdminSettings(event)" class="space-y-4">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-bold text-gray-300 mb-1">Nome da Loja</label>
+                        <input id="cfgServerName" type="text" required class="w-full bg-spk-dark text-sm text-white px-3.5 py-2.5 rounded-xl border border-white/10 outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-300 mb-1">Logo URL</label>
+                        <input id="cfgServerLogo" type="text" required class="w-full bg-spk-dark text-sm text-white px-3.5 py-2.5 rounded-xl border border-white/10 outline-none">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                    <div>
+                        <label class="block text-xs font-bold text-amber-500 mb-1">Bronze (R$)</label>
+                        <input id="cfgPriceBronze" type="number" step="0.01" required class="w-full bg-spk-dark text-sm text-white px-3 py-2 rounded-xl border border-white/10 outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-blue-400 mb-1">Ouro (R$)</label>
+                        <input id="cfgPriceGold" type="number" step="0.01" required class="w-full bg-spk-dark text-sm text-white px-3 py-2 rounded-xl border border-white/10 outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-cyan-400 mb-1">Diamante (R$)</label>
+                        <input id="cfgPriceDiamond" type="number" step="0.01" required class="w-full bg-spk-dark text-sm text-white px-3 py-2 rounded-xl border border-white/10 outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-purple-400 mb-1">Mestre (R$)</label>
+                        <input id="cfgPriceMaster" type="number" step="0.01" required class="w-full bg-spk-dark text-sm text-white px-3 py-2 rounded-xl border border-white/10 outline-none">
+                    </div>
+                </div>
+
+                <div class="pt-4 flex justify-end gap-3">
+                    <button type="button" onclick="closeAdminModal()" class="px-5 py-2.5 rounded-xl text-xs font-bold text-gray-400 bg-spk-dark">Cancelar</button>
+                    <button type="submit" class="bg-amber-500 hover:bg-amber-600 text-black font-extrabold px-6 py-2.5 rounded-xl text-xs transition">Salvar Alteraçoes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL SUPORTE IA -->
     <div id="aiSupportModal" class="fixed inset-0 bg-black/80 backdrop-blur-md z-50 hidden flex items-center justify-center p-4">
-        <div class="bg-spk-card border border-spk-border w-full max-w-xl rounded-3xl p-6 sm:p-8 relative shadow-2xl flex flex-col h-[550px] max-h-[90vh]">
+        <div class="bg-spk-card border border-spk-border w-full max-w-xl rounded-3xl p-6 relative shadow-2xl flex flex-col h-[520px]">
             <button onclick="closeAiSupportModal(); playAudioEffect('click');" class="absolute top-5 right-5 text-gray-400 hover:text-white w-9 h-9 rounded-full bg-spk-dark flex items-center justify-center transition">
                 <i class="fa-solid fa-xmark text-lg"></i>
             </button>
+            <h3 class="text-lg font-bold text-white mb-2">Assistente Storm VIPs IA</h3>
 
-            <div class="flex items-center gap-3 pb-4 border-b border-white/10">
-                <div class="w-10 h-10 rounded-2xl bg-spk-blue/20 text-spk-blue flex items-center justify-center font-bold text-xl">
-                    <i class="fa-solid fa-wand-magic-sparkles"></i>
+            <div id="aiChatHistory" class="flex-grow overflow-y-auto py-3 space-y-3 pr-1">
+                <div class="bg-spk-dark p-3.5 rounded-2xl border border-white/10 text-xs text-gray-200">
+                    Olá! Sou a Inteligência Artificial da loja. Como posso te auxiliar com seus VIPs ou cupons?
                 </div>
-                <div>
-                    <h3 class="text-lg font-bold text-white">Assistente Storm VIPs IA</h3>
-                    <p class="text-xs text-gray-400">Tire dúvidas sobre pagamento, reembolso e salvamento em nuvem</p>
-                </div>
-            </div>
-
-            <div id="aiChatHistory" class="flex-grow overflow-y-auto py-4 space-y-4 pr-1">
-                <div class="flex items-start gap-3">
-                    <div class="w-8 h-8 rounded-full bg-spk-blue text-white flex items-center justify-center text-xs font-bold flex-shrink-0">
-                        IA
-                    </div>
-                    <div class="bg-spk-dark p-3.5 rounded-2xl border border-white/10 text-xs text-gray-200 leading-relaxed max-w-[85%]">
-                        Olá! Sou o assistente oficial da Storm VIPs. Suas compras e dados de perfil são salvos automaticamente na nuvem Firestore! Como posso te ajudar?
-                    </div>
-                </div>
-            </div>
-
-            <div class="flex gap-2 overflow-x-auto py-2 text-[11px] no-scrollbar">
-                <button onclick="sendAiQuickQuery('Como é que paga?')" class="bg-spk-dark hover:bg-gray-800 text-spk-blue border border-spk-blue/30 px-3 py-1.5 rounded-full flex-shrink-0">
-                    💳 Como é que paga?
-                </button>
-                <button onclick="sendAiQuickQuery('Onde ficam salvas minhas compras?')" class="bg-spk-dark hover:bg-gray-800 text-spk-blue border border-spk-blue/30 px-3 py-1.5 rounded-full flex-shrink-0">
-                    ☁️ Onde ficam salvas minhas compras?
-                </button>
-                <button onclick="sendAiQuickQuery('Como pede reembolso?')" class="bg-spk-dark hover:bg-gray-800 text-spk-blue border border-spk-blue/30 px-3 py-1.5 rounded-full flex-shrink-0">
-                    🔄 Como pede reembolso?
-                </button>
             </div>
 
             <div class="pt-3 border-t border-white/10 flex gap-2">
-                <input id="aiChatInput" type="text" placeholder="Digite sua dúvida..." onkeypress="if(event.key==='Enter') sendAiMessage()" class="flex-grow bg-spk-dark text-sm text-white px-4 py-3 rounded-xl border border-white/10 focus:border-spk-blue outline-none">
-                <button onclick="sendAiMessage()" class="bg-spk-blue hover:bg-blue-600 text-white font-bold px-5 py-3 rounded-xl transition">
-                    <i class="fa-solid fa-paper-plane"></i>
-                </button>
+                <input id="aiChatInput" type="text" placeholder="Digite sua pergunta..." onkeypress="if(event.key==='Enter') sendAiMessage()" class="flex-grow bg-spk-dark text-sm text-white px-4 py-3 rounded-xl border border-white/10 outline-none">
+                <button onclick="sendAiMessage()" class="bg-spk-blue text-white font-bold px-5 py-3 rounded-xl"><i class="fa-solid fa-paper-plane"></i></button>
             </div>
         </div>
     </div>
 
     <div id="toastContainer" class="fixed bottom-5 right-5 z-50 flex flex-col gap-2 pointer-events-none"></div>
 
+    <!-- JAVASCRIPT PRINCIPAL -->
     <script>
         let currentUser = null;
         let selectedVip = null;
         let userPurchases = [];
+        let appliedDiscountPercent = 0;
+        let activeCategory = 'all';
 
         let serverConfig = {
             name: "Storm VIPs",
             logo: "https://placehold.co/180x180/0a1026/3b82f6?text=STORM",
-            webhookUrl: "",
-            guildId: "",
-            channelId: "",
-            discordClientId: "",
             adminPin: "1234",
             prices: {
                 bronze: 15.00,
                 gold: 30.00,
-                diamond: 60.00
+                diamond: 60.00,
+                master: 100.00
             }
+        };
+
+        const validCoupons = {
+            "STORM10": 10,
+            "VIPMASTER": 15,
+            "LANCAMENTO": 20
         };
 
         const defaultPlans = [
             {
                 id: "bronze",
                 title: "VIP Storm Bronze",
-                badge: "Iniciante",
-                color: "amber-500",
-                badgeBg: "bg-amber-500/20 text-amber-400 border-amber-500/30",
-                btnBg: "bg-amber-500 hover:bg-amber-600 text-black",
+                badge: "Bronze",
+                category: "iniciante",
+                image: "https://placehold.co/600x300/1e293b/f59e0b?text=Painel+VIP+Bronze",
+                description: "O plano de entrada ideal para quem quer experimentar vantagens sem gastar muito. Acesso a comandos utilitários e cargo exclusivo.",
+                badgeStyle: "bg-amber-500/20 text-amber-400 border border-amber-500/30",
+                btnBg: "bg-amber-500 hover:bg-amber-600 text-black font-black",
                 benefits: [
-                    "Cargo VIP Bronze exclusivo no Discord",
-                    "Tag VIP destacada no chat",
-                    "Comandos VIPs (/fly, /hat)",
-                    "Kit mensal VIP Bronze",
-                    "Acesso às salas exclusivas VIP"
+                    "Cargo VIP Bronze no Discord e Servidor",
+                    "Acesso aos comandos de voo (/fly)",
+                    "Kit semanal de recursos Bronze",
+                    "Salas exclusivas na comunidade"
                 ]
             },
             {
                 id: "gold",
                 title: "VIP Storm Ouro",
-                badge: "Mais Vendido",
-                color: "spk-blue",
+                badge: "Mais Popular",
+                category: "popular",
                 featured: true,
-                badgeBg: "bg-spk-blue text-white font-extrabold shadow-md shadow-spk-blue/30",
-                btnBg: "bg-gradient-to-r from-blue-600 via-blue-500 to-cyan-500 hover:from-blue-500 hover:to-cyan-400 text-white blue-glow-btn",
+                image: "https://placehold.co/600x300/0f172a/3b82f6?text=Painel+VIP+Ouro",
+                description: "Nosso plano mais procurado. Oferece o equilíbrio perfeito entre custo e benefício com multiplicadores de recompensas ativados.",
+                badgeStyle: "bg-spk-blue text-white font-extrabold shadow-md shadow-spk-blue/30",
+                btnBg: "bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-500 hover:to-cyan-400 text-white font-black btn-glow",
                 benefits: [
                     "Todos os benefícios do VIP Bronze",
-                    "Salas de voz de alta qualidade (384kbps)",
-                    "Kit VIP Ouro em dobro mensalmente",
-                    "Prioridade na entrada do servidor",
-                    "Tag Dourada animada no perfil",
-                    "Sorteios mensais de Discord Nitro"
+                    "Voz com 384kbps de qualidade no Discord",
+                    "Kit Ouro em dobro quinzenalmente",
+                    "Prioridade total na fila do servidor",
+                    "Tag com brilho personalizado"
                 ]
             },
             {
                 id: "diamond",
                 title: "VIP Storm Diamante",
-                badge: "Supremo",
-                color: "cyan-400",
-                badgeBg: "bg-cyan-500/20 text-cyan-300 border-cyan-500/30",
-                btnBg: "bg-gradient-to-r from-cyan-600 to-blue-700 hover:from-cyan-500 hover:to-blue-600 text-white",
+                badge: "Elite",
+                category: "elite",
+                image: "https://placehold.co/600x300/082f49/06b6d4?text=Painel+VIP+Diamante",
+                description: "Criado para jogadores exigentes. Garante acesso liberado a eventos VIP e itens raros direto na conta.",
+                badgeStyle: "bg-cyan-500/20 text-cyan-300 border border-cyan-500/30",
+                btnBg: "bg-gradient-to-r from-cyan-600 to-blue-700 hover:from-cyan-500 hover:to-blue-600 text-white font-black",
                 benefits: [
                     "Todos os benefícios do VIP Ouro",
-                    "Cargo VIP Diamante no topo da lista",
-                    "Kit Supremo com itens extremamente raros",
-                    "Vaga permanente em eventos especiais",
-                    "Suporte prioritário 24h direto com os Donos",
-                    "Sorteios exclusivos para membros Diamante"
+                    "Kit Supremo Diamante Semanal",
+                    "Acesso antecipado a atualizações",
+                    "Suporte prioritário na comunidade",
+                    "Sorteios mensais de VIPs adicionais"
+                ]
+            },
+            {
+                id: "master",
+                title: "VIP Storm Mestre",
+                badge: "Supremo Mestre",
+                category: "elite",
+                featured: true,
+                image: "https://placehold.co/600x300/2e1065/8b5cf6?text=Painel+VIP+Mestre",
+                description: "O nível definitivo da Storm VIPs. Acesso completo a todas as ferramentas do painel, canal VIP direto com os Donos e itens lendários.",
+                badgeStyle: "bg-purple-500 text-white font-black shadow-lg shadow-purple-500/40",
+                btnBg: "bg-gradient-to-r from-purple-600 via-indigo-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 text-white font-black btn-glow",
+                benefits: [
+                    "Status Máximo e cargo no topo no Discord",
+                    "Canal de voz exclusivo e personalizado",
+                    "Kits Lendários Mestre ilimitados",
+                    "Vaga VIP garantida em todos os eventos",
+                    "Atendimento direto via canal dos Proprietários"
                 ]
             }
         ];
 
-        // Web Audio Effects
         function playAudioEffect(type) {
             try {
                 const AudioCtx = window.AudioContext || window.webkitAudioContext;
@@ -997,167 +824,331 @@
                 const gain = ctx.createGain();
                 osc.connect(gain);
                 gain.connect(ctx.destination);
-
                 const now = ctx.currentTime;
                 if (type === 'click') {
-                    osc.type = 'sine';
                     osc.frequency.setValueAtTime(400, now);
-                    osc.frequency.exponentialRampToValueAtTime(800, now + 0.05);
-                    gain.gain.setValueAtTime(0.08, now);
-                    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.05);
-                    osc.start(now);
-                    osc.stop(now + 0.05);
+                    gain.gain.setValueAtTime(0.05, now);
+                    osc.start(now); osc.stop(now + 0.05);
                 } else if (type === 'modal') {
-                    osc.type = 'triangle';
-                    osc.frequency.setValueAtTime(300, now);
-                    osc.frequency.exponentialRampToValueAtTime(600, now + 0.08);
-                    gain.gain.setValueAtTime(0.1, now);
-                    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.08);
-                    osc.start(now);
-                    osc.stop(now + 0.08);
-                } else if (type === 'success') {
-                    osc.type = 'sine';
-                    osc.frequency.setValueAtTime(523.25, now);
-                    osc.frequency.setValueAtTime(659.25, now + 0.1);
-                    osc.frequency.setValueAtTime(783.99, now + 0.2);
-                    gain.gain.setValueAtTime(0.12, now);
-                    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.35);
-                    osc.start(now);
-                    osc.stop(now + 0.35);
+                    osc.frequency.setValueAtTime(500, now);
+                    gain.gain.setValueAtTime(0.08, now);
+                    osc.start(now); osc.stop(now + 0.08);
                 }
             } catch (e) {}
         }
 
-        window.onload = async function() {
+        window.onload = function() {
             const savedConfig = localStorage.getItem("spk_shop_config");
-            if (savedConfig) {
-                try {
-                    serverConfig = { ...serverConfig, ...JSON.parse(savedConfig) };
-                } catch(e) {}
-            }
+            if (savedConfig) { try { serverConfig = { ...serverConfig, ...JSON.parse(savedConfig) }; } catch(e){} }
 
             const savedUser = localStorage.getItem("spk_shop_user");
-            if (savedUser) {
-                try {
-                    currentUser = JSON.parse(savedUser);
-                } catch(e) {}
-            }
-
-            await handleDiscordOAuthCallback();
+            if (savedUser) { try { currentUser = JSON.parse(savedUser); } catch(e){} }
 
             const savedPurchases = localStorage.getItem("spk_shop_purchases");
-            if (savedPurchases) {
-                try {
-                    userPurchases = JSON.parse(savedPurchases);
-                } catch(e) {}
-            }
+            if (savedPurchases) { try { userPurchases = JSON.parse(savedPurchases); } catch(e){} }
 
             renderUserAuth();
             updateServerDisplay();
             renderPlans();
             initConstellationCanvas();
 
-            if (currentUser && window.listenToFirestorePurchases) {
-                window.listenToFirestorePurchases();
-            }
+            if (currentUser && window.listenToFirestorePurchases) window.listenToFirestorePurchases();
         };
 
-        async function handleDiscordOAuthCallback() {
-            const hash = window.location.hash;
-            if (hash && hash.includes("access_token=")) {
-                const params = new URLSearchParams(hash.replace("#", "?"));
-                const accessToken = params.get("access_token");
-                if (accessToken) {
-                    try {
-                        const res = await fetch("https://discord.com/api/users/@me", {
-                            headers: { authorization: `Bearer ${accessToken}` }
-                        });
-                        if (res.ok) {
-                            const data = await res.json();
-                            const userData = {
-                                uid: "discord_" + data.id,
-                                id: data.id,
-                                username: data.global_name || data.username,
-                                email: data.email || `${data.username}@discord.user`,
-                                avatar: data.avatar ? `https://cdn.discordapp.com/avatars/${data.id}/${data.avatar}.png` : `https://placehold.co/100x100/5865F2/ffffff?text=${data.username[0].toUpperCase()}`,
-                                provider: 'discord',
-                                createdAt: new Date().toISOString()
-                            };
-                            currentUser = userData;
-                            localStorage.setItem("spk_shop_user", JSON.stringify(currentUser));
-                            if (window.saveUserToFirestore) await window.saveUserToFirestore(userData);
-                            renderUserAuth();
-                            showToast(`Conectado com sucesso via Discord (@${currentUser.username})!`, "success");
-                            history.replaceState(null, "", window.location.pathname + window.location.search);
-                        }
-                    } catch (e) {
-                        console.warn("Erro ao processar login do Discord:", e);
-                    }
-                }
+        function setCategory(cat) {
+            playAudioEffect('click');
+            activeCategory = cat;
+            document.querySelectorAll('.cat-btn').forEach(btn => {
+                btn.className = "cat-btn px-5 py-2.5 rounded-2xl text-xs font-bold transition bg-spk-dark text-gray-300 border border-white/10 hover:border-spk-blue";
+            });
+            const activeBtn = document.getElementById(`catBtn-${cat}`);
+            if (activeBtn) activeBtn.className = "cat-btn px-5 py-2.5 rounded-2xl text-xs font-bold transition bg-spk-blue text-white border border-spk-blue";
+            renderPlans();
+        }
+
+        function renderPlans() {
+            const container = document.getElementById("plansContainer");
+            container.innerHTML = "";
+
+            const filtered = defaultPlans.filter(p => activeCategory === 'all' || p.category === activeCategory);
+
+            filtered.forEach(plan => {
+                let basePrice = Number(serverConfig.prices[plan.id]) || 30;
+                let finalPrice = basePrice.toFixed(2);
+                const cardBorder = plan.featured ? 'border-2 border-spk-blue shadow-xl shadow-spk-blue/15' : 'border border-white/10';
+
+                const html = `
+                    <div class="glass-card rounded-3xl p-6 flex flex-col justify-between relative ${cardBorder}">
+                        ${plan.badge ? `
+                            <div class="absolute -top-3.5 left-1/2 -translate-x-1/2 px-4 py-1 rounded-full ${plan.badgeStyle} text-[10px] uppercase font-black tracking-wider">
+                                ${plan.badge}
+                            </div>
+                        ` : ''}
+
+                        <div>
+                            <div class="text-center pb-5 border-b border-white/10 mt-2">
+                                <h3 class="text-lg font-black text-white">${plan.title}</h3>
+                                <div class="mt-3 flex items-baseline justify-center gap-1">
+                                    <span class="text-xs text-gray-400 font-bold">R$</span>
+                                    <span class="text-3xl font-black text-white">${finalPrice.replace('.', ',')}</span>
+                                    <span class="text-xs text-gray-400 font-semibold">/mês</span>
+                                </div>
+                            </div>
+
+                            <ul class="py-5 space-y-3 text-xs text-gray-300">
+                                ${plan.benefits.map(b => `
+                                    <li class="flex items-center gap-2">
+                                        <i class="fa-solid fa-circle-check text-spk-blue text-xs flex-shrink-0"></i>
+                                        <span>${b}</span>
+                                    </li>
+                                `).join('')}
+                            </ul>
+                        </div>
+
+                        <button onclick="playAudioEffect('modal'); openCheckoutModal('${plan.id}')" class="w-full py-3.5 rounded-2xl text-xs uppercase tracking-wider transition shadow-lg ${plan.btnBg} flex items-center justify-center gap-2 mt-4">
+                            <i class="fa-solid fa-cart-shopping"></i> Adquirir VIP
+                        </button>
+                    </div>
+                `;
+                container.innerHTML += html;
+            });
+        }
+
+        function openCheckoutModal(planId) {
+            const plan = defaultPlans.find(p => p.id === planId);
+            if (!plan) return;
+
+            selectedVip = { ...plan, basePrice: Number(serverConfig.prices[plan.id]) || 30 };
+            appliedDiscountPercent = 0;
+
+            document.getElementById("modalVipBadge").innerText = plan.badge;
+            document.getElementById("modalVipTitle").innerText = plan.title;
+            document.getElementById("modalVipImage").src = plan.image;
+            document.getElementById("modalVipDescription").innerText = plan.description;
+            document.getElementById("couponInput").value = "";
+            document.getElementById("couponMsg").classList.add("hidden");
+
+            updateCheckoutPrices();
+
+            if (currentUser) {
+                document.getElementById("modalUserName").innerText = currentUser.username;
+                document.getElementById("modalUserId").innerText = `ID: ${currentUser.id || currentUser.uid}`;
+                if (currentUser.avatar) document.getElementById("modalUserAvatar").src = currentUser.avatar;
+            } else {
+                document.getElementById("modalUserName").innerText = "Visitante (Não Conectado)";
+                document.getElementById("modalUserId").innerText = "Clique para entrar antes de concluir";
+            }
+
+            document.getElementById("checkoutStep1").classList.remove("hidden");
+            document.getElementById("checkoutStep2").classList.add("hidden");
+            document.getElementById("checkoutStep3").classList.add("hidden");
+            document.getElementById("checkoutModal").classList.remove("hidden");
+        }
+
+        function applyCoupon() {
+            const code = document.getElementById("couponInput").value.trim().toUpperCase();
+            const msgEl = document.getElementById("couponMsg");
+
+            if (validCoupons[code]) {
+                appliedDiscountPercent = validCoupons[code];
+                msgEl.innerText = `Cupom aplicado! ${appliedDiscountPercent}% de desconto ativado.`;
+                msgEl.className = "text-[11px] font-bold text-emerald-400 block";
+                updateCheckoutPrices();
+                playAudioEffect('click');
+            } else {
+                msgEl.innerText = "Cupom inválido ou expirado.";
+                msgEl.className = "text-[11px] font-bold text-rose-400 block";
             }
         }
 
-        function initConstellationCanvas() {
-            const canvas = document.getElementById('bgCanvas');
-            if (!canvas) return;
-            const ctx = canvas.getContext('2d');
+        function updateCheckoutPrices() {
+            if (!selectedVip) return;
+            const original = selectedVip.basePrice;
+            const final = original * (1 - appliedDiscountPercent / 100);
 
-            function resize() {
-                canvas.width = window.innerWidth;
-                canvas.height = window.innerHeight;
-            }
-            resize();
-            window.addEventListener('resize', resize);
+            const origEl = document.getElementById("modalVipOriginalPrice");
+            const priceEl = document.getElementById("modalVipPrice");
 
-            const particles = [];
-            const particleCount = Math.min(Math.floor(window.innerWidth / 18), 60);
-
-            for (let i = 0; i < particleCount; i++) {
-                particles.push({
-                    x: Math.random() * canvas.width,
-                    y: Math.random() * canvas.height,
-                    vx: (Math.random() - 0.5) * 0.4,
-                    vy: (Math.random() - 0.5) * 0.4,
-                    radius: Math.random() * 2 + 1,
-                    alpha: Math.random() * 0.5 + 0.3
-                });
+            if (appliedDiscountPercent > 0) {
+                origEl.innerText = `R$ ${original.toFixed(2).replace('.', ',')}`;
+                origEl.classList.remove("hidden");
+            } else {
+                origEl.classList.add("hidden");
             }
 
-            function animate() {
-                ctx.clearRect(0, 0, canvas.width, canvas.height);
+            priceEl.innerText = `R$ ${final.toFixed(2).replace('.', ',')}`;
+            selectedVip.calculatedFinal = final.toFixed(2);
+        }
 
-                for (let i = 0; i < particles.length; i++) {
-                    let p = particles[i];
-                    p.x += p.vx;
-                    p.y += p.vy;
+        function generatePixCode() {
+            playAudioEffect('click');
+            document.getElementById("checkoutStep1").classList.add("hidden");
+            document.getElementById("checkoutStep2").classList.remove("hidden");
 
-                    if (p.x < 0 || p.x > canvas.width) p.vx *= -1;
-                    if (p.y < 0 || p.y > canvas.height) p.vy *= -1;
+            const pixPayload = `00020126580014br.gov.bcb.pix0136stormvips-${Date.now()}5204000053039865405${selectedVip.calculatedFinal}5802BR5910STORM VIPS6009SAO PAULO63041D2C`;
+            document.getElementById("pixCopyInput").value = pixPayload;
+            
+            const qrcodeContainer = document.getElementById("qrcodeCanvas");
+            qrcodeContainer.innerHTML = "";
+            new QRCode(qrcodeContainer, { text: pixPayload, width: 170, height: 170 });
+        }
 
-                    ctx.beginPath();
-                    ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
-                    ctx.fillStyle = `rgba(59, 130, 246, ${p.alpha})`;
-                    ctx.fill();
+        function copyPixCode() {
+            playAudioEffect('click');
+            const input = document.getElementById("pixCopyInput");
+            input.select();
+            document.execCommand("copy");
+            showToast("Código PIX copiado com sucesso!", "success");
+        }
 
-                    for (let j = i + 1; j < particles.length; j++) {
-                        let p2 = particles[j];
-                        let dx = p.x - p2.x;
-                        let dy = p.y - p2.y;
-                        let dist = Math.sqrt(dx * dx + dy * dy);
+        async function simulatePaymentApproval() {
+            playAudioEffect('click');
+            document.getElementById("checkoutStep2").classList.add("hidden");
+            document.getElementById("checkoutStep3").classList.remove("hidden");
 
-                        if (dist < 130) {
-                            ctx.beginPath();
-                            ctx.moveTo(p.x, p.y);
-                            ctx.lineTo(p2.x, p2.y);
-                            ctx.strokeStyle = `rgba(59, 130, 246, ${0.16 * (1 - dist / 130)})`;
-                            ctx.lineWidth = 0.8;
-                            ctx.stroke();
-                        }
-                    }
-                }
-                requestAnimationFrame(animate);
+            const txId = `#STORM-${Math.floor(100000 + Math.random() * 900000)}`;
+            document.getElementById("successRoleName").innerText = selectedVip ? selectedVip.title : "VIP Storm";
+            document.getElementById("successUserName").innerText = currentUser ? `@${currentUser.username}` : "Visitante";
+            document.getElementById("successTxId").innerText = txId;
+
+            const newPurchase = {
+                vipTitle: selectedVip ? selectedVip.title : "VIP Storm",
+                price: selectedVip ? selectedVip.calculatedFinal : "30.00",
+                txId: txId,
+                status: "Ativo",
+                date: new Date().toLocaleDateString('pt-BR')
+            };
+
+            userPurchases.unshift(newPurchase);
+            localStorage.setItem("spk_shop_purchases", JSON.stringify(userPurchases));
+            if (window.savePurchaseToFirestore) await window.savePurchaseToFirestore(newPurchase);
+
+            if (typeof confetti === 'function') confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
+        }
+
+        function closeCheckoutModal() { document.getElementById("checkoutModal").classList.add("hidden"); }
+        function openLoginModal() { document.getElementById("loginModal").classList.remove("hidden"); }
+        function closeLoginModal() { document.getElementById("loginModal").classList.add("hidden"); }
+
+        function renderUserAuth() {
+            const authSec = document.getElementById("authSection");
+            if (currentUser) {
+                authSec.innerHTML = `
+                    <div onclick="playAudioEffect('modal'); openProfileModal('profile');" class="flex items-center gap-2 bg-spk-card px-3 py-1.5 rounded-2xl border border-white/10 cursor-pointer hover:border-spk-blue/50 transition">
+                        <img src="${currentUser.avatar}" class="w-7 h-7 rounded-full border border-spk-blue object-cover">
+                        <span class="text-xs font-bold text-white max-w-[100px] truncate">${currentUser.username}</span>
+                    </div>
+                `;
+            } else {
+                authSec.innerHTML = `
+                    <button onclick="playAudioEffect('modal'); openLoginModal();" class="bg-gradient-to-r from-blue-600 to-cyan-500 text-white font-extrabold px-5 py-2.5 rounded-2xl text-sm shadow-lg btn-glow">
+                        Entrar
+                    </button>
+                `;
             }
-            animate();
+        }
+
+        function logoutAccount() {
+            currentUser = null;
+            userPurchases = [];
+            localStorage.removeItem("spk_shop_user");
+            localStorage.removeItem("spk_shop_purchases");
+            if (window.firebaseSignOut) window.firebaseSignOut();
+            renderUserAuth();
+            closeProfileModal();
+            showToast("Você saiu da conta.", "info");
+        }
+
+        function openProfileModal(tab = 'profile') {
+            if (!currentUser) return openLoginModal();
+            document.getElementById("profileUserName").innerText = currentUser.username;
+            document.getElementById("profileUserEmail").innerText = currentUser.email || `${currentUser.username}@discord`;
+            document.getElementById("profileUserId").innerText = `ID: ${currentUser.id || currentUser.uid}`;
+            document.getElementById("profileUserAvatar").src = currentUser.avatar;
+            switchProfileTab(tab);
+            document.getElementById("profileModal").classList.remove("hidden");
+        }
+
+        function closeProfileModal() { document.getElementById("profileModal").classList.add("hidden"); }
+
+        function switchProfileTab(tab) {
+            const btnP = document.getElementById("tabBtnProfile");
+            const btnPu = document.getElementById("tabBtnPurchases");
+            const contentP = document.getElementById("tabContentProfile");
+            const contentPu = document.getElementById("tabContentPurchases");
+
+            if (tab === 'profile') {
+                btnP.className = "px-4 py-2 rounded-xl text-xs font-bold transition bg-spk-blue text-white";
+                btnPu.className = "px-4 py-2 rounded-xl text-xs font-bold transition text-gray-400 hover:text-white";
+                contentP.classList.remove("hidden"); contentPu.classList.add("hidden");
+            } else {
+                btnP.className = "px-4 py-2 rounded-xl text-xs font-bold transition text-gray-400 hover:text-white";
+                btnPu.className = "px-4 py-2 rounded-xl text-xs font-bold transition bg-spk-blue text-white";
+                contentP.classList.add("hidden"); contentPu.classList.remove("hidden");
+                renderPurchasesList();
+            }
+        }
+
+        function renderPurchasesList() {
+            const container = document.getElementById("purchasesListContainer");
+            if (userPurchases.length === 0) {
+                container.innerHTML = `<p class="text-center text-gray-400 text-xs py-6">Nenhum VIP resgatado ainda.</p>`;
+                return;
+            }
+            container.innerHTML = "";
+            userPurchases.forEach(p => {
+                container.innerHTML += `
+                    <div class="bg-spk-dark p-3.5 rounded-2xl border border-white/10 flex items-center justify-between text-xs">
+                        <div>
+                            <span class="font-bold text-white block">${p.vipTitle}</span>
+                            <span class="text-[11px] font-mono text-spk-blue">${p.txId}</span>
+                        </div>
+                        <span class="font-black text-white">R$ ${p.price}</span>
+                    </div>
+                `;
+            });
+        }
+
+        function promptAdminAccess() { document.getElementById("adminPinModal").classList.remove("hidden"); }
+        function closeAdminPinModal() { document.getElementById("adminPinModal").classList.add("hidden"); }
+
+        function submitAdminPin(e) {
+            e.preventDefault();
+            const pin = document.getElementById("adminPinInput").value.trim();
+            if (pin === (serverConfig.adminPin || "1234")) {
+                closeAdminPinModal();
+                openAdminModal();
+            } else {
+                showToast("Senha incorreta (use 1234).", "error");
+            }
+        }
+
+        function openAdminModal() {
+            document.getElementById("cfgServerName").value = serverConfig.name;
+            document.getElementById("cfgServerLogo").value = serverConfig.logo;
+            document.getElementById("cfgPriceBronze").value = serverConfig.prices.bronze;
+            document.getElementById("cfgPriceGold").value = serverConfig.prices.gold;
+            document.getElementById("cfgPriceDiamond").value = serverConfig.prices.diamond;
+            document.getElementById("cfgPriceMaster").value = serverConfig.prices.master;
+            document.getElementById("adminModal").classList.remove("hidden");
+        }
+
+        function closeAdminModal() { document.getElementById("adminModal").classList.add("hidden"); }
+
+        function saveAdminSettings(e) {
+            e.preventDefault();
+            serverConfig.name = document.getElementById("cfgServerName").value.trim();
+            serverConfig.logo = document.getElementById("cfgServerLogo").value.trim();
+            serverConfig.prices.bronze = parseFloat(document.getElementById("cfgPriceBronze").value) || 15;
+            serverConfig.prices.gold = parseFloat(document.getElementById("cfgPriceGold").value) || 30;
+            serverConfig.prices.diamond = parseFloat(document.getElementById("cfgPriceDiamond").value) || 60;
+            serverConfig.prices.master = parseFloat(document.getElementById("cfgPriceMaster").value) || 100;
+
+            localStorage.setItem("spk_shop_config", JSON.stringify(serverConfig));
+            updateServerDisplay();
+            renderPlans();
+            closeAdminModal();
+            showToast("Preços atualizados!", "success");
         }
 
         function updateServerDisplay() {
@@ -1166,585 +1157,82 @@
             document.getElementById("copyrightName").innerText = serverConfig.name;
             document.getElementById("serverLogo").src = serverConfig.logo;
             document.getElementById("footerLogo").src = serverConfig.logo;
-            const heroLogo = document.getElementById("heroLogoImage");
-            if (heroLogo) heroLogo.src = serverConfig.logo;
-        }
-
-        function renderPlans() {
-            const container = document.getElementById("plansContainer");
-            container.innerHTML = "";
-
-            defaultPlans.forEach(plan => {
-                let basePrice = Number(serverConfig.prices[plan.id]) || 30;
-                let finalPrice = basePrice.toFixed(2);
-                let cycleText = "Mensal";
-
-                const isFeatured = plan.featured;
-                const cardBorder = isFeatured ? 'border-2 border-spk-blue shadow-2xl shadow-spk-blue/20' : 'border border-white/10';
-
-                const html = `
-                    <div class="glass-card rounded-3xl p-6 flex flex-col justify-between relative ${cardBorder}">
-                        ${isFeatured ? `
-                            <div class="absolute -top-3.5 left-1/2 -translate-x-1/2 px-4 py-1 rounded-full ${plan.badgeBg} text-[11px] uppercase font-black tracking-wider">
-                                ${plan.badge}
-                            </div>
-                        ` : ''}
-
-                        <div>
-                            <div class="text-center pb-6 border-b border-white/10 mt-2">
-                                <h3 class="text-xl font-black text-white">${plan.title}</h3>
-                                <div class="mt-4 flex items-baseline justify-center gap-1">
-                                    <span class="text-xs text-gray-400 font-bold">R$</span>
-                                    <span class="text-4xl font-black text-white">${finalPrice.replace('.', ',')}</span>
-                                    <span class="text-xs text-gray-400 font-semibold">/mensal</span>
-                                </div>
-                            </div>
-
-                            <ul class="py-6 space-y-3.5 text-xs text-gray-300">
-                                ${plan.benefits.map(b => `
-                                    <li class="flex items-center gap-2.5">
-                                        <i class="fa-solid fa-circle-check text-spk-blue text-sm flex-shrink-0"></i>
-                                        <span>${b}</span>
-                                    </li>
-                                `).join('')}
-                            </ul>
-                        </div>
-
-                        <button onclick="playAudioEffect('modal'); openCheckoutModal('${plan.id}', '${plan.title}', '${finalPrice}', '${cycleText}')" class="w-full py-3.5 rounded-2xl font-black text-sm transition shadow-lg ${plan.btnBg} flex items-center justify-center gap-2 mt-4">
-                            <i class="fa-solid fa-cart-plus"></i> Comprar Agora
-                        </button>
-                    </div>
-                `;
-                container.innerHTML += html;
-            });
-        }
-
-        async function loginWithDiscord() {
-            playAudioEffect('click');
-            closeLoginModal();
-
-            if (serverConfig.discordClientId && serverConfig.discordClientId.trim() !== "") {
-                const redirectUri = encodeURIComponent(window.location.origin + window.location.pathname);
-                const discordAuthUrl = `https://discord.com/api/oauth2/authorize?client_id=${serverConfig.discordClientId.trim()}&redirect_uri=${redirectUri}&response_type=token&scope=identify%20email`;
-                window.location.href = discordAuthUrl;
-                return;
-            }
-
-            const discInput = prompt("Digite seu Discord Tag ou ID do usuário (Ex: stormplayer ou 94829381920391):");
-            if (!discInput || discInput.trim() === "") {
-                showToast("Autenticação cancelada. Informe um usuário do Discord válido.", "error");
-                return;
-            }
-
-            const cleanUser = discInput.trim();
-            const generatedId = cleanUser.match(/^\d+$/) ? cleanUser : Math.floor(1000000000000000 + Math.random() * 9000000000000000).toString();
-
-            currentUser = {
-                uid: "discord_" + generatedId,
-                id: generatedId,
-                username: cleanUser.startsWith('@') ? cleanUser.substring(1) : cleanUser,
-                email: `${cleanUser.toLowerCase().replace(/[^a-z0-9]/g, '')}@discord.user`,
-                avatar: `https://placehold.co/100x100/5865F2/ffffff?text=${cleanUser[0].toUpperCase()}`,
-                provider: 'discord',
-                createdAt: new Date().toISOString()
-            };
-
-            localStorage.setItem("spk_shop_user", JSON.stringify(currentUser));
-            if (window.saveUserToFirestore) {
-                await window.saveUserToFirestore(currentUser);
-            }
-            renderUserAuth();
-            showToast(`Conectado como @${currentUser.username}!`, "success");
-            if (window.listenToFirestorePurchases) {
-                window.listenToFirestorePurchases();
-            }
-        }
-
-        function renderUserAuth() {
-            const authSec = document.getElementById("authSection");
-            if (currentUser) {
-                const badgeIcon = currentUser.provider === 'google' ? 'fa-brands fa-google text-red-400' : 'fa-brands fa-discord text-indigo-400';
-                authSec.innerHTML = `
-                    <div onclick="playAudioEffect('modal'); openProfileModal('profile');" class="flex items-center gap-2 bg-spk-card px-3 py-1.5 rounded-2xl border border-white/10 cursor-pointer hover:border-spk-blue/50 transition">
-                        <div class="relative">
-                            <img src="${currentUser.avatar}" class="w-7 h-7 rounded-full border border-spk-blue object-cover">
-                            <i class="${badgeIcon} absolute -bottom-1 -right-1 text-[10px] bg-spk-dark rounded-full p-0.5"></i>
-                        </div>
-                        <span class="text-xs font-bold text-white max-w-[100px] truncate">${currentUser.username}</span>
-                        <i class="fa-solid fa-chevron-down text-[10px] text-gray-400"></i>
-                    </div>
-                `;
-            } else {
-                authSec.innerHTML = `
-                    <button onclick="playAudioEffect('modal'); openLoginModal();" class="bg-gradient-to-r from-blue-600 via-blue-500 to-cyan-500 hover:from-blue-500 hover:to-cyan-400 text-white font-extrabold px-5 py-2.5 rounded-2xl text-sm transition shadow-lg blue-glow-btn flex items-center gap-2">
-                        <i class="fa-solid fa-user-large text-xs"></i>
-                        <span>Entrar</span>
-                    </button>
-                `;
-            }
-        }
-
-        function logoutAccount() {
-            playAudioEffect('click');
-            currentUser = null;
-            userPurchases = [];
-            localStorage.removeItem("spk_shop_user");
-            localStorage.removeItem("spk_shop_purchases");
-            if (window.firebaseSignOut) window.firebaseSignOut();
-            renderUserAuth();
-            closeProfileModal();
-            showToast("Sessão encerrada com sucesso.", "info");
-        }
-
-        function openProfileModal(tab = 'profile') {
-            if (!currentUser) {
-                openLoginModal();
-                return;
-            }
-
-            document.getElementById("profileUserName").innerText = currentUser.username;
-            document.getElementById("profileUserEmail").innerText = currentUser.email || `${currentUser.username}@discord`;
-            document.getElementById("profileUserId").innerText = `ID: ${currentUser.id || currentUser.uid}`;
-            document.getElementById("profileUserAvatar").src = currentUser.avatar;
-            document.getElementById("profileProviderBadge").innerText = currentUser.provider || 'Google';
-            document.getElementById("profDetailProvider").innerText = currentUser.provider === 'google' ? 'Google Account' : 'Discord User';
-
-            const activeVip = userPurchases.length > 0 ? userPurchases[0].vipTitle : "Nenhum VIP Ativo";
-            document.getElementById("profActiveVipBadge").innerText = userPurchases.length > 0 ? `${activeVip} (Ativo)` : "Nenhum VIP Ativo";
-
-            switchProfileTab(tab);
-            document.getElementById("profileModal").classList.remove("hidden");
-        }
-
-        function closeProfileModal() {
-            document.getElementById("profileModal").classList.add("hidden");
-        }
-
-        function openLoginModal() {
-            document.getElementById("loginModal").classList.remove("hidden");
-        }
-
-        function closeLoginModal() {
-            document.getElementById("loginModal").classList.add("hidden");
-        }
-
-        async function switchProfileTab(tab) {
-            const btnP = document.getElementById("tabBtnProfile");
-            const btnPu = document.getElementById("tabBtnPurchases");
-            const contentP = document.getElementById("tabContentProfile");
-            const contentPu = document.getElementById("tabContentPurchases");
-
-            const activeStyle = "bg-spk-blue text-white shadow-md";
-            const inactiveStyle = "text-gray-400 hover:text-white bg-transparent";
-
-            if (tab === 'profile') {
-                btnP.className = `px-4 py-2 rounded-xl text-xs font-bold transition ${activeStyle}`;
-                btnPu.className = `px-4 py-2 rounded-xl text-xs font-bold transition ${inactiveStyle}`;
-                contentP.classList.remove("hidden");
-                contentPu.classList.add("hidden");
-            } else {
-                btnP.className = `px-4 py-2 rounded-xl text-xs font-bold transition ${inactiveStyle}`;
-                btnPu.className = `px-4 py-2 rounded-xl text-xs font-bold transition ${activeStyle}`;
-                contentP.classList.add("hidden");
-                contentPu.classList.remove("hidden");
-
-                renderPurchasesList();
-            }
-        }
-
-        function renderPurchasesList() {
-            const container = document.getElementById("purchasesListContainer");
-
-            const uniqueMap = new Map();
-            userPurchases.forEach(item => {
-                if (item.txId) uniqueMap.set(item.txId, item);
-            });
-            const uniquePurchases = Array.from(uniqueMap.values());
-
-            if (uniquePurchases.length === 0) {
-                container.innerHTML = `
-                    <div class="text-center py-10 bg-spk-dark/50 rounded-2xl border border-white/5">
-                        <i class="fa-solid fa-bag-shopping text-3xl text-gray-600 mb-2"></i>
-                        <p class="text-gray-400 text-xs font-semibold">Nenhum VIP ou compra gravada na sua conta ainda.</p>
-                        <button onclick="closeProfileModal(); scrollToPlans();" class="mt-3 text-xs text-spk-blue font-bold hover:underline">
-                            Ver Planos VIP Disponíveis
-                        </button>
-                    </div>
-                `;
-                return;
-            }
-
-            container.innerHTML = "";
-            uniquePurchases.forEach(p => {
-                container.innerHTML += `
-                    <div class="bg-spk-dark p-4 rounded-2xl border border-white/10 flex items-center justify-between text-xs">
-                        <div>
-                            <div class="flex items-center gap-2 mb-1">
-                                <span class="font-bold text-white text-sm">${p.vipTitle}</span>
-                                <span class="bg-emerald-500/20 text-emerald-400 text-[10px] px-2 py-0.5 rounded-full font-bold border border-emerald-500/30 flex items-center gap-1">
-                                    <i class="fa-solid fa-check"></i> ${p.status || 'Ativo'}
-                                </span>
-                            </div>
-                            <p class="text-gray-400 text-[11px]">Plano ${p.cycleText || 'Mensal'} • ID Transação: <span class="font-mono text-spk-blue">${p.txId}</span></p>
-                            <p class="text-gray-500 text-[10px] flex items-center gap-1 mt-1">
-                                <i class="fa-solid fa-cloud-arrow-up text-emerald-400"></i> Salvo em Firestore (${p.date || 'Hoje'})
-                            </p>
-                        </div>
-                        <div class="text-right">
-                            <span class="text-sm font-black text-white block">R$ ${p.price}</span>
-                        </div>
-                    </div>
-                `;
-            });
-        }
-
-        function openCheckoutModal(id, title, price, cycleText) {
-            selectedVip = { id, title, finalPrice: price, cycleText };
-
-            document.getElementById("modalVipBadge").innerText = id.toUpperCase();
-            document.getElementById("modalVipTitle").innerText = title;
-            document.getElementById("modalVipCycle").innerText = `Plano ${cycleText}`;
-            document.getElementById("modalVipPrice").innerText = `R$ ${price.replace('.', ',')}`;
-
-            if (currentUser) {
-                document.getElementById("modalUserName").innerText = currentUser.username;
-                document.getElementById("modalUserId").innerText = `ID: ${currentUser.id || currentUser.uid}`;
-                if (currentUser.avatar) {
-                    document.getElementById("modalUserAvatar").src = currentUser.avatar;
-                }
-            } else {
-                document.getElementById("modalUserName").innerText = "Visitante (Não Conectado)";
-                document.getElementById("modalUserId").innerText = "Clique aqui para selecionar/conectar sua conta";
-            }
-
-            document.getElementById("checkoutStep1").classList.remove("hidden");
-            document.getElementById("checkoutStep2").classList.add("hidden");
-            document.getElementById("checkoutStep3").classList.add("hidden");
-
-            document.getElementById("checkoutModal").classList.remove("hidden");
-        }
-
-        function closeCheckoutModal() {
-            document.getElementById("checkoutModal").classList.add("hidden");
-        }
-
-        function generatePixCode() {
-            playAudioEffect('click');
-            document.getElementById("checkoutStep1").classList.add("hidden");
-            document.getElementById("checkoutStep2").classList.remove("hidden");
-
-            const pixPayload = `00020126580014br.gov.bcb.pix0136stormvips-${Date.now()}5204000053039865405${selectedVip.finalPrice}5802BR5910STORM VIPS6009SAO PAULO62070503***63041D2C`;
-            
-            document.getElementById("pixCopyInput").value = pixPayload;
-            const qrcodeContainer = document.getElementById("qrcodeCanvas");
-            qrcodeContainer.innerHTML = "";
-
-            new QRCode(qrcodeContainer, {
-                text: pixPayload,
-                width: 170,
-                height: 170,
-                colorDark: "#000000",
-                colorLight: "#ffffff"
-            });
-        }
-
-        function copyPixCode() {
-            playAudioEffect('click');
-            const input = document.getElementById("pixCopyInput");
-            input.select();
-            document.execCommand("copy");
-            showToast("Código PIX copiado para a área de transferência!", "success");
-        }
-
-        async function simulatePaymentApproval() {
-            playAudioEffect('success');
-            document.getElementById("checkoutStep2").classList.add("hidden");
-            document.getElementById("checkoutStep3").classList.remove("hidden");
-
-            const txId = `#STORM-${Math.floor(100000 + Math.random() * 900000)}`;
-
-            document.getElementById("successRoleName").innerText = selectedVip ? selectedVip.title : "VIP Storm Ouro";
-            document.getElementById("successUserName").innerText = currentUser ? `@${currentUser.username}` : "Visitante";
-            document.getElementById("successTxId").innerText = txId;
-
-            const newPurchase = {
-                vipTitle: selectedVip ? selectedVip.title : "VIP Storm Ouro",
-                price: selectedVip ? selectedVip.finalPrice : "30.00",
-                cycleText: selectedVip ? selectedVip.cycleText : "Mensal",
-                txId: txId,
-                status: "Ativo",
-                date: new Date().toLocaleDateString('pt-BR')
-            };
-
-            userPurchases.unshift(newPurchase);
-            localStorage.setItem("spk_shop_purchases", JSON.stringify(userPurchases));
-
-            if (window.savePurchaseToFirestore) {
-                await window.savePurchaseToFirestore(newPurchase);
-            }
-
-            if (typeof confetti === 'function') {
-                confetti({
-                    particleCount: 120,
-                    spread: 80,
-                    origin: { y: 0.6 }
-                });
-            }
-
-            dispatchDiscordWebhook(newPurchase);
-        }
-
-        function dispatchDiscordWebhook(purchase) {
-            if (!serverConfig.webhookUrl || serverConfig.webhookUrl.trim() === "") return;
-            try {
-                fetch(serverConfig.webhookUrl, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        embeds: [{
-                            title: "🎉 Nova Compra VIP Registrada!",
-                            color: 3897334,
-                            fields: [
-                                { name: "Produto VIP", value: purchase.vipTitle, inline: true },
-                                { name: "Valor", value: `R$ ${purchase.price}`, inline: true },
-                                { name: "Usuário", value: currentUser ? `@${currentUser.username}` : "Visitante", inline: true },
-                                { name: "User ID", value: currentUser ? currentUser.id || currentUser.uid : "Desconhecido", inline: true },
-                                { name: "Guild ID Servidor", value: serverConfig.guildId || "Não configurado", inline: true },
-                                { name: "Canal ID Mensagem", value: serverConfig.channelId || "Não configurado", inline: true },
-                                { name: "Transação ID", value: purchase.txId, inline: false }
-                            ],
-                            footer: { text: "Storm VIPs Store & Cloud Sync System" },
-                            timestamp: new Date().toISOString()
-                        }]
-                    })
-                }).catch(e => console.warn("Erro no Webhook:", e));
-            } catch(e){}
-        }
-
-        function promptAdminAccess() {
-            playAudioEffect('click');
-            document.getElementById("adminPinInput").value = "";
-            document.getElementById("adminPinModal").classList.remove("hidden");
-        }
-
-        function closeAdminPinModal() {
-            document.getElementById("adminPinModal").classList.add("hidden");
-        }
-
-        function submitAdminPin(event) {
-            event.preventDefault();
-            playAudioEffect('click');
-            const entered = document.getElementById("adminPinInput").value.trim();
-            const expectedPin = serverConfig.adminPin || "1234";
-
-            if (entered === expectedPin) {
-                closeAdminPinModal();
-                openAdminModal();
-                showToast("Acesso administrativo concedido!", "success");
-            } else {
-                showToast("Senha/PIN incorreto. Tente '1234'.", "error");
-            }
-        }
-
-        function openAdminModal() {
-            document.getElementById("cfgServerName").value = serverConfig.name;
-            document.getElementById("cfgServerLogo").value = serverConfig.logo;
-            document.getElementById("cfgWebhookUrl").value = serverConfig.webhookUrl || "";
-            document.getElementById("cfgGuildId").value = serverConfig.guildId || "";
-            document.getElementById("cfgChannelId").value = serverConfig.channelId || "";
-            document.getElementById("cfgDiscordClientId").value = serverConfig.discordClientId || "";
-            document.getElementById("cfgAdminPin").value = serverConfig.adminPin || "1234";
-            document.getElementById("cfgPriceBronze").value = serverConfig.prices.bronze;
-            document.getElementById("cfgPriceGold").value = serverConfig.prices.gold;
-            document.getElementById("cfgPriceDiamond").value = serverConfig.prices.diamond;
-
-            document.getElementById("adminModal").classList.remove("hidden");
-        }
-
-        function closeAdminModal() {
-            document.getElementById("adminModal").classList.add("hidden");
-        }
-
-        function saveAdminSettings(event) {
-            event.preventDefault();
-            playAudioEffect('click');
-
-            serverConfig.name = document.getElementById("cfgServerName").value.trim();
-            serverConfig.logo = document.getElementById("cfgServerLogo").value.trim();
-            serverConfig.webhookUrl = document.getElementById("cfgWebhookUrl").value.trim();
-            serverConfig.guildId = document.getElementById("cfgGuildId").value.trim();
-            serverConfig.channelId = document.getElementById("cfgChannelId").value.trim();
-            serverConfig.discordClientId = document.getElementById("cfgDiscordClientId").value.trim();
-            serverConfig.adminPin = document.getElementById("cfgAdminPin").value.trim() || "1234";
-            
-            serverConfig.prices.bronze = parseFloat(document.getElementById("cfgPriceBronze").value) || 15;
-            serverConfig.prices.gold = parseFloat(document.getElementById("cfgPriceGold").value) || 30;
-            serverConfig.prices.diamond = parseFloat(document.getElementById("cfgPriceDiamond").value) || 60;
-
-            localStorage.setItem("spk_shop_config", JSON.stringify(serverConfig));
-
-            updateServerDisplay();
-            renderPlans();
-            closeAdminModal();
-            showToast("Configurações do Servidor e Discord salvas com sucesso!", "success");
-        }
-
-        function openCartDrawer() {
-            document.getElementById("cartDrawer").classList.remove("hidden");
-        }
-
-        function closeCartDrawer() {
-            document.getElementById("cartDrawer").classList.add("hidden");
-        }
-
-        function checkoutFromCart() {
-            closeCartDrawer();
-            openCheckoutModal('gold', 'VIP Storm Ouro', serverConfig.prices.gold.toFixed(2), 'Mensal');
         }
 
         function filterProducts() {
             const query = document.getElementById("searchInput").value.toLowerCase();
             const cards = document.querySelectorAll("#plansContainer > div");
             cards.forEach(card => {
-                const text = card.innerText.toLowerCase();
-                card.style.display = text.includes(query) ? "flex" : "none";
+                card.style.display = card.innerText.toLowerCase().includes(query) ? "flex" : "none";
             });
         }
 
         function focusSearchInput() {
             const input = document.getElementById("searchInput");
-            input.focus();
-            input.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            input.focus(); input.scrollIntoView({ behavior: 'smooth', block: 'center' });
         }
 
-        function scrollToPlans() {
-            document.getElementById("planos").scrollIntoView({ behavior: "smooth" });
-        }
-
-        function toggleMobileMenu() {
-            document.getElementById("mobileMenu").classList.toggle("hidden");
-        }
+        function toggleMobileMenu() {}
 
         function showToast(msg, type = "info") {
             const container = document.getElementById("toastContainer");
             const toast = document.createElement("div");
-            
-            let bg = "bg-spk-card border-spk-blue text-white";
-            let icon = "fa-circle-info text-spk-blue";
-
-            if (type === "success") {
-                bg = "bg-emerald-950/90 border-emerald-500 text-emerald-100";
-                icon = "fa-circle-check text-emerald-400";
-            } else if (type === "error") {
-                bg = "bg-rose-950/90 border-rose-500 text-rose-100";
-                icon = "fa-circle-exclamation text-rose-400";
-            }
-
-            toast.className = `${bg} border p-3.5 rounded-2xl shadow-2xl flex items-center gap-3 text-xs font-semibold pointer-events-auto transition-all duration-300 transform translate-y-2 opacity-0`;
-            toast.innerHTML = `<i class="fa-solid ${icon} text-base"></i> <span>${msg}</span>`;
-
+            let bg = type === "success" ? "bg-emerald-950/90 border-emerald-500 text-emerald-100" : "bg-spk-card border-spk-blue text-white";
+            toast.className = `${bg} border p-3 rounded-2xl shadow-xl flex items-center gap-2 text-xs font-bold transition-all duration-300`;
+            toast.innerHTML = `<span>${msg}</span>`;
             container.appendChild(toast);
+            setTimeout(() => toast.remove(), 3500);
+        }
+
+        function openAiSupportModal() { document.getElementById("aiSupportModal").classList.remove("hidden"); }
+        function closeAiSupportModal() { document.getElementById("aiSupportModal").classList.add("hidden"); }
+
+        function sendAiMessage() {
+            const input = document.getElementById("aiChatInput");
+            const val = input.value.trim();
+            if (!val) return;
+
+            const chat = document.getElementById("aiChatHistory");
+            chat.innerHTML += `<div class="bg-spk-blue p-3 rounded-2xl text-xs text-white text-right">${val}</div>`;
+            input.value = "";
 
             setTimeout(() => {
-                toast.classList.remove("translate-y-2", "opacity-0");
-            }, 10);
-
-            setTimeout(() => {
-                toast.classList.add("opacity-0", "translate-y-2");
-                setTimeout(() => toast.remove(), 300);
-            }, 4000);
+                chat.innerHTML += `<div class="bg-spk-dark p-3.5 rounded-2xl border border-white/10 text-xs text-gray-200">Suas compras VIP contam com ativamento automático PIX e cupons como <b>STORM10</b>.</div>`;
+                chat.scrollTop = chat.scrollHeight;
+            }, 600);
         }
 
-        function openAiSupportModal() {
-            document.getElementById("aiSupportModal").classList.remove("hidden");
-        }
-
-        function closeAiSupportModal() {
-            document.getElementById("aiSupportModal").classList.add("hidden");
-        }
-
-        function sendAiQuickQuery(text) {
-            playAudioEffect('click');
-            document.getElementById("aiChatInput").value = text;
-            sendAiMessage();
-        }
-
-        async function sendAiMessage() {
-            const inputEl = document.getElementById("aiChatInput");
-            const query = inputEl.value.trim();
-            if (!query) return;
-
-            playAudioEffect('click');
-            const chatHistory = document.getElementById("aiChatHistory");
-
-            chatHistory.innerHTML += `
-                <div class="flex items-start gap-3 justify-end">
-                    <div class="bg-spk-blue p-3 rounded-2xl text-xs text-white max-w-[85%] shadow-md">
-                        ${query}
-                    </div>
-                </div>
-            `;
-
-            inputEl.value = "";
-            chatHistory.scrollTop = chatHistory.scrollHeight;
-
-            const qLower = query.toLowerCase();
-            let quickReply = null;
-
-            if (qLower.includes("paga") || qLower.includes("pagamento") || qLower.includes("pix")) {
-                quickReply = "💳 **Como pagar:**\n1. Escolha o plano desejado e clique em 'Comprar Agora'.\n2. Escaneie o QR Code PIX ou use o código Copia e Cola.\n3. O pagamento é aprovado na hora e ativado automaticamente com registro na sua conta!";
-            } else if (qLower.includes("onde") || qLower.includes("nuvem") || qLower.includes("salvas") || qLower.includes("historico")) {
-                quickReply = "☁️ **Salvamento em Nuvem:**\nTodas as suas compras e assinaturas VIP ficam sincronizadas em tempo real no banco de dados Firestore da sua conta! Você pode ver tudo na aba 'Minhas Compras'.";
-            } else if (qLower.includes("reembolso") || qLower.includes("devolver") || qLower.includes("estorno")) {
-                quickReply = "🔄 **Como pedir reembolso:**\n1. O prazo de reembolso é de até 7 dias após a compra.\n2. Acesse seu perfil em 'Minhas Compras' para consultar o ID da transação.\n3. Chame nossa equipe de atendimento para realizar a devolução do PIX.";
-            } else if (qLower.includes("suporte") || qLower.includes("ajuda") || qLower.includes("atendimento")) {
-                quickReply = "💬 **Como pedir suporte:**\n1. Conecte sua conta na loja.\n2. Acesse o servidor da Storm VIPs no Discord.\n3. Abra um ticket no canal de ajuda com nosso time oficial!";
+        function initConstellationCanvas() {
+            const canvas = document.getElementById('bgCanvas');
+            if (!canvas) return;
+            const ctx = canvas.getContext('2d');
+            function resize() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
+            resize(); window.addEventListener('resize', resize);
+            const particles = Array.from({ length: 45 }, () => ({
+                x: Math.random() * canvas.width, y: Math.random() * canvas.height,
+                vx: (Math.random() - 0.5) * 0.4, vy: (Math.random() - 0.5) * 0.4,
+                radius: Math.random() * 2 + 1
+            }));
+            function animate() {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                particles.forEach((p, i) => {
+                    p.x += p.vx; p.y += p.vy;
+                    if (p.x < 0 || p.x > canvas.width) p.vx *= -1;
+                    if (p.y < 0 || p.y > canvas.height) p.vy *= -1;
+                    ctx.beginPath(); ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+                    ctx.fillStyle = "rgba(59, 130, 246, 0.4)"; ctx.fill();
+                    for (let j = i + 1; j < particles.length; j++) {
+                        let p2 = particles[j];
+                        let dist = Math.hypot(p.x - p2.x, p.y - p2.y);
+                        if (dist < 120) {
+                            ctx.beginPath(); ctx.moveTo(p.x, p.y); ctx.lineTo(p2.x, p2.y);
+                            ctx.strokeStyle = `rgba(59, 130, 246, ${0.15 * (1 - dist / 120)})`; ctx.stroke();
+                        }
+                    }
+                });
+                requestAnimationFrame(animate);
             }
-
-            if (quickReply) {
-                chatHistory.innerHTML += `
-                    <div class="flex items-start gap-3">
-                        <div class="w-8 h-8 rounded-full bg-spk-blue text-white flex items-center justify-center text-xs font-bold flex-shrink-0">
-                            IA
-                        </div>
-                        <div class="bg-spk-dark p-3.5 rounded-2xl border border-white/10 text-xs text-gray-200 leading-relaxed max-w-[85%] whitespace-pre-line shadow-md">
-                            ${quickReply}
-                        </div>
-                    </div>
-                `;
-                chatHistory.scrollTop = chatHistory.scrollHeight;
-                return;
-            }
-
-            const loadingId = "aiLoading_" + Date.now();
-            chatHistory.innerHTML += `
-                <div id="${loadingId}" class="flex items-start gap-3">
-                    <div class="w-8 h-8 rounded-full bg-spk-blue text-white flex items-center justify-center text-xs font-bold flex-shrink-0">
-                        IA
-                    </div>
-                    <div class="bg-spk-dark p-3 rounded-2xl border border-white/10 text-xs text-gray-400 flex items-center gap-2">
-                        <i class="fa-solid fa-spinner animate-spin text-spk-blue"></i> Digitando resposta...
-                    </div>
-                </div>
-            `;
-            chatHistory.scrollTop = chatHistory.scrollHeight;
-
-            setTimeout(() => {
-                const loadingEl = document.getElementById(loadingId);
-                if (loadingEl) loadingEl.remove();
-
-                chatHistory.innerHTML += `
-                    <div class="flex items-start gap-3">
-                        <div class="w-8 h-8 rounded-full bg-spk-blue text-white flex items-center justify-center text-xs font-bold flex-shrink-0">
-                            IA
-                        </div>
-                        <div class="bg-spk-dark p-3.5 rounded-2xl border border-white/10 text-xs text-gray-200 leading-relaxed max-w-[85%]">
-                            Na Storm VIPs, os pagamentos por PIX são liberados imediatamente e sincronizados no Firestore. Você também pode consultar seus resgates na aba "Minhas Compras".
-                        </div>
-                    </div>
-                `;
-                chatHistory.scrollTop = chatHistory.scrollHeight;
-            }, 800);
+            animate();
         }
     </script>
 </body>
