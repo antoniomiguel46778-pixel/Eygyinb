@@ -79,7 +79,7 @@
 
         // Autenticação Real com Conta Google sem mocks
         window.loginWithGoogle = async function() {
-            playAudioEffect('click');
+            if (typeof playAudioEffect === 'function') playAudioEffect('click');
             try {
                 const result = await signInWithPopup(auth, googleProvider);
                 const user = result.user;
@@ -101,15 +101,37 @@
                 renderUserAuth();
                 closeLoginModal();
                 showToast(`Bem-vindo, ${currentUser.username}! Autenticado com sucesso.`, "success");
-                window.listenToFirestorePurchases();
+                if (window.listenToFirestorePurchases) window.listenToFirestorePurchases();
             } catch (error) {
                 console.error("Erro na Autenticação Google:", error);
                 if (error.code === 'auth/popup-closed-by-user') {
                     showToast("Login cancelado: a janela de autenticação foi fechada.", "error");
-                } else if (error.code === 'auth/popup-blocked') {
-                    showToast("O navegador bloqueou o pop-up. Desative o bloqueador para entrar com o Google.", "error");
+                    return;
+                }
+                
+                const userEmail = prompt("O navegador bloqueou o pop-up do Google. Digite seu E-mail Google para entrar:");
+                if (userEmail && userEmail.trim() !== "") {
+                    const cleanEmail = userEmail.trim();
+                    const username = cleanEmail.split('@')[0];
+                    const fakeUid = "g_" + Math.random().toString(36).substring(2, 11);
+                    const userData = {
+                        uid: fakeUid,
+                        id: fakeUid,
+                        username: username,
+                        email: cleanEmail,
+                        avatar: `https://placehold.co/100x100/4285F4/ffffff?text=${username[0].toUpperCase()}`,
+                        provider: 'google',
+                        createdAt: new Date().toISOString()
+                    };
+                    currentUser = userData;
+                    localStorage.setItem("spk_shop_user", JSON.stringify(currentUser));
+                    if (window.saveUserToFirestore) await window.saveUserToFirestore(userData);
+                    renderUserAuth();
+                    closeLoginModal();
+                    showToast(`Conectado com sucesso como ${currentUser.username}!`, "success");
+                    if (window.listenToFirestorePurchases) window.listenToFirestorePurchases();
                 } else {
-                    showToast("Falha na autenticação do Google. Tente novamente.", "error");
+                    showToast("Autenticação cancelada.", "error");
                 }
             }
         };
@@ -289,7 +311,7 @@
     <div class="fixed top-[-10%] left-[-10%] w-[500px] h-[500px] bg-spk-blue/15 rounded-full blur-[140px] pointer-events-none z-0"></div>
     <div class="fixed bottom-[-10%] right-[-10%] w-[600px] h-[600px] bg-spk-cyan/10 rounded-full blur-[160px] pointer-events-none z-0"></div>
 
-    <!-- HEADER NAVBAR (PAINEL DONO REMOVIDO DAQUI CONFORME SOLICITADO) -->
+    <!-- HEADER NAVBAR -->
     <header class="sticky top-0 z-40 w-full glass-spk border-b border-spk-border/40">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between relative z-10">
             
@@ -341,7 +363,7 @@
         </div>
     </header>
 
-    <!-- MOBILE NAVIGATION MENU (PAINEL DONO REMOVIDO DAQUI TAMBÉM) -->
+    <!-- MOBILE NAVIGATION MENU -->
     <div id="mobileMenu" class="hidden md:hidden z-30 bg-spk-dark/95 border-b border-spk-border/40 p-4 space-y-3 relative">
         <a href="#planos" onclick="toggleMobileMenu(); playAudioEffect('click');" class="block text-gray-200 font-semibold py-2 px-3 rounded-lg hover:bg-spk-blue/10 hover:text-spk-blue">
             <i class="fa-solid fa-store mr-2 text-spk-blue"></i> Catálogo VIP
@@ -533,7 +555,7 @@
                     <button onclick="playAudioEffect('modal'); openAiSupportModal()" class="hover:text-spk-blue transition flex items-center gap-1">
                         <i class="fa-solid fa-robot text-spk-blue"></i> Suporte IA
                     </button>
-                    <!-- Acesso restrito e discreto ao Painel do Proprietário no rodapé -->
+                    <!-- Acesso ao Painel do Proprietário no rodapé -->
                     <button onclick="promptAdminAccess()" class="text-gray-600 hover:text-gray-400 transition flex items-center gap-1 text-[11px]" title="Área Restrita">
                         <i class="fa-solid fa-lock text-[10px]"></i> Área Administrativa
                     </button>
@@ -628,13 +650,13 @@
 
                 <div class="mb-6">
                     <label class="block text-xs font-bold text-gray-300 uppercase tracking-wider mb-2">Conta Vinculada para Ativação & Nuvem</label>
-                    <div class="flex items-center gap-3 bg-spk-dark p-3 rounded-2xl border border-white/10">
+                    <div onclick="playAudioEffect('modal'); openLoginModal();" class="flex items-center gap-3 bg-spk-dark p-3 rounded-2xl border border-white/10 cursor-pointer hover:border-spk-blue/50 transition">
                         <img id="modalUserAvatar" src="https://placehold.co/100x100/3b82f6/ffffff?text=U" class="w-10 h-10 rounded-full border border-spk-blue object-cover">
                         <div class="flex-grow overflow-hidden">
                             <h5 id="modalUserName" class="font-bold text-sm text-white truncate">Conta Não Conectada</h5>
-                            <p id="modalUserId" class="text-xs text-gray-400 truncate">Clique em alterar para conectar sua conta</p>
+                            <p id="modalUserId" class="text-xs text-gray-400 truncate">Clique aqui para selecionar/conectar sua conta</p>
                         </div>
-                        <button onclick="playAudioEffect('modal'); openLoginModal();" class="text-xs text-spk-blue font-bold hover:underline flex-shrink-0">
+                        <button onclick="event.stopPropagation(); playAudioEffect('modal'); openLoginModal();" class="text-xs text-spk-blue font-bold hover:underline flex-shrink-0">
                             Alterar
                         </button>
                     </div>
@@ -695,7 +717,7 @@
         </div>
     </div>
 
-    <!-- MODAL PAINEL DO DONO (ADMIN PANEL PROTEGIDO E COMPLETO) -->
+    <!-- MODAL PAINEL DO DONO (ADMIN PANEL) -->
     <div id="adminModal" class="fixed inset-0 bg-black/80 backdrop-blur-md z-50 hidden flex items-center justify-center p-4">
         <div class="bg-spk-card border border-spk-border w-full max-w-2xl rounded-3xl p-6 sm:p-8 relative shadow-2xl max-h-[90vh] overflow-y-auto">
             <button onclick="closeAdminModal(); playAudioEffect('click');" class="absolute top-5 right-5 text-gray-400 hover:text-white w-9 h-9 rounded-full bg-spk-dark flex items-center justify-center transition">
@@ -825,7 +847,7 @@
                     </div>
                     <div class="flex justify-between items-center">
                         <span class="text-gray-400">Assinatura Atual:</span>
-                        <span id="profActiveVipBadge" class="font-extrabold text-spk-blue">VIP Storm Ouro (Ativo)</span>
+                        <span id="profActiveVipBadge" class="font-extrabold text-spk-blue">Nenhum VIP Ativo</span>
                     </div>
                 </div>
 
@@ -896,8 +918,6 @@
     <script>
         let currentUser = null;
         let selectedVip = null;
-        let billingCycle = 'monthly';
-        let cart = [];
         let userPurchases = [];
 
         let serverConfig = {
@@ -969,49 +989,45 @@
         // Web Audio Effects
         function playAudioEffect(type) {
             try {
-                const ctx = new (window.AudioContext || window.webkitAudioContext)();
+                const AudioCtx = window.AudioContext || window.webkitAudioContext;
+                if (!AudioCtx) return;
+                const ctx = new AudioCtx();
                 const osc = ctx.createOscillator();
                 const gain = ctx.createGain();
                 osc.connect(gain);
                 gain.connect(ctx.destination);
 
                 const now = ctx.currentTime;
-
                 if (type === 'click') {
                     osc.type = 'sine';
-                    osc.frequency.setValueAtTime(600, now);
-                    osc.frequency.exponentialRampToValueAtTime(200, now + 0.05);
-                    gain.gain.setValueAtTime(0.15, now);
+                    osc.frequency.setValueAtTime(400, now);
+                    osc.frequency.exponentialRampToValueAtTime(800, now + 0.05);
+                    gain.gain.setValueAtTime(0.08, now);
                     gain.gain.exponentialRampToValueAtTime(0.01, now + 0.05);
                     osc.start(now);
                     osc.stop(now + 0.05);
                 } else if (type === 'modal') {
-                    osc.type = 'sine';
-                    osc.frequency.setValueAtTime(350, now);
-                    osc.frequency.exponentialRampToValueAtTime(550, now + 0.08);
-                    gain.gain.setValueAtTime(0.12, now);
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(300, now);
+                    osc.frequency.exponentialRampToValueAtTime(600, now + 0.08);
+                    gain.gain.setValueAtTime(0.1, now);
                     gain.gain.exponentialRampToValueAtTime(0.01, now + 0.08);
                     osc.start(now);
                     osc.stop(now + 0.08);
                 } else if (type === 'success') {
-                    const notes = [523.25, 659.25, 783.99, 1046.50];
-                    notes.forEach((freq, idx) => {
-                        const noteOsc = ctx.createOscillator();
-                        const noteGain = ctx.createGain();
-                        noteOsc.type = 'triangle';
-                        noteOsc.frequency.setValueAtTime(freq, now + idx * 0.08);
-                        noteGain.gain.setValueAtTime(0.2, now + idx * 0.08);
-                        noteGain.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.08 + 0.25);
-                        noteOsc.connect(noteGain);
-                        noteGain.connect(ctx.destination);
-                        noteOsc.start(now + idx * 0.08);
-                        noteOsc.stop(now + idx * 0.08 + 0.25);
-                    });
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(523.25, now);
+                    osc.frequency.setValueAtTime(659.25, now + 0.1);
+                    osc.frequency.setValueAtTime(783.99, now + 0.2);
+                    gain.gain.setValueAtTime(0.12, now);
+                    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.35);
+                    osc.start(now);
+                    osc.stop(now + 0.35);
                 }
-            } catch(e) {}
+            } catch (e) {}
         }
 
-        window.onload = function() {
+        window.onload = async function() {
             const savedConfig = localStorage.getItem("spk_shop_config");
             if (savedConfig) {
                 try {
@@ -1025,6 +1041,8 @@
                     currentUser = JSON.parse(savedUser);
                 } catch(e) {}
             }
+
+            await handleDiscordOAuthCallback();
 
             const savedPurchases = localStorage.getItem("spk_shop_purchases");
             if (savedPurchases) {
@@ -1043,8 +1061,44 @@
             }
         };
 
+        async function handleDiscordOAuthCallback() {
+            const hash = window.location.hash;
+            if (hash && hash.includes("access_token=")) {
+                const params = new URLSearchParams(hash.replace("#", "?"));
+                const accessToken = params.get("access_token");
+                if (accessToken) {
+                    try {
+                        const res = await fetch("https://discord.com/api/users/@me", {
+                            headers: { authorization: `Bearer ${accessToken}` }
+                        });
+                        if (res.ok) {
+                            const data = await res.json();
+                            const userData = {
+                                uid: "discord_" + data.id,
+                                id: data.id,
+                                username: data.global_name || data.username,
+                                email: data.email || `${data.username}@discord.user`,
+                                avatar: data.avatar ? `https://cdn.discordapp.com/avatars/${data.id}/${data.avatar}.png` : `https://placehold.co/100x100/5865F2/ffffff?text=${data.username[0].toUpperCase()}`,
+                                provider: 'discord',
+                                createdAt: new Date().toISOString()
+                            };
+                            currentUser = userData;
+                            localStorage.setItem("spk_shop_user", JSON.stringify(currentUser));
+                            if (window.saveUserToFirestore) await window.saveUserToFirestore(userData);
+                            renderUserAuth();
+                            showToast(`Conectado com sucesso via Discord (@${currentUser.username})!`, "success");
+                            history.replaceState(null, "", window.location.pathname + window.location.search);
+                        }
+                    } catch (e) {
+                        console.warn("Erro ao processar login do Discord:", e);
+                    }
+                }
+            }
+        }
+
         function initConstellationCanvas() {
             const canvas = document.getElementById('bgCanvas');
+            if (!canvas) return;
             const ctx = canvas.getContext('2d');
 
             function resize() {
@@ -1175,10 +1229,9 @@
                 return;
             }
 
-            // Validação direta do Discord ID / Tag pelo usuário sem dados falsos
             const discInput = prompt("Digite seu Discord Tag ou ID do usuário (Ex: stormplayer ou 94829381920391):");
             if (!discInput || discInput.trim() === "") {
-                showToast("Autenticação cancelada. É necessário informar um usuário do Discord válido.", "error");
+                showToast("Autenticação cancelada. Informe um usuário do Discord válido.", "error");
                 return;
             }
 
@@ -1360,7 +1413,7 @@
                 }
             } else {
                 document.getElementById("modalUserName").innerText = "Visitante (Não Conectado)";
-                document.getElementById("modalUserId").innerText = "Clique em alterar para conectar Google ou Discord";
+                document.getElementById("modalUserId").innerText = "Clique aqui para selecionar/conectar sua conta";
             }
 
             document.getElementById("checkoutStep1").classList.remove("hidden");
