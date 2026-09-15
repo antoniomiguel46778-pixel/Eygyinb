@@ -427,6 +427,7 @@
                     <h4 class="font-bold text-white text-sm mb-4">Minha Conta</h4>
                     <ul class="space-y-2 text-xs text-gray-400">
                         <li><button onclick="playAudioEffect('modal'); openProfileModal('profile')" class="hover:text-spk-blue transition">Meu Perfil</button></li>
+                        <li><button onclick="playAudioEffect('modal'); openProfileModal('purchases')" class="hover:text-spk-blue transition">Minhas Compras</button></li>
                         <!-- BOTÃO PAINEL DO DONO: Invisível por padrão, visível APENAS para antoniomiguel46779@gmail.com -->
                         <li id="ownerAdminLink" class="hidden">
                             <button onclick="promptAdminAccess()" class="text-amber-400 hover:text-amber-300 transition font-bold flex items-center gap-1.5">
@@ -598,7 +599,7 @@
         </div>
     </div>
 
-    <!-- MODAL PERFIL DO USUÁRIO -->
+    <!-- MODAL PERFIL DO USUÁRIO & MINHAS COMPRAS -->
     <div id="profileModal" class="fixed inset-0 bg-black/80 backdrop-blur-md z-50 hidden flex items-center justify-center p-4">
         <div class="bg-spk-card border border-spk-border w-full max-w-2xl rounded-3xl p-6 sm:p-8 relative shadow-2xl flex flex-col max-h-[90vh]">
             <button onclick="closeProfileModal(); playAudioEffect('click');" class="absolute top-5 right-5 text-gray-400 hover:text-white w-9 h-9 rounded-full bg-spk-dark flex items-center justify-center transition">
@@ -636,6 +637,11 @@
                         <span class="font-bold text-emerald-400 flex items-center gap-1"><i class="fa-solid fa-cloud-arrow-up"></i> Conectado com Firestore</span>
                     </div>
                 </div>
+
+                <!-- Botão para atalho direto das compras dentro do modal -->
+                <button onclick="switchProfileTab('purchases'); playAudioEffect('click');" class="w-full bg-spk-dark hover:bg-white/5 text-gray-200 border border-white/10 font-bold py-3 rounded-2xl transition text-xs flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-receipt text-spk-blue"></i> Ver Histórico de VIPs Comprados
+                </button>
 
                 <button onclick="logoutAccount()" class="w-full bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/30 font-bold py-3 rounded-2xl transition text-xs flex items-center justify-center gap-2">
                     <i class="fa-solid fa-right-from-bracket"></i> Sair da Conta
@@ -1236,7 +1242,10 @@
                             <span class="font-bold text-white block">${p.vipTitle}</span>
                             <span class="text-[11px] font-mono text-spk-blue">${p.txId}</span>
                         </div>
-                        <span class="font-black text-white">R$ ${p.price}</span>
+                        <div class="text-right">
+                            <span class="font-black text-white block">R$ ${p.price}</span>
+                            <span class="text-[10px] text-emerald-400 font-bold">${p.status || 'Ativo'}</span>
+                        </div>
                     </div>
                 `;
             });
