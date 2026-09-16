@@ -77,7 +77,12 @@
         const googleProvider = new GoogleAuthProvider();
         googleProvider.setCustomParameters({ prompt: 'select_account' });
         
-        const discordProvider = new OAuthProvider('oidc.discord');
+        let discordProvider = null;
+        try {
+            discordProvider = new OAuthProvider('oidc.discord');
+        } catch (e) {
+            console.warn("OAuthProvider do Discord não suportado neste ambiente.");
+        }
 
         window.loginWithGoogle = async function() {
             if (typeof playAudioEffect === 'function') playAudioEffect('click');
@@ -137,6 +142,7 @@
         window.loginWithDiscord = async function() {
             if (typeof playAudioEffect === 'function') playAudioEffect('click');
             try {
+                if (!discordProvider) throw new Error("Discord Provider Indisponível");
                 const result = await signInWithPopup(auth, discordProvider);
                 const user = result.user;
                 
@@ -1749,3 +1755,4 @@
     </script>
 </body>
 </html>
+
