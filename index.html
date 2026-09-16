@@ -101,7 +101,6 @@
             } catch (error) {
                 console.error("Erro no Google Login:", error);
                 
-                // Fallback para e-mail manual se o pop-up falhar por bloqueio de domínio/browser
                 const emailPrompt = prompt("O login popup do Google não pôde ser concluído (domínio não autorizado ou popup bloqueado). Digite seu e-mail para conectar:");
                 if (emailPrompt && emailPrompt.includes("@")) {
                     const cleanEmail = emailPrompt.trim().toLowerCase();
@@ -737,7 +736,7 @@
             </div>
 
             <form id="adminForm" onsubmit="saveAdminSettings(event)" class="space-y-4">
-                <!-- Aba Geral & Bot (Com Botão de Categorias, Webhook e URI) -->
+                <!-- Aba Geral & Bot -->
                 <div id="admSecGeneral" class="space-y-4">
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>
@@ -851,8 +850,8 @@
         let serverConfig = {
             name: "Storm VIPs",
             logo: "https://placehold.co/180x180/0a1026/3b82f6?text=STORM",
-            botWebhookUrl: "",
-            botUri: "uri 1329241513256030310",
+            botWebhookUrl: "https://discord.com/api/webhooks/1549285505252728832/WboYE5IlvN7RhUXqdbBZRavpYBSJ0oOeleJBz4N7cq0aDmDxGi70YXaIjTuYmwOgxemH",
+            botUri: "uri 1455730680330977415",
             categories: ["iniciante", "popular", "elite"],
             terms: "Estes são os termos gerais de serviço e uso da plataforma Storm VIPs. Todos os bens digitais são entregues automaticamente de forma instantânea.",
             privacy: "A sua privacidade é totalmente preservada em nosso sistema. Não compartilhamos dados sensíveis com terceiros."
@@ -1273,6 +1272,32 @@
             showToast("Código PIX copiado com sucesso!", "success");
         };
 
+        async function sendDiscordNotification(purchaseObj) {
+            if (!serverConfig.botWebhookUrl) return;
+            try {
+                const payload = {
+                    embeds: [{
+                        title: "🛒 Nova Compra Realizada!",
+                        color: 3889142,
+                        fields: [
+                            { name: "VIP", value: purchaseObj.vipTitle, inline: true },
+                            { name: "Valor", value: `R$ ${purchaseObj.price}`, inline: true },
+                            { name: "Usuário", value: window.currentUser ? window.currentUser.username : "Desconhecido", inline: false },
+                            { name: "ID Transação", value: purchaseObj.txId, inline: false }
+                        ],
+                        timestamp: new Date().toISOString()
+                    }]
+                };
+                await fetch(serverConfig.botWebhookUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+            } catch (e) {
+                console.warn("Erro ao enviar webhook:", e);
+            }
+        }
+
         window.simulatePaymentApproval = async function() {
             playAudioEffect('click');
             const finalPrice = selectedVip.price - (selectedVip.price * (appliedDiscountPercent / 100));
@@ -1292,6 +1317,8 @@
             if (window.savePurchaseToFirestore) {
                 await window.savePurchaseToFirestore(purchaseObj);
             }
+
+            await sendDiscordNotification(purchaseObj);
 
             document.getElementById("successRoleName").innerText = selectedVip.title;
             document.getElementById("successUserName").innerText = window.currentUser.username;
@@ -1402,7 +1429,7 @@
             document.getElementById("cfgServerName").value = serverConfig.name;
             document.getElementById("cfgServerLogo").value = serverConfig.logo;
             document.getElementById("cfgBotWebhook").value = serverConfig.botWebhookUrl || "";
-            document.getElementById("cfgBotUri").value = serverConfig.botUri || "uri 1329241513256030310";
+            document.getElementById("cfgBotUri").value = serverConfig.botUri || "uri 1455730680330977415";
             document.getElementById("cfgCategoriesInput").value = serverConfig.categories.join(", ");
             document.getElementById("cfgTerms").value = serverConfig.terms;
             document.getElementById("cfgPrivacy").value = serverConfig.privacy;
@@ -1459,7 +1486,6 @@
             plansData.forEach((p, index) => {
                 html += `
                     <div class="bg-spk-dark p-4 rounded-2xl border border-white/10 space-y-3">
-                        <!-- Linha 1: Título e Preço -->
                         <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
                             <div class="sm:col-span-2">
                                 <label class="block text-[11px] font-bold text-gray-400 mb-1">Título do Produto</label>
@@ -1471,7 +1497,6 @@
                             </div>
                         </div>
 
-                        <!-- Linha 2: Estoque e Categoria -->
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                             <div>
                                 <label class="block text-[11px] font-bold text-gray-400 mb-1">Estoque</label>
@@ -1483,7 +1508,6 @@
                             </div>
                         </div>
 
-                        <!-- Linha 3: Foto do Produto e Descrição -->
                         <div>
                             <label class="block text-[11px] font-bold text-gray-400 mb-1">Foto do Produto (URL da Imagem)</label>
                             <input type="text" value="${p.image || ''}" onchange="updatePlanField(${index}, 'image', this.value)" class="w-full bg-spk-card text-xs text-white p-2.5 rounded-xl border border-white/10 outline-none">
@@ -1721,4 +1745,3 @@
     </script>
 </body>
 </html>
-
