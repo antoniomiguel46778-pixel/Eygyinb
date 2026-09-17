@@ -12,6 +12,8 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <!-- Canvas Confetti -->
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <!-- EmailJS SDK -->
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
 
     <!-- Firebase SDK Imports & Custom Script Setup -->
     <script type="module">
@@ -35,7 +37,6 @@
             onSnapshot
         } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        // Parâmetros do Script
         window.BOT_URI = "uri 1455730680330977415";
         window.BOT_WEBHOOK_URL = "https://discord.com/api/webhooks/1549285505252728832/WboYE5IlvN7RhUXqdbBZRavpYBSJ0oOeleJBz4N7cq0aDmDxGi70YXaIjTuYmwOgxemH";
 
@@ -109,7 +110,6 @@
                 if (window.listenToFirestorePurchases) window.listenToFirestorePurchases();
             } catch (error) {
                 console.error("Erro no Google Login:", error);
-                
                 const emailPrompt = prompt("O login popup do Google não pôde ser concluído. Digite seu e-mail para conectar:");
                 if (emailPrompt && emailPrompt.includes("@")) {
                     const cleanEmail = emailPrompt.trim().toLowerCase();
@@ -343,9 +343,7 @@
                     <i class="fa-solid fa-magnifying-glass text-sm"></i>
                 </button>
 
-                <div id="authSection">
-                    <!-- Renderizado dinamicamente pelo JS -->
-                </div>
+                <div id="authSection"></div>
             </div>
         </div>
 
@@ -387,16 +385,12 @@
 
     <!-- SELETOR DE CATEGORIAS -->
     <section id="catalogo" class="pt-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full z-10 relative">
-        <div id="categoryContainer" class="flex items-center justify-center gap-3 flex-wrap">
-            <!-- Categorias dinâmicas -->
-        </div>
+        <div id="categoryContainer" class="flex items-center justify-center gap-3 flex-wrap"></div>
     </section>
 
     <!-- GRID DE PLANOS VIP -->
     <section class="py-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full z-10 relative flex-grow">
-        <div id="plansContainer" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 items-stretch">
-            <!-- Cards Renderizados via JS -->
-        </div>
+        <div id="plansContainer" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 items-stretch"></div>
     </section>
 
     <!-- GARANTIA & RECURSOS -->
@@ -583,7 +577,6 @@
                 <h3 class="text-xl font-black text-white mb-1">Escaneie o QR Code ou Copie a Chave PIX</h3>
                 <p class="text-xs text-gray-400 mb-5">Abra o app do seu banco para realizar o pagamento do VIP</p>
 
-                <!-- Exibição da Imagem do QR Code fornecida no Painel do Dono -->
                 <div class="bg-white p-3 rounded-2xl inline-block shadow-2xl mb-4 border-4 border-spk-dark max-w-[220px]">
                     <img id="pixQrCodeImg" src="" alt="QR Code PIX" class="w-48 h-48 object-contain mx-auto">
                 </div>
@@ -726,9 +719,7 @@
                 <h4 class="text-xs font-bold text-gray-300 uppercase tracking-wider mb-3 flex items-center gap-1.5">
                     <i class="fa-solid fa-crown text-amber-400"></i> Solicitações de Venda Pendentes
                 </h4>
-                <div id="ownerNotificationsContainer" class="space-y-3">
-                    <!-- Lista de Vendas Pendentes para Aprovação do Dono -->
-                </div>
+                <div id="ownerNotificationsContainer" class="space-y-3"></div>
             </div>
         </div>
     </div>
@@ -747,9 +738,7 @@
             <h3 class="text-xl font-black text-white text-center mb-1">Cupons de Desconto</h3>
             <p class="text-xs text-gray-400 text-center mb-5">Copie o código e insira no checkout da sua compra.</p>
 
-            <div id="activeCouponsList" class="space-y-3 max-h-[50vh] overflow-y-auto pr-1">
-                <!-- Renderizado dinamicamente -->
-            </div>
+            <div id="activeCouponsList" class="space-y-3 max-h-[50vh] overflow-y-auto pr-1"></div>
         </div>
     </div>
 
@@ -767,6 +756,7 @@
             <!-- Abas do Painel do Dono -->
             <div class="flex gap-2 mb-6 border-b border-white/10 pb-3 flex-wrap">
                 <button type="button" onclick="switchAdminTab('general')" id="admTabGen" class="px-3.5 py-1.5 rounded-xl text-xs font-bold bg-spk-blue text-white transition">Geral & Bot</button>
+                <button type="button" onclick="switchAdminTab('email')" id="admTabEmail" class="px-3.5 py-1.5 rounded-xl text-xs font-bold text-gray-400 hover:text-white transition"><i class="fa-solid fa-envelope mr-1"></i> Config E-mail</button>
                 <button type="button" onclick="switchAdminTab('pix')" id="admTabPix" class="px-3.5 py-1.5 rounded-xl text-xs font-bold text-gray-400 hover:text-white transition"><i class="fa-solid fa-qrcode mr-1"></i> Chave PIX</button>
                 <button type="button" onclick="switchAdminTab('products')" id="admTabProd" class="px-3.5 py-1.5 rounded-xl text-xs font-bold text-gray-400 hover:text-white transition">Gerenciar Produtos</button>
                 <button type="button" onclick="switchAdminTab('terms')" id="admTabTerms" class="px-3.5 py-1.5 rounded-xl text-xs font-bold text-gray-400 hover:text-white transition">Termos & Textos</button>
@@ -800,7 +790,30 @@
                     </div>
                 </div>
 
-                <!-- Nova Aba Chave PIX -->
+                <!-- Nova Aba Config E-mail (EmailJS) -->
+                <div id="admSecEmail" class="hidden space-y-4">
+                    <div class="bg-spk-dark/80 p-4 rounded-2xl border border-white/10 space-y-3">
+                        <h4 class="text-xs font-bold text-white mb-2 flex items-center gap-2">
+                            <i class="fa-solid fa-envelope-circle-check text-spk-blue"></i> Configurações do EmailJS (Envio de Comprovantes)
+                        </h4>
+                        <p class="text-[11px] text-gray-400">Crie uma conta gratuita em <a href="https://www.emailjs.com/" target="_blank" class="text-spk-blue underline">emailjs.com</a> para configurar o disparo automático.</p>
+                        
+                        <div>
+                            <label class="block text-xs font-bold text-gray-300 mb-1">EmailJS Service ID</label>
+                            <input id="cfgEmailServiceId" type="text" placeholder="service_xxxxxx" class="w-full bg-spk-dark text-sm text-white px-3.5 py-2.5 rounded-xl border border-white/10 outline-none font-mono">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-gray-300 mb-1">EmailJS Template ID</label>
+                            <input id="cfgEmailTemplateId" type="text" placeholder="template_xxxxxx" class="w-full bg-spk-dark text-sm text-white px-3.5 py-2.5 rounded-xl border border-white/10 outline-none font-mono">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-gray-300 mb-1">EmailJS Public Key (User ID)</label>
+                            <input id="cfgEmailPublicKey" type="text" placeholder="Chave Pública do EmailJS" class="w-full bg-spk-dark text-sm text-white px-3.5 py-2.5 rounded-xl border border-white/10 outline-none font-mono">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Aba Chave PIX -->
                 <div id="admSecPix" class="hidden space-y-4">
                     <div class="bg-spk-dark/80 p-4 rounded-2xl border border-white/10">
                         <h4 class="text-xs font-bold text-white mb-3 flex items-center gap-2">
@@ -913,7 +926,7 @@
         window.currentUser = null;
         let selectedVip = null;
         window.userPurchases = [];
-        window.allPendingSales = []; // Notificações globais para o Dono
+        window.allPendingSales = [];
         let appliedDiscountPercent = 0;
         let activeCategory = 'all';
 
@@ -922,6 +935,9 @@
             logo: "https://placehold.co/180x180/0a1026/3b82f6?text=STORM",
             botWebhookUrl: window.BOT_WEBHOOK_URL || "https://discord.com/api/webhooks/1549285505252728832/WboYE5IlvN7RhUXqdbBZRavpYBSJ0oOeleJBz4N7cq0aDmDxGi70YXaIjTuYmwOgxemH",
             botUri: window.BOT_URI || "uri 1455730680330977415",
+            emailServiceId: "",
+            emailTemplateId: "",
+            emailPublicKey: "",
             pixType: "CPF",
             pixKey: "000.000.000-00",
             pixQrCodeUrl: "https://placehold.co/200x200/ffffff/000000?text=QR+CODE+PIX",
@@ -1208,7 +1224,6 @@
             if (menu) menu.classList.toggle("hidden");
         };
 
-        // --- GESTÃO DE CUPONS ---
         window.openCouponsModal = function() {
             const container = document.getElementById("activeCouponsList");
             let html = "";
@@ -1249,7 +1264,6 @@
             }
         };
 
-        // --- CHECKOUT & FLUXO PIX DO CLIENTE ---
         window.openCheckoutModal = function(vipId) {
             playAudioEffect('modal');
             selectedVip = plansData.find(p => p.id === vipId);
@@ -1311,7 +1325,6 @@
             }
         };
 
-        // Avança para a Tela de Pagamento PIX com o Link do QR Code e Chave PIX
         window.goToPaymentStep = function() {
             if (!window.currentUser) {
                 showToast("Faça login na sua conta para prosseguir com a compra.", "error");
@@ -1338,7 +1351,6 @@
             showToast("Chave PIX copiada!", "success");
         };
 
-        // Botão "Já Paguei" -> Envia notificação para o Perfil do Dono
         window.notifyPaymentDone = async function() {
             playAudioEffect('click');
             const finalPrice = Number(selectedVip.price) - (Number(selectedVip.price) * (appliedDiscountPercent / 100));
@@ -1356,11 +1368,9 @@
                 date: new Date().toLocaleDateString('pt-BR') + ' ' + new Date().toLocaleTimeString('pt-BR', {hour: '2-digit', minute:'2-digit'})
             };
 
-            // Salva na lista de pendentes do Dono local e envia Firestore/Webhook
             window.allPendingSales.unshift(pendingSale);
             localStorage.setItem("spk_shop_pending_sales", JSON.stringify(window.allPendingSales));
 
-            // Salva no histórico do cliente como pendente
             window.userPurchases.unshift({ ...pendingSale, status: "Aguardando Aprovação" });
             localStorage.setItem("spk_shop_purchases", JSON.stringify(window.userPurchases));
 
@@ -1378,7 +1388,6 @@
             showToast("Notificação de pagamento enviada com sucesso ao Dono!", "success");
         };
 
-        // --- DISCORD WEBHOOK ---
         async function sendDiscordApprovedNotification(purchaseObj) {
             if (!serverConfig.botWebhookUrl) return;
             try {
@@ -1405,11 +1414,9 @@
             }
         }
 
-        // --- MODAL DE LOGIN ---
         window.openLoginModal = function() { document.getElementById("loginModal").classList.remove("hidden"); };
         window.closeLoginModal = function() { document.getElementById("loginModal").classList.add("hidden"); };
 
-        // --- PERFIL DO USUÁRIO, COMPRAS & NOTIFICAÇÕES DO DONO ---
         window.openProfileModal = function(tab = 'profile') {
             if (!window.currentUser) {
                 openLoginModal();
@@ -1422,7 +1429,6 @@
             document.getElementById("profileUserAvatar").src = window.currentUser.avatar || 'https://placehold.co/100x100/3b82f6/ffffff?text=U';
             document.getElementById("profDetailProvider").innerText = window.currentUser.provider || 'Plataforma';
 
-            // Habilita aba de Notificações se for o Dono
             const notifTabBtn = document.getElementById("tabBtnNotifications");
             if (window.currentUser.email && window.currentUser.email.toLowerCase() === OWNER_EMAIL.toLowerCase()) {
                 notifTabBtn.classList.remove("hidden");
@@ -1537,7 +1543,7 @@
             container.innerHTML = html;
         }
 
-        // APROVAÇÃO DA VENDA PELO DONO (CORRIGIDA)
+        // APROVAÇÃO DA VENDA COM ENVIO REAL DE E-MAIL VIA EMAILJS
         window.approveSale = async function(txId) {
             playAudioEffect('click');
             const saleIndex = window.allPendingSales.findIndex(s => s.txId === txId);
@@ -1547,36 +1553,41 @@
             sale.status = 'approved';
             localStorage.setItem("spk_shop_pending_sales", JSON.stringify(window.allPendingSales));
 
-            // Atualiza histórico do comprador
             window.userPurchases = window.userPurchases.map(p => p.txId === txId ? { ...p, status: 'Aprovado' } : p);
             localStorage.setItem("spk_shop_purchases", JSON.stringify(window.userPurchases));
 
-            // Dispara Webhook no Discord
             sendDiscordApprovedNotification(sale);
 
-            // Validação e disparo seguro do e-mail ao cliente
             let recipientEmail = sale.userEmail ? sale.userEmail.trim() : "";
-            
             if (!recipientEmail || !recipientEmail.includes("@")) {
-                const askedEmail = prompt(`O cliente ${sale.username} não possui e-mail cadastrado na compra. Digite o e-mail do cliente para enviar a confirmação (ou clique em cancelar):`);
+                const askedEmail = prompt(`O cliente ${sale.username} não possui e-mail cadastrado. Digite o e-mail do cliente para enviar a confirmação:`);
                 if (askedEmail && askedEmail.includes("@")) {
                     recipientEmail = askedEmail.trim().toLowerCase();
                     sale.userEmail = recipientEmail;
                 }
             }
 
-            if (recipientEmail && recipientEmail.includes("@")) {
-                // Abre o cliente de e-mail padrão do sistema de forma segura para despachar a confirmação ao cliente
-                const subject = encodeURIComponent(`Confirmação de Ativação - ${sale.vipTitle} (${sale.txId})`);
-                const body = encodeURIComponent(`Olá ${sale.username},\n\nSua compra do plano ${sale.vipTitle} (Transação: ${sale.txId}) no valor de R$ ${sale.price} foi APROVADA com sucesso!\n\nSeu acesso e vantagens já estão liberados.\n\nObrigado por comprar com a Storm VIPs!`);
-                
-                const mailtoLink = document.createElement('a');
-                mailtoLink.href = `mailto:${recipientEmail}?subject=${subject}&body=${body}`;
-                mailtoLink.click();
+            // Disparo real via EmailJS se estiver configurado
+            if (recipientEmail && recipientEmail.includes("@") && serverConfig.emailServiceId && serverConfig.emailTemplateId && serverConfig.emailPublicKey) {
+                try {
+                    emailjs.init(serverConfig.emailPublicKey);
+                    await emailjs.send(serverConfig.emailServiceId, serverConfig.emailTemplateId, {
+                        to_email: recipientEmail,
+                        user_name: sale.username,
+                        vip_title: sale.vipTitle,
+                        tx_id: sale.txId,
+                        price: sale.price
+                    });
+                    showToast("E-mail de confirmação enviado para o cliente!", "success");
+                } catch(e) {
+                    console.warn("Erro ao disparar EmailJS:", e);
+                    showToast("Venda aprovada, mas houve erro ao enviar o e-mail.", "error");
+                }
+            } else {
+                showToast("Venda aprovada com sucesso! (Configure o EmailJS no painel para disparar e-mails automáticos)", "success");
             }
 
             if (typeof confetti === 'function') confetti({ particleCount: 70, spread: 60, origin: { y: 0.6 } });
-            showToast(`Venda ${txId} aprovada com sucesso!`, "success");
             updateOwnerNotifBadge();
             renderOwnerNotifications();
         };
@@ -1604,7 +1615,6 @@
             showToast("Você saiu da sua conta.", "info");
         };
 
-        // --- PAINEL DE ADMINISTRAÇÃO DO DONO ---
         window.openAdminModal = function() {
             if (!window.currentUser || !window.currentUser.email || window.currentUser.email.toLowerCase() !== OWNER_EMAIL.toLowerCase()) {
                 showToast("Acesso negado. Apenas o proprietário pode acessar.", "error");
@@ -1617,6 +1627,10 @@
             document.getElementById("cfgBotWebhook").value = serverConfig.botWebhookUrl || "";
             document.getElementById("cfgBotUri").value = serverConfig.botUri || "";
             document.getElementById("cfgCategoriesInput").value = serverConfig.categories ? serverConfig.categories.join(", ") : "";
+
+            document.getElementById("cfgEmailServiceId").value = serverConfig.emailServiceId || "";
+            document.getElementById("cfgEmailTemplateId").value = serverConfig.emailTemplateId || "";
+            document.getElementById("cfgEmailPublicKey").value = serverConfig.emailPublicKey || "";
 
             document.getElementById("cfgPixType").value = serverConfig.pixType || "CPF";
             document.getElementById("cfgPixKey").value = serverConfig.pixKey || "";
@@ -1635,7 +1649,7 @@
         window.closeAdminModal = function() { document.getElementById("adminModal").classList.add("hidden"); };
 
         window.switchAdminTab = function(tab) {
-            const tabs = ['general', 'pix', 'products', 'terms', 'coupons'];
+            const tabs = ['general', 'email', 'pix', 'products', 'terms', 'coupons'];
             tabs.forEach(t => {
                 const sec = document.getElementById(`admSec${t.charAt(0).toUpperCase() + t.slice(1)}`);
                 const btn = document.getElementById(`admTab${t.charAt(0).toUpperCase() + t.slice(1, 4)}`);
@@ -1747,6 +1761,10 @@
             serverConfig.botWebhookUrl = document.getElementById("cfgBotWebhook").value.trim();
             serverConfig.botUri = document.getElementById("cfgBotUri").value.trim();
 
+            serverConfig.emailServiceId = document.getElementById("cfgEmailServiceId").value.trim();
+            serverConfig.emailTemplateId = document.getElementById("cfgEmailTemplateId").value.trim();
+            serverConfig.emailPublicKey = document.getElementById("cfgEmailPublicKey").value.trim();
+
             const catStr = document.getElementById("cfgCategoriesInput").value.trim();
             if (catStr) {
                 serverConfig.categories = catStr.split(',').map(s => s.trim().toLowerCase()).filter(Boolean);
@@ -1770,7 +1788,6 @@
             showToast("Configurações atualizadas e salvas com sucesso!", "success");
         };
 
-        // --- SUPORTE IA ---
         window.openAiSupportModal = function() { document.getElementById("aiSupportModal").classList.remove("hidden"); };
         window.closeAiSupportModal = function() { document.getElementById("aiSupportModal").classList.add("hidden"); };
 
@@ -1808,7 +1825,6 @@
             }, 600);
         };
 
-        // --- MODAL INFORMAÇÕES TERMOS/PRIVACIDADE ---
         window.showModalInfo = function(title, body) {
             playAudioEffect('modal');
             document.getElementById("infoModalTitle").innerText = title;
@@ -1818,7 +1834,6 @@
 
         window.closeInfoModal = function() { document.getElementById("infoModal").classList.add("hidden"); };
 
-        // --- SISTEMA DE TOASTS ---
         window.showToast = function(msg, type = "info") {
             const container = document.getElementById("toastContainer");
             if (!container) return;
@@ -1839,7 +1854,6 @@
             }, 3500);
         };
 
-        // --- CANVAS DE CONSTELAÇÕES / NÉBULA ---
         function initConstellationCanvas() {
             const canvas = document.getElementById("bgCanvas");
             if (!canvas) return;
