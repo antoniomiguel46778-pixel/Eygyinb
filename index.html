@@ -673,15 +673,17 @@
             </div>
 
             <!-- Abas do Modal -->
-            <div id="profileTabsContainer" class="flex items-center gap-3 my-4 border-b border-white/10 pb-3 flex-wrap">
+            <div class="flex items-center gap-3 my-4 border-b border-white/10 pb-3 flex-wrap">
                 <button id="tabBtnProfile" onclick="switchProfileTab('profile'); playAudioEffect('click');" class="px-4 py-2 rounded-xl text-xs font-bold transition bg-spk-blue text-white">
                     <i class="fa-solid fa-user mr-1.5"></i> Perfil
                 </button>
                 <button id="tabBtnPurchases" onclick="switchProfileTab('purchases'); playAudioEffect('click');" class="px-4 py-2 rounded-xl text-xs font-bold transition text-gray-400 hover:text-white">
                     <i class="fa-solid fa-bag-shopping mr-1.5"></i> Minhas Compras
                 </button>
-                <!-- Somente gerada no JS se for o Dono -->
-                <div id="ownerTabWrapper"></div>
+                <!-- Somente visível para o dono -->
+                <button id="tabBtnNotifications" onclick="switchProfileTab('notifications'); playAudioEffect('click');" class="hidden px-4 py-2 rounded-xl text-xs font-bold transition text-amber-400 hover:text-amber-300 bg-amber-500/10 border border-amber-500/30">
+                    <i class="fa-solid fa-bell mr-1.5"></i> Notificações / Vendas <span id="notifBadgeCount" class="bg-rose-500 text-white text-[10px] px-1.5 py-0.2 rounded-full ml-1 hidden">0</span>
+                </button>
             </div>
 
             <!-- Conteúdo Aba Perfil -->
@@ -789,7 +791,7 @@
                     </div>
                 </div>
 
-                <!-- Aba Config E-mail (EmailJS) -->
+                <!-- Nova Aba Config E-mail (EmailJS) -->
                 <div id="admSecEmail" class="hidden space-y-4">
                     <div class="bg-spk-dark/80 p-4 rounded-2xl border border-white/10 space-y-3">
                         <h4 class="text-xs font-bold text-white mb-2 flex items-center gap-2">
@@ -846,7 +848,7 @@
                 <!-- Aba Produtos -->
                 <div id="admSecProducts" class="hidden space-y-4">
                     <div class="flex justify-between items-center mb-2">
-                        <span class="text-xs text-gray-400 font-bold">Edite os produtos, imagens e destaque dos seus VIPs:</span>
+                        <span class="text-xs text-gray-400 font-bold">Edite produtos, fotos, destaque e estoque:</span>
                         <button type="button" onclick="addNewProduct()" class="bg-emerald-500 hover:bg-emerald-600 text-white font-bold px-3 py-1.5 rounded-xl text-xs transition">
                             + Criar VIP
                         </button>
@@ -1177,7 +1179,9 @@
                         ${plan.featured ? '<div class="absolute -right-12 top-6 bg-gradient-to-r from-blue-600 to-cyan-500 text-white font-extrabold text-[10px] uppercase tracking-widest py-1 px-12 rotate-45 shadow-lg">Destaque</div>' : ''}
                         
                         <div>
-                            ${plan.image ? `<div class="w-full h-36 rounded-2xl overflow-hidden mb-4 border border-white/10"><img src="${plan.image}" class="w-full h-full object-cover group-hover:scale-105 transition duration-500"></div>` : ''}
+                            <div class="w-full h-36 rounded-2xl overflow-hidden mb-4 border border-white/10">
+                                <img src="${plan.image || 'https://placehold.co/600x300/0f172a/3b82f6?text=VIP'}" alt="${plan.title}" class="w-full h-full object-cover group-hover:scale-105 transition duration-500">
+                            </div>
 
                             <div class="flex items-center justify-between gap-2 mb-3">
                                 <span class="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider ${plan.badgeStyle || 'bg-spk-blue text-white'}">${plan.badge || 'VIP'}</span>
@@ -1188,7 +1192,7 @@
                             <p class="text-xs text-gray-400 leading-relaxed mb-4 line-clamp-2">${plan.description}</p>
 
                             <div class="border-t border-white/10 pt-4 mb-4">
-                                <span class="text-[11px] font-bold text-gray-400 uppercase tracking-wider block mb-2">Benefícios do VIP:</span>
+                                <span class="text-[10px] font-bold text-gray-400 uppercase tracking-wider block mb-2">Benefícios do VIP:</span>
                                 <ul class="space-y-2">
                                     ${benefitsHtml}
                                 </ul>
@@ -1441,18 +1445,14 @@
             document.getElementById("profileUserAvatar").src = window.currentUser.avatar || 'https://placehold.co/100x100/3b82f6/ffffff?text=U';
             document.getElementById("profDetailProvider").innerText = window.currentUser.provider || 'Plataforma';
 
-            const ownerWrapper = document.getElementById("ownerTabWrapper");
+            const notifTabBtn = document.getElementById("tabBtnNotifications");
             
-            // ABA INJETADA APENAS E EXCLUSIVAMENTE SE FOR O EMAIL DO DONO
+            // VERIFICAÇÃO RIGOROSA: APENAS O DONO PODE VER A ABA DE NOTIFICAÇÕES/VENDAS
             if (window.currentUser.email && window.currentUser.email.toLowerCase() === OWNER_EMAIL.toLowerCase()) {
-                ownerWrapper.innerHTML = `
-                    <button id="tabBtnNotifications" onclick="switchProfileTab('notifications'); playAudioEffect('click');" class="px-4 py-2 rounded-xl text-xs font-bold transition text-amber-400 hover:text-amber-300 bg-amber-500/10 border border-amber-500/30 flex items-center">
-                        <i class="fa-solid fa-bell mr-1.5"></i> Notificações / Vendas <span id="notifBadgeCount" class="bg-rose-500 text-white text-[10px] px-1.5 py-0.2 rounded-full ml-1 hidden">0</span>
-                    </button>
-                `;
+                notifTabBtn.classList.remove("hidden");
                 updateOwnerNotifBadge();
             } else {
-                ownerWrapper.innerHTML = "";
+                notifTabBtn.classList.add("hidden");
                 if (tab === 'notifications') tab = 'profile'; 
             }
 
@@ -1471,17 +1471,16 @@
             const contentPurc = document.getElementById("tabContentPurchases");
             const contentNoti = document.getElementById("tabContentNotifications");
 
-            [contentProf, contentPurc, contentNoti].forEach(el => el && el.classList.add("hidden"));
-            if (btnProf) btnProf.className = "px-4 py-2 rounded-xl text-xs font-bold transition text-gray-400 hover:text-white";
-            if (btnPurc) btnPurc.className = "px-4 py-2 rounded-xl text-xs font-bold transition text-gray-400 hover:text-white";
+            [contentProf, contentPurc, contentNoti].forEach(el => el.classList.add("hidden"));
+            [btnProf, btnPurc].forEach(el => el.className = "px-4 py-2 rounded-xl text-xs font-bold transition text-gray-400 hover:text-white");
             if (btnNoti) btnNoti.className = "px-4 py-2 rounded-xl text-xs font-bold transition text-amber-400 hover:text-amber-300 bg-amber-500/10 border border-amber-500/30";
 
             if (tab === 'profile') {
                 contentProf.classList.remove("hidden");
-                if (btnProf) btnProf.className = "px-4 py-2 rounded-xl text-xs font-bold transition bg-spk-blue text-white";
+                btnProf.className = "px-4 py-2 rounded-xl text-xs font-bold transition bg-spk-blue text-white";
             } else if (tab === 'purchases') {
                 contentPurc.classList.remove("hidden");
-                if (btnPurc) btnPurc.className = "px-4 py-2 rounded-xl text-xs font-bold transition bg-spk-blue text-white";
+                btnPurc.className = "px-4 py-2 rounded-xl text-xs font-bold transition bg-spk-blue text-white";
                 renderPurchasesList();
             } else if (tab === 'notifications') {
                 if (window.currentUser && window.currentUser.email && window.currentUser.email.toLowerCase() === OWNER_EMAIL.toLowerCase()) {
@@ -1677,50 +1676,58 @@
                 if (btn) btn.className = "px-3.5 py-1.5 rounded-xl text-xs font-bold text-gray-400 hover:text-white transition";
             });
 
-            const currentSec = document.getElementById(`admSec${tab.charAt(0).toUpperCase() + tab.slice(1)}`);
-            const currentBtn = document.getElementById(`admTab${tab.charAt(0).toUpperCase() + tab.slice(1, 4)}`);
-            if (currentSec) currentSec.classList.remove("hidden");
-            if (currentBtn) currentBtn.className = "px-3.5 py-1.5 rounded-xl text-xs font-bold bg-spk-blue text-white transition";
+            const activeSec = document.getElementById(`admSec${tab.charAt(0).toUpperCase() + tab.slice(1)}`);
+            const activeBtn = document.getElementById(`admTab${tab.charAt(0).toUpperCase() + tab.slice(1, 4)}`);
+            if (activeSec) activeSec.classList.remove("hidden");
+            if (activeBtn) activeBtn.className = "px-3.5 py-1.5 rounded-xl text-xs font-bold bg-spk-blue text-white transition";
         };
 
-        // RENDERIZAR LISTA DE PRODUTOS NO PAINEL COM CAMPO DE IMAGEM E DESTAQUE
+        // GERENCIAMENTO DE PRODUTOS NO PAINEL DO DONO (COM SUPORTE A FOTO E DESTAQUE)
         function renderAdminProductsList() {
             const container = document.getElementById("adminProductsList");
             let html = "";
-            plansData.forEach((p, idx) => {
+            plansData.forEach((plan, index) => {
                 html += `
                     <div class="bg-spk-dark p-4 rounded-2xl border border-white/10 space-y-3">
                         <div class="flex justify-between items-center">
-                            <span class="text-xs font-bold text-spk-blue font-mono">ID: ${p.id}</span>
-                            <button type="button" onclick="removeProduct(${idx})" class="text-rose-400 hover:text-rose-300 text-xs"><i class="fa-solid fa-trash"></i> Excluir</button>
+                            <span class="text-xs font-bold text-spk-blue uppercase font-mono">ID: ${plan.id}</span>
+                            <button type="button" onclick="removeProduct(${index})" class="text-rose-400 hover:text-rose-300 text-xs font-bold">
+                                <i class="fa-solid fa-trash mr-1"></i> Excluir
+                            </button>
                         </div>
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                             <div>
-                                <label class="block text-[10px] text-gray-400 font-bold mb-1">Título</label>
-                                <input type="text" value="${p.title}" onchange="plansData[${idx}].title = this.value" class="w-full bg-spk-card text-xs text-white px-3 py-2 rounded-xl border border-white/10">
+                                <label class="block text-[11px] text-gray-400 font-bold mb-1">Título do VIP</label>
+                                <input type="text" value="${plan.title}" onchange="plansData[${index}].title = this.value" class="w-full bg-spk-card text-xs text-white px-3 py-2 rounded-xl border border-white/10">
                             </div>
                             <div>
-                                <label class="block text-[10px] text-gray-400 font-bold mb-1">Preço (R$)</label>
-                                <input type="number" step="0.01" value="${p.price}" onchange="plansData[${idx}].price = parseFloat(this.value)" class="w-full bg-spk-card text-xs text-white px-3 py-2 rounded-xl border border-white/10">
-                            </div>
-                            <div>
-                                <label class="block text-[10px] text-gray-400 font-bold mb-1">Estoque</label>
-                                <input type="number" value="${p.stock || 0}" onchange="plansData[${idx}].stock = parseInt(this.value)" class="w-full bg-spk-card text-xs text-white px-3 py-2 rounded-xl border border-white/10">
-                            </div>
-                            <div>
-                                <label class="block text-[10px] text-gray-400 font-bold mb-1">Categoria</label>
-                                <input type="text" value="${p.category || 'iniciante'}" onchange="plansData[${idx}].category = this.value" class="w-full bg-spk-card text-xs text-white px-3 py-2 rounded-xl border border-white/10">
+                                <label class="block text-[11px] text-gray-400 font-bold mb-1">Preço (R$)</label>
+                                <input type="number" step="0.01" value="${plan.price}" onchange="plansData[${index}].price = parseFloat(this.value)" class="w-full bg-spk-card text-xs text-white px-3 py-2 rounded-xl border border-white/10">
                             </div>
                         </div>
-                        <!-- CAMPO DE URL DA IMAGEM DO PRODUTO -->
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <div>
+                                <label class="block text-[11px] text-gray-400 font-bold mb-1">Categoria</label>
+                                <input type="text" value="${plan.category || 'iniciante'}" onchange="plansData[${index}].category = this.value" class="w-full bg-spk-card text-xs text-white px-3 py-2 rounded-xl border border-white/10">
+                            </div>
+                            <div>
+                                <label class="block text-[11px] text-gray-400 font-bold mb-1">Estoque</label>
+                                <input type="number" value="${plan.stock || 0}" onchange="plansData[${index}].stock = parseInt(this.value)" class="w-full bg-spk-card text-xs text-white px-3 py-2 rounded-xl border border-white/10">
+                            </div>
+                        </div>
                         <div>
-                            <label class="block text-[10px] text-gray-400 font-bold mb-1">URL da Imagem do Produto</label>
-                            <input type="text" value="${p.image || ''}" placeholder="https://site.com/imagem-do-produto.png" onchange="plansData[${idx}].image = this.value" class="w-full bg-spk-card text-xs text-white px-3 py-2 rounded-xl border border-white/10">
+                            <label class="block text-[11px] text-gray-400 font-bold mb-1">URL da Imagem do VIP</label>
+                            <input type="text" value="${plan.image || ''}" placeholder="https://site.com/imagem.png" onchange="plansData[${index}].image = this.value" class="w-full bg-spk-card text-xs text-white px-3 py-2 rounded-xl border border-white/10">
                         </div>
-                        <!-- OPÇÃO PRODUTO DESTAQUE -->
+                        <div>
+                            <label class="block text-[11px] text-gray-400 font-bold mb-1">Descrição Breve</label>
+                            <input type="text" value="${plan.description || ''}" onchange="plansData[${index}].description = this.value" class="w-full bg-spk-card text-xs text-white px-3 py-2 rounded-xl border border-white/10">
+                        </div>
                         <div class="flex items-center gap-2 pt-1">
-                            <input type="checkbox" id="featured_${idx}" ${p.featured ? 'checked' : ''} onchange="plansData[${idx}].featured = this.checked" class="w-4 h-4 rounded accent-spk-blue">
-                            <label for="featured_${idx}" class="text-xs font-bold text-amber-400 cursor-pointer">Marcar como Produto Destaque ⭐</label>
+                            <input type="checkbox" id="destaque_${index}" ${plan.featured ? 'checked' : ''} onchange="plansData[${index}].featured = this.checked" class="w-4 h-4 rounded accent-spk-blue cursor-pointer">
+                            <label for="destaque_${index}" class="text-xs font-bold text-amber-400 cursor-pointer select-none">
+                                <i class="fa-solid fa-star mr-1"></i> Produto em Destaque na Loja
+                            </label>
                         </div>
                     </div>
                 `;
@@ -1732,21 +1739,21 @@
             const newId = "vip_" + Date.now();
             plansData.push({
                 id: newId,
-                title: "Novo VIP Storm",
-                badge: "Novo",
+                title: "Novo VIP Exclusivo",
+                badge: "VIP",
                 category: "iniciante",
                 price: 20.00,
                 stock: 50,
                 featured: false,
                 image: "https://placehold.co/600x300/0f172a/3b82f6?text=Novo+VIP",
-                description: "Descrição do seu novo VIP.",
+                description: "Descrição simples do VIP",
                 benefits: ["Benefício exclusivo 1", "Benefício exclusivo 2"]
             });
             renderAdminProductsList();
         };
 
-        window.removeProduct = function(idx) {
-            plansData.splice(idx, 1);
+        window.removeProduct = function(index) {
+            plansData.splice(index, 1);
             renderAdminProductsList();
         };
 
@@ -1756,11 +1763,8 @@
             Object.keys(validCoupons).forEach(code => {
                 html += `
                     <div class="bg-spk-dark p-3 rounded-xl border border-white/10 flex justify-between items-center text-xs">
-                        <div>
-                            <span class="font-mono text-amber-400 font-bold">${code}</span>
-                            <span class="text-gray-400 ml-2">(${validCoupons[code]}% OFF)</span>
-                        </div>
-                        <button type="button" onclick="deleteCoupon('${code}')" class="text-rose-400 hover:text-rose-300 font-bold">Excluir</button>
+                        <span class="font-mono font-bold text-amber-400">${code} (${validCoupons[code]}%)</span>
+                        <button type="button" onclick="removeAdminCoupon('${code}')" class="text-rose-400 hover:text-rose-300 font-bold">Remover</button>
                     </div>
                 `;
             });
@@ -1770,6 +1774,7 @@
         window.addAdminCoupon = function() {
             const code = document.getElementById("newCouponCode").value.trim().toUpperCase();
             const discount = parseInt(document.getElementById("newCouponDiscount").value);
+
             if (code && !isNaN(discount)) {
                 validCoupons[code] = discount;
                 document.getElementById("newCouponCode").value = "";
@@ -1778,20 +1783,22 @@
             }
         };
 
-        window.deleteCoupon = function(code) {
+        window.removeAdminCoupon = function(code) {
             delete validCoupons[code];
             renderAdminCouponsList();
         };
 
-        window.saveAdminSettings = function(e) {
-            e.preventDefault();
+        window.saveAdminSettings = function(event) {
+            event.preventDefault();
+            playAudioEffect('click');
+
             serverConfig.name = document.getElementById("cfgServerName").value;
             serverConfig.logo = document.getElementById("cfgServerLogo").value;
             serverConfig.botWebhookUrl = document.getElementById("cfgBotWebhook").value;
             serverConfig.botUri = document.getElementById("cfgBotUri").value;
-
+            
             const catsRaw = document.getElementById("cfgCategoriesInput").value;
-            serverConfig.categories = catsRaw.split(',').map(c => c.trim().toLowerCase()).filter(c => c !== '');
+            serverConfig.categories = catsRaw.split(',').map(c => c.trim().toLowerCase()).filter(c => c.length > 0);
 
             serverConfig.emailServiceId = document.getElementById("cfgEmailServiceId").value;
             serverConfig.emailTemplateId = document.getElementById("cfgEmailTemplateId").value;
@@ -1816,13 +1823,15 @@
             showToast("Configurações salvas com sucesso!", "success");
         };
 
-        window.showModalInfo = function(title, body) {
+        window.showModalInfo = function(title, text) {
             document.getElementById("infoModalTitle").innerText = title;
-            document.getElementById("infoModalBody").innerText = body;
+            document.getElementById("infoModalBody").innerText = text;
             document.getElementById("infoModal").classList.remove("hidden");
         };
 
-        window.closeInfoModal = function() { document.getElementById("infoModal").classList.add("hidden"); };
+        window.closeInfoModal = function() {
+            document.getElementById("infoModal").classList.add("hidden");
+        };
 
         window.openAiSupportModal = function() { document.getElementById("aiSupportModal").classList.remove("hidden"); };
         window.closeAiSupportModal = function() { document.getElementById("aiSupportModal").classList.add("hidden"); };
@@ -1832,33 +1841,110 @@
             const text = input.value.trim();
             if (!text) return;
 
-            const history = document.getElementById("aiChatHistory");
-            history.innerHTML += `
-                <div class="bg-spk-blue/20 text-white p-3.5 rounded-2xl border border-spk-blue/30 text-xs ml-auto max-w-[80%]">
+            const chatHistory = document.getElementById("aiChatHistory");
+            chatHistory.innerHTML += `
+                <div class="bg-spk-blue/20 text-white p-3.5 rounded-2xl border border-spk-blue/30 text-xs ml-8">
                     ${text}
                 </div>
             `;
             input.value = "";
 
             setTimeout(() => {
-                history.innerHTML += `
-                    <div class="bg-spk-dark p-3.5 rounded-2xl border border-white/10 text-xs text-gray-200 max-w-[80%]">
-                        Obrigado pelo contato! Todas as compras de VIPs na Storm VIPs são liberadas rapidamente após a notificação ao dono via PIX. Caso precise de algo específico, você pode abrir um ticket em nosso Discord!
+                let reply = "Para comprar qualquer VIP, basta clicar no botão 'Adquirir', aplicar um cupom de desconto caso tenha e finalizar o pagamento via PIX.";
+                if (text.toLowerCase().includes("cupom") || text.toLowerCase().includes("desconto")) {
+                    reply = "Nossos cupons ativos atualmente podem ser visualizados clicando no botão 'Cupons' no topo do site!";
+                } else if (text.toLowerCase().includes("entrega") || text.toLowerCase().includes("demora")) {
+                    reply = "A ativação é feita assim que o pagamento via PIX é confirmado pelo dono no sistema.";
+                }
+
+                chatHistory.innerHTML += `
+                    <div class="bg-spk-dark p-3.5 rounded-2xl border border-white/10 text-xs text-gray-200 mr-8">
+                        ${reply}
                     </div>
                 `;
-                history.scrollTop = history.scrollHeight;
+                chatHistory.scrollTop = chatHistory.scrollHeight;
             }, 600);
         };
 
-        window.showToast = function(msg, type = "info") {
+        function showToast(message, type = "info") {
             const container = document.getElementById("toastContainer");
+            if (!container) return;
+
             const toast = document.createElement("div");
-            const colors = type === "success" ? "bg-emerald-500 text-black" : type === "error" ? "bg-rose-500 text-white" : "bg-spk-blue text-white";
-            toast.className = `${colors} font-bold text-xs px-4 py-3 rounded-2xl shadow-xl transition transform duration-300 pointer-events-auto flex items-center gap-2`;
-            toast.innerHTML = `<i class="fa-solid fa-circle-info"></i> ${msg}`;
+            let bgClass = "bg-spk-card border-spk-blue text-white";
+            if (type === "success") bgClass = "bg-emerald-950/90 border-emerald-500 text-emerald-200";
+            if (type === "error") bgClass = "bg-rose-950/90 border-rose-500 text-rose-200";
+
+            toast.className = `px-4 py-3 rounded-2xl border shadow-2xl text-xs font-bold transition-all transform translate-y-2 opacity-0 pointer-events-auto flex items-center gap-2 ${bgClass}`;
+            toast.innerHTML = `<span>${message}</span>`;
+
             container.appendChild(toast);
-            setTimeout(() => { toast.remove(); }, 3500);
-        };
+            setTimeout(() => {
+                toast.classList.remove("translate-y-2", "opacity-0");
+            }, 10);
+
+            setTimeout(() => {
+                toast.classList.add("opacity-0", "translate-y-2");
+                setTimeout(() => toast.remove(), 300);
+            }, 4000);
+        }
+
+        function initConstellationCanvas() {
+            const canvas = document.getElementById("bgCanvas");
+            if (!canvas) return;
+            const ctx = canvas.getContext("2d");
+
+            let width = (canvas.width = window.innerWidth);
+            let height = (canvas.height = window.innerHeight);
+
+            window.addEventListener("resize", () => {
+                width = canvas.width = window.innerWidth;
+                height = canvas.height = window.innerHeight;
+            });
+
+            const particles = [];
+            for (let i = 0; i < 45; i++) {
+                particles.push({
+                    x: Math.random() * width,
+                    y: Math.random() * height,
+                    vx: (Math.random() - 0.5) * 0.5,
+                    vy: (Math.random() - 0.5) * 0.5,
+                    radius: Math.random() * 1.5 + 1
+                });
+            }
+
+            function animate() {
+                ctx.clearRect(0, 0, width, height);
+                ctx.fillStyle = "rgba(59, 130, 246, 0.4)";
+                ctx.strokeStyle = "rgba(59, 130, 246, 0.08)";
+
+                for (let i = 0; i < particles.length; i++) {
+                    let p = particles[i];
+                    p.x += p.vx;
+                    p.y += p.vy;
+
+                    if (p.x < 0 || p.x > width) p.vx *= -1;
+                    if (p.y < 0 || p.y > height) p.vy *= -1;
+
+                    ctx.beginPath();
+                    ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+                    ctx.fill();
+
+                    for (let j = i + 1; j < particles.length; j++) {
+                        let p2 = particles[j];
+                        let dist = Math.hypot(p.x - p2.x, p.y - p2.y);
+                        if (dist < 120) {
+                            ctx.beginPath();
+                            ctx.moveTo(p.x, p.y);
+                            ctx.lineTo(p2.x, p2.y);
+                            ctx.stroke();
+                        }
+                    }
+                }
+                requestAnimationFrame(animate);
+            }
+            animate();
+        }
     </script>
 </body>
 </html>
