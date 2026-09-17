@@ -680,6 +680,7 @@
                 <button id="tabBtnPurchases" onclick="switchProfileTab('purchases'); playAudioEffect('click');" class="px-4 py-2 rounded-xl text-xs font-bold transition text-gray-400 hover:text-white">
                     <i class="fa-solid fa-bag-shopping mr-1.5"></i> Minhas Compras
                 </button>
+                <!-- Somente visível para o dono -->
                 <button id="tabBtnNotifications" onclick="switchProfileTab('notifications'); playAudioEffect('click');" class="hidden px-4 py-2 rounded-xl text-xs font-bold transition text-amber-400 hover:text-amber-300 bg-amber-500/10 border border-amber-500/30">
                     <i class="fa-solid fa-bell mr-1.5"></i> Notificações / Vendas <span id="notifBadgeCount" class="bg-rose-500 text-white text-[10px] px-1.5 py-0.2 rounded-full ml-1 hidden">0</span>
                 </button>
@@ -1179,7 +1180,7 @@
                         <div>
                             <div class="flex items-center justify-between gap-2 mb-3">
                                 <span class="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider ${plan.badgeStyle || 'bg-spk-blue text-white'}">${plan.badge || 'VIP'}</span>
-                                <span class="text-[11px] font-semibold text-gray-400"><i class="fa-solid fa-box text-spk-blue mr-1"></i> ${plan.stock || 99} Restantes</span>
+                                <span class="text-[11px] font-semibold text-gray-400"><i class="fa-solid fa-box text-spk-blue mr-1"></i> ${plan.stock || 0} Restantes</span>
                             </div>
 
                             <h3 class="text-xl font-black text-white mb-2 group-hover:text-spk-blue transition">${plan.title}</h3>
@@ -1353,6 +1354,17 @@
 
         window.notifyPaymentDone = async function() {
             playAudioEffect('click');
+            
+            // DIMINUI O ESTOQUE DO PRODUTO CORRETAMENTE AO FINALIZAR A COMPRA
+            if (selectedVip) {
+                const planRef = plansData.find(p => p.id === selectedVip.id);
+                if (planRef) {
+                    planRef.stock = Math.max(0, (planRef.stock || 0) - 1);
+                    localStorage.setItem("spk_shop_plans", JSON.stringify(plansData));
+                    renderPlans();
+                }
+            }
+
             const finalPrice = Number(selectedVip.price) - (Number(selectedVip.price) * (appliedDiscountPercent / 100));
             const txId = "#STORM-" + Math.floor(100000 + Math.random() * 900000);
 
@@ -1430,11 +1442,14 @@
             document.getElementById("profDetailProvider").innerText = window.currentUser.provider || 'Plataforma';
 
             const notifTabBtn = document.getElementById("tabBtnNotifications");
+            
+            // VERIFICAÇÃO RIGOROSA: APENAS O DONO VÊ A ABA DE APROVAÇÃO DE VENDAS
             if (window.currentUser.email && window.currentUser.email.toLowerCase() === OWNER_EMAIL.toLowerCase()) {
                 notifTabBtn.classList.remove("hidden");
                 updateOwnerNotifBadge();
             } else {
                 notifTabBtn.classList.add("hidden");
+                if (tab === 'notifications') tab = 'profile'; // Evita abrir aba restrita se membro tentar forçar
             }
 
             switchProfileTab(tab);
@@ -1464,9 +1479,11 @@
                 btnPurc.className = "px-4 py-2 rounded-xl text-xs font-bold transition bg-spk-blue text-white";
                 renderPurchasesList();
             } else if (tab === 'notifications') {
-                contentNoti.classList.remove("hidden");
-                if (btnNoti) btnNoti.className = "px-4 py-2 rounded-xl text-xs font-bold transition bg-amber-500 text-black";
-                renderOwnerNotifications();
+                if (window.currentUser && window.currentUser.email && window.currentUser.email.toLowerCase() === OWNER_EMAIL.toLowerCase()) {
+                    contentNoti.classList.remove("hidden");
+                    if (btnNoti) btnNoti.className = "px-4 py-2 rounded-xl text-xs font-bold transition bg-amber-500 text-black";
+                    renderOwnerNotifications();
+                }
             }
         };
 
@@ -1567,7 +1584,6 @@
                 }
             }
 
-            // Disparo real via EmailJS se estiver configurado
             if (recipientEmail && recipientEmail.includes("@") && serverConfig.emailServiceId && serverConfig.emailTemplateId && serverConfig.emailPublicKey) {
                 try {
                     emailjs.init(serverConfig.emailPublicKey);
@@ -1686,7 +1702,7 @@
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                             <div>
                                 <label class="text-[10px] text-gray-400 block mb-1">Estoque</label>
-                                <input type="number" value="${plan.stock || 99}" onchange="plansData[${idx}].stock = parseInt(this.value)" class="w-full bg-spk-card text-xs text-white p-2.5 rounded-xl border border-white/10 outline-none">
+                                <input type="number" value="${plan.stock || 0}" onchange="plansData[${idx}].stock = parseInt(this.value)" class="w-full bg-spk-card text-xs text-white p-2.5 rounded-xl border border-white/10 outline-none">
                             </div>
                             <div>
                                 <label class="text-[10px] text-gray-400 block mb-1">Categoria</label>
@@ -1894,21 +1910,8 @@
 
                     ctx.beginPath();
                     ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
-                    ctx.fillStyle = "rgba(59, 130, 246, 0.4)";
+                    ctx.fillStyle = "rgba(59, 130, 246, 0.5)";
                     ctx.fill();
-
-                    for (let j = i + 1; j < particles.length; j++) {
-                        const p2 = particles[j];
-                        const dist = Math.hypot(p.x - p2.x, p.y - p2.y);
-                        if (dist < 100) {
-                            ctx.beginPath();
-                            ctx.moveTo(p.x, p.y);
-                            ctx.lineTo(p2.x, p2.y);
-                            ctx.strokeStyle = `rgba(59, 130, 246, ${0.15 * (1 - dist / 100)})`;
-                            ctx.lineWidth = 0.5;
-                            ctx.stroke();
-                        }
-                    }
                 }
                 requestAnimationFrame(animate);
             }
@@ -1917,3 +1920,4 @@
     </script>
 </body>
 </html>
+
