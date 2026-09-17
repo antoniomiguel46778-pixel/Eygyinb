@@ -1537,7 +1537,7 @@
             container.innerHTML = html;
         }
 
-        // APROVAÇÃO DA VENDA PELO DONO
+        // APROVAÇÃO DA VENDA PELO DONO (CORRIGIDA)
         window.approveSale = async function(txId) {
             playAudioEffect('click');
             const saleIndex = window.allPendingSales.findIndex(s => s.txId === txId);
@@ -1554,11 +1554,11 @@
             // Dispara Webhook no Discord
             sendDiscordApprovedNotification(sale);
 
-            // Tenta enviar e-mail de confirmação exclusivamente para o e-mail do cliente
+            // Validação e disparo seguro do e-mail ao cliente
             let recipientEmail = sale.userEmail ? sale.userEmail.trim() : "";
             
             if (!recipientEmail || !recipientEmail.includes("@")) {
-                const askedEmail = prompt(`O cliente ${sale.username} não possui e-mail cadastrado na compra. Digite o e-mail do cliente para enviar a confirmação (ou cancele):`);
+                const askedEmail = prompt(`O cliente ${sale.username} não possui e-mail cadastrado na compra. Digite o e-mail do cliente para enviar a confirmação (ou clique em cancelar):`);
                 if (askedEmail && askedEmail.includes("@")) {
                     recipientEmail = askedEmail.trim().toLowerCase();
                     sale.userEmail = recipientEmail;
@@ -1566,25 +1566,13 @@
             }
 
             if (recipientEmail && recipientEmail.includes("@")) {
-                try {
-                    await fetch("https://api.emailjs.com/api/v1.0/email/send", {
-                        method: "POST",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({
-                            service_id: "default_service",
-                            template_id: "template_approved",
-                            user_id: "YOUR_EMAILJS_USER_ID",
-                            template_params: {
-                                to_email: recipientEmail,
-                                user_name: sale.username,
-                                vip_title: sale.vipTitle,
-                                tx_id: sale.txId
-                            }
-                        })
-                    });
-                } catch(e) {
-                    console.warn("Envio de e-mail ao cliente:", e);
-                }
+                // Abre o cliente de e-mail padrão do sistema de forma segura para despachar a confirmação ao cliente
+                const subject = encodeURIComponent(`Confirmação de Ativação - ${sale.vipTitle} (${sale.txId})`);
+                const body = encodeURIComponent(`Olá ${sale.username},\n\nSua compra do plano ${sale.vipTitle} (Transação: ${sale.txId}) no valor de R$ ${sale.price} foi APROVADA com sucesso!\n\nSeu acesso e vantagens já estão liberados.\n\nObrigado por comprar com a Storm VIPs!`);
+                
+                const mailtoLink = document.createElement('a');
+                mailtoLink.href = `mailto:${recipientEmail}?subject=${subject}&body=${body}`;
+                mailtoLink.click();
             }
 
             if (typeof confetti === 'function') confetti({ particleCount: 70, spread: 60, origin: { y: 0.6 } });
@@ -1917,3 +1905,4 @@
     </script>
 </body>
 </html>
+
