@@ -80,8 +80,6 @@
         let discordProvider = null;
         try {
             discordProvider = new OAuthProvider('oidc.discord');
-            discordProvider.addScope('email');
-            discordProvider.addScope('identify');
         } catch (e) {
             console.warn("OAuthProvider do Discord não suportado neste ambiente.");
         }
@@ -147,15 +145,15 @@
                 if (!discordProvider) throw new Error("Discord Provider Indisponível");
                 const result = await signInWithPopup(auth, discordProvider);
                 const user = result.user;
-                
+
                 let userEmail = user.email || "";
-                if (!userEmail) {
-                    const promptedEmail = prompt("O Discord não compartilhou seu e-mail automaticamente. Por favor, digite seu e-mail para receber as confirmações de compra:");
+                if (!userEmail || !userEmail.includes("@")) {
+                    const promptedEmail = prompt("O Discord não forneceu seu e-mail de entrega. Digite seu e-mail para receber as compras:");
                     if (promptedEmail && promptedEmail.includes("@")) {
                         userEmail = promptedEmail.trim().toLowerCase();
                     }
                 }
-
+                
                 const userData = {
                     uid: user.uid,
                     id: user.uid,
@@ -181,7 +179,7 @@
                     const fakeUid = "dc_" + Math.abs(tagClean.split('').reduce((acc, char) => (acc << 5) - acc + char.charCodeAt(0), 0));
                     
                     let userEmail = "";
-                    const emailPrompt = prompt("Digite seu e-mail para vinculação e recebimento de compras:");
+                    const emailPrompt = prompt("Digite seu e-mail para receber as confirmações de compra:");
                     if (emailPrompt && emailPrompt.includes("@")) {
                         userEmail = emailPrompt.trim().toLowerCase();
                     }
@@ -585,6 +583,7 @@
                 <h3 class="text-xl font-black text-white mb-1">Escaneie o QR Code ou Copie a Chave PIX</h3>
                 <p class="text-xs text-gray-400 mb-5">Abra o app do seu banco para realizar o pagamento do VIP</p>
 
+                <!-- Exibição da Imagem do QR Code fornecida no Painel do Dono -->
                 <div class="bg-white p-3 rounded-2xl inline-block shadow-2xl mb-4 border-4 border-spk-dark max-w-[220px]">
                     <img id="pixQrCodeImg" src="" alt="QR Code PIX" class="w-48 h-48 object-contain mx-auto">
                 </div>
@@ -933,138 +932,567 @@
 
         let validCoupons = {
             "STORM10": 10,
-            "DESCONTO20": 20,
-            "VIP15": 15
+            "VIPMASTER": 15,
+            "LANCAMENTO": 20
         };
 
-        let vipProducts = [
+        let plansData = [
             {
-                id: "vip-bronze",
-                name: "VIP BRONZE",
+                id: "bronze",
+                title: "VIP Storm Bronze",
+                badge: "Bronze",
                 category: "iniciante",
                 price: 15.00,
-                badge: "INICIANTE",
-                badgeColor: "bg-amber-700/30 text-amber-400 border-amber-600/40",
-                description: "Kit básico para iniciar com vantagens essenciais no servidor.",
-                imageUrl: "https://placehold.co/600x300/1e293b/3b82f6?text=VIP+BRONZE",
-                features: ["Acesso a comandos básicos", "Tag Bronze no Chat", "Kit diário exclusivo", "Reserva de vaga"]
+                stock: 99,
+                image: "https://placehold.co/600x300/1e293b/f59e0b?text=Painel+VIP+Bronze",
+                description: "O plano de entrada ideal para quem quer experimentar vantagens sem gastar muito. Acesso a comandos utilitários e cargo exclusivo.",
+                badgeStyle: "bg-amber-500/20 text-amber-400 border border-amber-500/30",
+                btnBg: "bg-amber-500 hover:bg-amber-600 text-black font-black",
+                benefits: [
+                    "Cargo VIP Bronze no Discord e Servidor",
+                    "Acesso aos comandos de voo (/fly)",
+                    "Kit semanal de recursos Bronze",
+                    "Salas exclusivas na comunidade"
+                ]
             },
             {
-                id: "vip-ouro",
-                name: "VIP OURO",
+                id: "gold",
+                title: "VIP Storm Ouro",
+                badge: "Mais Popular",
                 category: "popular",
-                price: 35.00,
-                badge: "POPULAR",
-                badgeColor: "bg-amber-500/20 text-amber-300 border-amber-500/40",
-                description: "O plano mais procurado! Equilíbrio perfeito entre preço e benefícios imbatíveis.",
-                imageUrl: "https://placehold.co/600x300/1e293b/f59e0b?text=VIP+OURO",
-                features: ["Tudo do VIP Bronze", "Tag Ouro reluzente", "Kit Semanal Ouro", "Acesso a áreas VIPs", "Atendimento prioritário"]
+                price: 30.00,
+                stock: 50,
+                featured: true,
+                image: "https://placehold.co/600x300/0f172a/3b82f6?text=Painel+VIP+Ouro",
+                description: "Nosso plano mais procurado. Oferece o equilíbrio perfeito entre custo e benefício com multiplicadores de recompensas ativados.",
+                badgeStyle: "bg-spk-blue text-white font-extrabold shadow-md shadow-spk-blue/30",
+                btnBg: "bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-500 hover:to-cyan-400 text-white font-black btn-glow",
+                benefits: [
+                    "Todos os benefícios do VIP Bronze",
+                    "Voz com 384kbps de qualidade no Discord",
+                    "Kit Ouro em dobro quinzenalmente",
+                    "Prioridade total na fila do servidor",
+                    "Tag com brilho personalizado"
+                ]
             },
             {
-                id: "vip-diamante",
-                name: "VIP DIAMANTE",
+                id: "diamond",
+                title: "VIP Storm Diamante",
+                badge: "Elite",
                 category: "elite",
-                price: 65.00,
-                badge: "ELITE",
-                badgeColor: "bg-cyan-500/20 text-cyan-300 border-cyan-500/40",
-                description: "Vantagens avançadas para jogadores exigentes que buscam alto desempenho.",
-                imageUrl: "https://placehold.co/600x300/1e293b/06b6d4?text=VIP+DIAMANTE",
-                features: ["Tudo do VIP Ouro", "Tag Diamante Exclusiva", "Fly e comandos avançados", "Desconto de 10% na loja", "Kits Especiais mensais"]
+                price: 60.00,
+                stock: 20,
+                image: "https://placehold.co/600x300/082f49/06b6d4?text=Painel+VIP+Diamante",
+                description: "Criado para jogadores exigentes. Garante acesso liberado a eventos VIP e itens raros direto na conta.",
+                badgeStyle: "bg-cyan-500/20 text-cyan-300 border border-cyan-500/30",
+                btnBg: "bg-gradient-to-r from-cyan-600 to-blue-700 hover:from-cyan-500 hover:to-blue-600 text-white font-black",
+                benefits: [
+                    "Todos os benefícios do VIP Ouro",
+                    "Kit Supremo Diamante Semanal",
+                    "Acesso antecipado a atualizações",
+                    "Suporte prioritário na comunidade",
+                    "Sorteios mensais de VIPs adicionais"
+                ]
             },
             {
-                id: "vip-mestre",
-                name: "VIP MESTRE SUPREMO",
+                id: "master",
+                title: "VIP Storm Mestre",
+                badge: "Supremo Mestre",
                 category: "elite",
-                price: 120.00,
-                badge: "SUPREMO",
-                badgeColor: "bg-purple-500/20 text-purple-300 border-purple-500/40",
-                description: "O mais alto escalão! Domínio total do servidor com todas as permissões e privilégios máximos.",
-                imageUrl: "https://placehold.co/600x300/1e293b/8b5cf6?text=VIP+MESTRE",
-                features: ["Acesso ilimitado e irrestrito", "Tag Mestre com brilho especial", "Cargo VIP no Discord", "Suporte direto com o Dono", "Todos os Kits liberados"]
+                price: 100.00,
+                stock: 10,
+                featured: true,
+                image: "https://placehold.co/600x300/2e1065/8b5cf6?text=Painel+VIP+Mestre",
+                description: "O nível definitivo da Storm VIPs. Acesso completo a todas as ferramentas do painel, canal VIP direto com os Donos e itens lendários.",
+                badgeStyle: "bg-purple-500 text-white font-black shadow-lg shadow-purple-500/40",
+                btnBg: "bg-gradient-to-r from-purple-600 via-indigo-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 text-white font-black btn-glow",
+                benefits: [
+                    "Status Máximo e cargo no topo no Discord",
+                    "Canal de voz exclusivo e personalizado",
+                    "Kits Lendários Mestre ilimitados",
+                    "Vaga VIP garantida em todos os eventos",
+                    "Atendimento direto via canal dos Proprietários"
+                ]
             }
         ];
 
-        // INICIALIZAÇÃO
-        document.addEventListener("DOMContentLoaded", () => {
-            loadSavedSettings();
-            loadSavedUserData();
-            loadSavedPurchasesData();
+        window.playAudioEffect = function(type) {
+            try {
+                const AudioCtx = window.AudioContext || window.webkitAudioContext;
+                if (!AudioCtx) return;
+                const ctx = new AudioCtx();
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+                const now = ctx.currentTime;
+                if (type === 'click') {
+                    osc.frequency.setValueAtTime(400, now);
+                    gain.gain.setValueAtTime(0.05, now);
+                    osc.start(now); osc.stop(now + 0.05);
+                } else if (type === 'modal') {
+                    osc.frequency.setValueAtTime(500, now);
+                    gain.gain.setValueAtTime(0.08, now);
+                    osc.start(now); osc.stop(now + 0.08);
+                }
+            } catch (e) {}
+        };
 
-            renderCategories();
-            renderProducts();
-            renderUserAuth();
-            updateServerInfoUI();
-            initBackgroundAnimation();
-        });
-
-        function loadSavedSettings() {
+        window.onload = function() {
             const savedConfig = localStorage.getItem("spk_shop_config");
-            if (savedConfig) {
-                try { serverConfig = { ...serverConfig, ...JSON.parse(savedConfig) }; } catch(e){}
-            }
-            const savedProducts = localStorage.getItem("spk_shop_products");
-            if (savedProducts) {
-                try { vipProducts = JSON.parse(savedProducts); } catch(e){}
-            }
+            if (savedConfig) { try { serverConfig = { ...serverConfig, ...JSON.parse(savedConfig) }; } catch(e){} }
+
+            const savedPlans = localStorage.getItem("spk_shop_plans");
+            if (savedPlans) { try { plansData = JSON.parse(savedPlans); } catch(e){} }
+
             const savedCoupons = localStorage.getItem("spk_shop_coupons");
-            if (savedCoupons) {
-                try { validCoupons = JSON.parse(savedCoupons); } catch(e){}
-            }
-            const savedPending = localStorage.getItem("spk_pending_sales");
-            if (savedPending) {
-                try { window.allPendingSales = JSON.parse(savedPending); } catch(e){}
-            }
-        }
+            if (savedCoupons) { try { validCoupons = JSON.parse(savedCoupons); } catch(e){} }
 
-        function loadSavedUserData() {
             const savedUser = localStorage.getItem("spk_shop_user");
-            if (savedUser) {
-                try { window.currentUser = JSON.parse(savedUser); } catch(e){}
-            }
-        }
+            if (savedUser) { try { window.currentUser = JSON.parse(savedUser); } catch(e){} }
 
-        function loadSavedPurchasesData() {
             const savedPurchases = localStorage.getItem("spk_shop_purchases");
-            if (savedPurchases) {
-                try { window.userPurchases = JSON.parse(savedPurchases); } catch(e){}
-            }
-        }
+            if (savedPurchases) { try { window.userPurchases = JSON.parse(savedPurchases); } catch(e){} }
 
-        function saveConfigToStorage() {
-            localStorage.setItem("spk_shop_config", JSON.stringify(serverConfig));
-            localStorage.setItem("spk_shop_products", JSON.stringify(vipProducts));
-            localStorage.setItem("spk_shop_coupons", JSON.stringify(validCoupons));
-            localStorage.setItem("spk_pending_sales", JSON.stringify(window.allPendingSales));
-            updateServerInfoUI();
-        }
+            const savedPendingSales = localStorage.getItem("spk_shop_pending_sales");
+            if (savedPendingSales) { try { window.allPendingSales = JSON.parse(savedPendingSales); } catch(e){} }
 
-        function updateServerInfoUI() {
-            document.getElementById("serverNameDisplay").innerHTML = `${serverConfig.name} <i class="fa-solid fa-circle-check text-blue-400 text-xs"></i>`;
-            document.getElementById("footerServerName").innerHTML = `${serverConfig.name} <i class="fa-solid fa-circle-check text-blue-400 text-sm"></i>`;
-            document.getElementById("copyrightName").innerText = serverConfig.name;
-            if (serverConfig.logo) {
-                document.getElementById("serverLogo").src = serverConfig.logo;
-                document.getElementById("footerLogo").src = serverConfig.logo;
-            }
-            checkOwnerStatus();
-        }
+            renderUserAuth();
+            updateServerDisplay();
+            renderCategories();
+            renderPlans();
+            initConstellationCanvas();
 
-        function checkOwnerStatus() {
-            const isOwner = window.currentUser && window.currentUser.email && window.currentUser.email.toLowerCase() === OWNER_EMAIL.toLowerCase();
+            if (window.currentUser && window.listenToFirestorePurchases) window.listenToFirestorePurchases();
+        };
+
+        function renderUserAuth() {
+            const authSection = document.getElementById("authSection");
             const ownerLink = document.getElementById("ownerAdminLink");
-            const notifTab = document.getElementById("tabBtnNotifications");
 
-            if (isOwner) {
-                if (ownerLink) ownerLink.classList.remove("hidden");
-                if (notifTab) notifTab.classList.remove("hidden");
-                updatePendingNotifBadge();
+            if (window.currentUser) {
+                authSection.innerHTML = `
+                    <button onclick="playAudioEffect('modal'); openProfileModal('profile')" class="flex items-center gap-2.5 bg-spk-dark/80 hover:bg-spk-dark p-1.5 pr-4 rounded-2xl border border-spk-blue/40 transition">
+                        <img src="${window.currentUser.avatar || 'https://placehold.co/100x100/3b82f6/ffffff?text=U'}" class="w-8 h-8 rounded-xl border border-spk-blue object-cover">
+                        <span class="text-xs font-bold text-white truncate max-w-[100px] sm:max-w-[140px]">${window.currentUser.username}</span>
+                    </button>
+                `;
+
+                if (ownerLink && window.currentUser.email && window.currentUser.email.toLowerCase() === OWNER_EMAIL.toLowerCase()) {
+                    ownerLink.classList.remove("hidden");
+                } else if (ownerLink) {
+                    ownerLink.classList.add("hidden");
+                }
             } else {
+                authSection.innerHTML = `
+                    <button onclick="playAudioEffect('modal'); openLoginModal();" class="bg-gradient-to-r from-blue-600 via-blue-500 to-cyan-500 hover:from-blue-500 hover:to-cyan-400 text-white font-extrabold px-5 py-2.5 rounded-2xl text-sm transition shadow-lg btn-glow flex items-center gap-2">
+                        <i class="fa-solid fa-user-large text-xs"></i>
+                        <span>Entrar</span>
+                    </button>
+                `;
                 if (ownerLink) ownerLink.classList.add("hidden");
-                if (notifTab) notifTab.classList.add("hidden");
             }
         }
 
-        function updatePendingNotifBadge() {
+        function updateServerDisplay() {
+            if (document.getElementById("serverNameDisplay")) document.getElementById("serverNameDisplay").innerHTML = `${serverConfig.name} <i class="fa-solid fa-circle-check text-blue-400 text-xs"></i>`;
+            if (document.getElementById("footerServerName")) document.getElementById("footerServerName").innerHTML = `${serverConfig.name} <i class="fa-solid fa-circle-check text-blue-400 text-sm"></i>`;
+            if (document.getElementById("copyrightName")) document.getElementById("copyrightName").innerText = serverConfig.name;
+            if (document.getElementById("serverLogo")) document.getElementById("serverLogo").src = serverConfig.logo;
+            if (document.getElementById("footerLogo")) document.getElementById("footerLogo").src = serverConfig.logo;
+        }
+
+        function renderCategories() {
+            const container = document.getElementById("categoryContainer");
+            let html = `
+                <button onclick="setCategory('all')" class="px-5 py-2 rounded-2xl text-xs font-bold transition ${activeCategory === 'all' ? 'bg-spk-blue text-white shadow-lg shadow-spk-blue/30' : 'bg-spk-card/80 text-gray-400 hover:text-white border border-white/10'}">
+                    <i class="fa-solid fa-border-all mr-1.5"></i> Todos os Planos
+                </button>
+            `;
+            serverConfig.categories.forEach(cat => {
+                const isSelected = activeCategory === cat;
+                html += `
+                    <button onclick="setCategory('${cat}')" class="px-5 py-2 rounded-2xl text-xs font-bold transition capitalize ${isSelected ? 'bg-spk-blue text-white shadow-lg shadow-spk-blue/30' : 'bg-spk-card/80 text-gray-400 hover:text-white border border-white/10'}">
+                        <i class="fa-solid fa-tag mr-1.5"></i> ${cat}
+                    </button>
+                `;
+            });
+            container.innerHTML = html;
+        }
+
+        window.setCategory = function(cat) {
+            playAudioEffect('click');
+            activeCategory = cat;
+            renderCategories();
+            renderPlans();
+        };
+
+        function renderPlans() {
+            const container = document.getElementById("plansContainer");
+            const searchVal = document.getElementById("searchInput") ? document.getElementById("searchInput").value.toLowerCase().trim() : "";
+
+            let filtered = plansData.filter(plan => {
+                const matchCat = activeCategory === 'all' || plan.category === activeCategory;
+                const matchSearch = plan.title.toLowerCase().includes(searchVal) || plan.description.toLowerCase().includes(searchVal);
+                return matchCat && matchSearch;
+            });
+
+            if (filtered.length === 0) {
+                container.innerHTML = `
+                    <div class="col-span-full text-center py-12">
+                        <i class="fa-solid fa-magnifying-glass text-4xl text-gray-600 mb-3"></i>
+                        <p class="text-gray-400 text-sm font-medium">Nenhum plano VIP encontrado com estes termos.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            let html = "";
+            filtered.forEach(plan => {
+                let benefitsHtml = "";
+                if (plan.benefits) {
+                    plan.benefits.forEach(b => {
+                        benefitsHtml += `<li class="flex items-center gap-2 text-xs text-gray-300"><i class="fa-solid fa-circle-check text-spk-blue text-[10px]"></i> ${b}</li>`;
+                    });
+                }
+
+                html += `
+                    <div class="glass-card rounded-3xl p-6 flex flex-col justify-between relative overflow-hidden group">
+                        ${plan.featured ? '<div class="absolute -right-12 top-6 bg-gradient-to-r from-blue-600 to-cyan-500 text-white font-extrabold text-[10px] uppercase tracking-widest py-1 px-12 rotate-45 shadow-lg">Destaque</div>' : ''}
+                        
+                        <div>
+                            <div class="flex items-center justify-between gap-2 mb-3">
+                                <span class="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider ${plan.badgeStyle || 'bg-spk-blue text-white'}">${plan.badge || 'VIP'}</span>
+                                <span class="text-[11px] font-semibold text-gray-400"><i class="fa-solid fa-box text-spk-blue mr-1"></i> ${plan.stock || 99} Restantes</span>
+                            </div>
+
+                            <h3 class="text-xl font-black text-white mb-2 group-hover:text-spk-blue transition">${plan.title}</h3>
+                            <p class="text-xs text-gray-400 leading-relaxed mb-4 line-clamp-2">${plan.description}</p>
+
+                            <div class="border-t border-white/10 pt-4 mb-4">
+                                <span class="text-[11px] font-bold text-gray-400 uppercase tracking-wider block mb-2">Benefícios do VIP:</span>
+                                <ul class="space-y-2">
+                                    ${benefitsHtml}
+                                </ul>
+                            </div>
+                        </div>
+
+                        <div class="pt-4 border-t border-white/10 flex items-center justify-between gap-3">
+                            <div>
+                                <span class="text-[10px] text-gray-400 font-medium block">Valor à vista</span>
+                                <span class="text-2xl font-black text-white">R$ ${Number(plan.price).toFixed(2).replace('.', ',')}</span>
+                            </div>
+
+                            <button onclick="openCheckoutModal('${plan.id}')" class="px-5 py-3 rounded-2xl ${plan.btnBg || 'bg-spk-blue hover:bg-blue-600 text-white font-bold'} text-xs transition flex items-center gap-1.5 shadow-lg">
+                                Adquirir <i class="fa-solid fa-arrow-right text-[10px]"></i>
+                            </button>
+                        </div>
+                    </div>
+                `;
+            });
+            container.innerHTML = html;
+        }
+
+        window.filterProducts = function() { renderPlans(); };
+
+        window.focusSearchInput = function() {
+            const input = document.getElementById("searchInput");
+            if (input) {
+                input.focus();
+                input.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+        };
+
+        window.toggleMobileMenu = function() {
+            const menu = document.getElementById("mobileMenu");
+            if (menu) menu.classList.toggle("hidden");
+        };
+
+        // --- GESTÃO DE CUPONS ---
+        window.openCouponsModal = function() {
+            const container = document.getElementById("activeCouponsList");
+            let html = "";
+            const keys = Object.keys(validCoupons);
+
+            if (keys.length === 0) {
+                html = `<p class="text-center text-xs text-gray-400 py-6">Nenhum cupom ativo no momento.</p>`;
+            } else {
+                keys.forEach(code => {
+                    const discount = validCoupons[code];
+                    html += `
+                        <div class="bg-spk-dark p-3.5 rounded-2xl border border-white/10 flex items-center justify-between gap-2">
+                            <div>
+                                <span class="font-mono font-black text-sm text-amber-400 block">${code}</span>
+                                <span class="text-[11px] text-gray-400">${discount}% de desconto em qualquer VIP</span>
+                            </div>
+                            <button onclick="copyCouponCode('${code}')" class="bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 border border-amber-500/30 px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 flex-shrink-0">
+                                <i class="fa-solid fa-copy"></i> Copiar
+                            </button>
+                        </div>
+                    `;
+                });
+            }
+
+            container.innerHTML = html;
+            document.getElementById("couponsModal").classList.remove("hidden");
+        };
+
+        window.closeCouponsModal = function() {
+            document.getElementById("couponsModal").classList.add("hidden");
+        };
+
+        window.copyCouponCode = function(code) {
+            navigator.clipboard.writeText(code);
+            showToast(`Cupom ${code} copiado!`, "success");
+            if (document.getElementById("couponInput")) {
+                document.getElementById("couponInput").value = code;
+            }
+        };
+
+        // --- CHECKOUT & FLUXO PIX DO CLIENTE ---
+        window.openCheckoutModal = function(vipId) {
+            playAudioEffect('modal');
+            selectedVip = plansData.find(p => p.id === vipId);
+            if (!selectedVip) return;
+
+            appliedDiscountPercent = 0;
+            document.getElementById("couponInput").value = "";
+            document.getElementById("couponMsg").classList.add("hidden");
+            document.getElementById("modalVipOriginalPrice").classList.add("hidden");
+
+            document.getElementById("modalVipBadge").innerText = selectedVip.badge || "VIP";
+            document.getElementById("modalVipBadge").className = `px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider ${selectedVip.badgeStyle || 'bg-spk-blue text-white'}`;
+            document.getElementById("modalVipTitle").innerText = selectedVip.title;
+            document.getElementById("modalVipImage").src = selectedVip.image || "https://placehold.co/600x300/0f172a/3b82f6?text=Demonstrativo+Painel+VIP";
+            document.getElementById("modalVipDescription").innerText = selectedVip.description;
+            document.getElementById("modalVipPrice").innerText = `R$ ${Number(selectedVip.price).toFixed(2).replace('.', ',')}`;
+
+            if (window.currentUser) {
+                document.getElementById("modalUserName").innerText = window.currentUser.username;
+                document.getElementById("modalUserId").innerText = `ID: ${window.currentUser.id || window.currentUser.uid || '000000'}`;
+                document.getElementById("modalUserAvatar").src = window.currentUser.avatar || 'https://placehold.co/100x100/3b82f6/ffffff?text=U';
+            } else {
+                document.getElementById("modalUserName").innerText = "Visitante (Não Conectado)";
+                document.getElementById("modalUserId").innerText = "Clique para fazer login antes da compra";
+                document.getElementById("modalUserAvatar").src = 'https://placehold.co/100x100/3b82f6/ffffff?text=U';
+            }
+
+            document.getElementById("checkoutStep1").classList.remove("hidden");
+            document.getElementById("checkoutStep2").classList.add("hidden");
+            document.getElementById("checkoutStep3").classList.add("hidden");
+
+            document.getElementById("checkoutModal").classList.remove("hidden");
+        };
+
+        window.closeCheckoutModal = function() {
+            document.getElementById("checkoutModal").classList.add("hidden");
+        };
+
+        window.applyCoupon = function() {
+            playAudioEffect('click');
+            const code = document.getElementById("couponInput").value.trim().toUpperCase();
+            const msgEl = document.getElementById("couponMsg");
+
+            if (validCoupons[code]) {
+                appliedDiscountPercent = validCoupons[code];
+                const originalPrice = Number(selectedVip.price);
+                const finalPrice = originalPrice - (originalPrice * (appliedDiscountPercent / 100));
+
+                document.getElementById("modalVipOriginalPrice").innerText = `R$ ${originalPrice.toFixed(2).replace('.', ',')}`;
+                document.getElementById("modalVipOriginalPrice").classList.remove("hidden");
+                document.getElementById("modalVipPrice").innerText = `R$ ${finalPrice.toFixed(2).replace('.', ',')}`;
+
+                msgEl.innerText = `Cupom ativado! ${appliedDiscountPercent}% de desconto aplicado.`;
+                msgEl.className = "text-[11px] font-bold text-emerald-400 block";
+            } else {
+                appliedDiscountPercent = 0;
+                msgEl.innerText = "Cupom inválido ou expirado.";
+                msgEl.className = "text-[11px] font-bold text-rose-400 block";
+            }
+        };
+
+        // Avança para a Tela de Pagamento PIX com o Link do QR Code e Chave PIX
+        window.goToPaymentStep = function() {
+            if (!window.currentUser) {
+                showToast("Faça login na sua conta para prosseguir com a compra.", "error");
+                openLoginModal();
+                return;
+            }
+
+            playAudioEffect('click');
+
+            document.getElementById("displayPixType").innerText = serverConfig.pixType || "CPF";
+            document.getElementById("displayPixKey").value = serverConfig.pixKey || "000.000.000-00";
+            
+            const qrImg = document.getElementById("pixQrCodeImg");
+            qrImg.src = serverConfig.pixQrCodeUrl || "https://placehold.co/200x200/ffffff/000000?text=QR+CODE+PIX";
+
+            document.getElementById("checkoutStep1").classList.add("hidden");
+            document.getElementById("checkoutStep2").classList.remove("hidden");
+        };
+
+        window.copyPixKey = function() {
+            const input = document.getElementById("displayPixKey");
+            input.select();
+            navigator.clipboard.writeText(input.value);
+            showToast("Chave PIX copiada!", "success");
+        };
+
+        // Botão "Já Paguei" -> Envia notificação para o Perfil do Dono
+        window.notifyPaymentDone = async function() {
+            playAudioEffect('click');
+            const finalPrice = Number(selectedVip.price) - (Number(selectedVip.price) * (appliedDiscountPercent / 100));
+            const txId = "#STORM-" + Math.floor(100000 + Math.random() * 900000);
+
+            const pendingSale = {
+                txId: txId,
+                vipId: selectedVip.id,
+                vipTitle: selectedVip.title,
+                price: finalPrice.toFixed(2).replace('.', ','),
+                username: window.currentUser.username,
+                userEmail: window.currentUser.email || "",
+                userId: window.currentUser.id || window.currentUser.uid,
+                status: "pending",
+                date: new Date().toLocaleDateString('pt-BR') + ' ' + new Date().toLocaleTimeString('pt-BR', {hour: '2-digit', minute:'2-digit'})
+            };
+
+            // Salva na lista de pendentes do Dono local e envia Firestore/Webhook
+            window.allPendingSales.unshift(pendingSale);
+            localStorage.setItem("spk_shop_pending_sales", JSON.stringify(window.allPendingSales));
+
+            // Salva no histórico do cliente como pendente
+            window.userPurchases.unshift({ ...pendingSale, status: "Aguardando Aprovação" });
+            localStorage.setItem("spk_shop_purchases", JSON.stringify(window.userPurchases));
+
+            if (window.savePurchaseToFirestore) {
+                await window.savePurchaseToFirestore(pendingSale);
+            }
+
+            document.getElementById("successRoleName").innerText = selectedVip.title;
+            document.getElementById("successUserName").innerText = window.currentUser.username;
+            document.getElementById("successTxId").innerText = txId;
+
+            document.getElementById("checkoutStep2").classList.add("hidden");
+            document.getElementById("checkoutStep3").classList.remove("hidden");
+
+            showToast("Notificação de pagamento enviada com sucesso ao Dono!", "success");
+        };
+
+        // --- DISCORD WEBHOOK ---
+        async function sendDiscordApprovedNotification(purchaseObj) {
+            if (!serverConfig.botWebhookUrl) return;
+            try {
+                const payload = {
+                    embeds: [{
+                        title: "✅ Venda Aprovada pelo Proprietário!",
+                        color: 1097625,
+                        fields: [
+                            { name: "VIP", value: purchaseObj.vipTitle, inline: true },
+                            { name: "Valor", value: `R$ ${purchaseObj.price}`, inline: true },
+                            { name: "Usuário", value: purchaseObj.username, inline: false },
+                            { name: "ID Transação", value: purchaseObj.txId, inline: false }
+                        ],
+                        timestamp: new Date().toISOString()
+                    }]
+                };
+                await fetch(serverConfig.botWebhookUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+            } catch (e) {
+                console.warn("Erro ao enviar webhook:", e);
+            }
+        }
+
+        // --- MODAL DE LOGIN ---
+        window.openLoginModal = function() { document.getElementById("loginModal").classList.remove("hidden"); };
+        window.closeLoginModal = function() { document.getElementById("loginModal").classList.add("hidden"); };
+
+        // --- PERFIL DO USUÁRIO, COMPRAS & NOTIFICAÇÕES DO DONO ---
+        window.openProfileModal = function(tab = 'profile') {
+            if (!window.currentUser) {
+                openLoginModal();
+                return;
+            }
+            playAudioEffect('modal');
+            document.getElementById("profileUserName").innerHTML = `${window.currentUser.username} <span id="profileProviderBadge" class="text-[10px] px-2 py-0.5 rounded-full bg-spk-blue/20 text-spk-blue border border-spk-blue/30 font-bold uppercase">${window.currentUser.provider || 'Conta'}</span>`;
+            document.getElementById("profileUserEmail").innerText = window.currentUser.email || "Conectado via ID Direto";
+            document.getElementById("profileUserId").innerText = `ID: ${window.currentUser.id || window.currentUser.uid || '000000'}`;
+            document.getElementById("profileUserAvatar").src = window.currentUser.avatar || 'https://placehold.co/100x100/3b82f6/ffffff?text=U';
+            document.getElementById("profDetailProvider").innerText = window.currentUser.provider || 'Plataforma';
+
+            // Habilita aba de Notificações se for o Dono
+            const notifTabBtn = document.getElementById("tabBtnNotifications");
+            if (window.currentUser.email && window.currentUser.email.toLowerCase() === OWNER_EMAIL.toLowerCase()) {
+                notifTabBtn.classList.remove("hidden");
+                updateOwnerNotifBadge();
+            } else {
+                notifTabBtn.classList.add("hidden");
+            }
+
+            switchProfileTab(tab);
+            document.getElementById("profileModal").classList.remove("hidden");
+        };
+
+        window.closeProfileModal = function() { document.getElementById("profileModal").classList.add("hidden"); };
+
+        window.switchProfileTab = function(tab) {
+            const btnProf = document.getElementById("tabBtnProfile");
+            const btnPurc = document.getElementById("tabBtnPurchases");
+            const btnNoti = document.getElementById("tabBtnNotifications");
+
+            const contentProf = document.getElementById("tabContentProfile");
+            const contentPurc = document.getElementById("tabContentPurchases");
+            const contentNoti = document.getElementById("tabContentNotifications");
+
+            [contentProf, contentPurc, contentNoti].forEach(el => el.classList.add("hidden"));
+            [btnProf, btnPurc].forEach(el => el.className = "px-4 py-2 rounded-xl text-xs font-bold transition text-gray-400 hover:text-white");
+            if (btnNoti) btnNoti.className = "px-4 py-2 rounded-xl text-xs font-bold transition text-amber-400 hover:text-amber-300 bg-amber-500/10 border border-amber-500/30";
+
+            if (tab === 'profile') {
+                contentProf.classList.remove("hidden");
+                btnProf.className = "px-4 py-2 rounded-xl text-xs font-bold transition bg-spk-blue text-white";
+            } else if (tab === 'purchases') {
+                contentPurc.classList.remove("hidden");
+                btnPurc.className = "px-4 py-2 rounded-xl text-xs font-bold transition bg-spk-blue text-white";
+                renderPurchasesList();
+            } else if (tab === 'notifications') {
+                contentNoti.classList.remove("hidden");
+                if (btnNoti) btnNoti.className = "px-4 py-2 rounded-xl text-xs font-bold transition bg-amber-500 text-black";
+                renderOwnerNotifications();
+            }
+        };
+
+        function renderPurchasesList() {
+            const container = document.getElementById("purchasesListContainer");
+            if (!window.userPurchases || window.userPurchases.length === 0) {
+                container.innerHTML = `<p class="text-center text-gray-400 text-xs py-8">Nenhum VIP adquirido até o momento.</p>`;
+                return;
+            }
+
+            let html = "";
+            window.userPurchases.forEach(item => {
+                const isApproved = item.status === 'Aprovado' || item.status === 'approved';
+                const statusBadge = isApproved 
+                    ? `<span class="px-2.5 py-1 rounded-full text-[10px] font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">Aprovado</span>`
+                    : `<span class="px-2.5 py-1 rounded-full text-[10px] font-bold bg-amber-500/20 text-amber-400 border border-amber-500/30">Pendente</span>`;
+
+                html += `
+                    <div class="bg-spk-dark p-4 rounded-2xl border border-white/10 flex items-center justify-between gap-3">
+                        <div>
+                            <h5 class="font-bold text-sm text-white">${item.vipTitle || 'VIP Storm'}</h5>
+                            <p class="text-[11px] text-gray-400 font-mono mt-0.5">${item.txId} • R$ ${item.price}</p>
+                            <span class="text-[10px] text-gray-500 block mt-1">${item.date || ''}</span>
+                        </div>
+                        <div>${statusBadge}</div>
+                    </div>
+                `;
+            });
+            container.innerHTML = html;
+        }
+
+        function updateOwnerNotifBadge() {
             const pendingCount = window.allPendingSales.filter(s => s.status === 'pending').length;
             const badge = document.getElementById("notifBadgeCount");
             if (badge) {
@@ -1077,679 +1505,411 @@
             }
         }
 
-        function renderUserAuth() {
-            const container = document.getElementById("authSection");
-            checkOwnerStatus();
+        function renderOwnerNotifications() {
+            const container = document.getElementById("ownerNotificationsContainer");
+            const pendingSales = window.allPendingSales.filter(s => s.status === 'pending');
 
-            if (window.currentUser) {
-                container.innerHTML = `
-                    <div onclick="playAudioEffect('modal'); openProfileModal('profile');" class="flex items-center gap-2.5 bg-spk-card hover:bg-spk-dark/80 px-3 py-1.5 rounded-full border border-spk-border cursor-pointer transition">
-                        <img src="${window.currentUser.avatar}" class="w-7 h-7 rounded-full object-cover border border-spk-blue">
-                        <span class="text-xs font-bold text-white max-w-[100px] truncate">${window.currentUser.username}</span>
-                        <i class="fa-solid fa-chevron-down text-[10px] text-gray-400"></i>
+            if (pendingSales.length === 0) {
+                container.innerHTML = `<p class="text-center text-gray-400 text-xs py-8">Nenhuma solicitação de compra pendente.</p>`;
+                return;
+            }
+
+            let html = "";
+            pendingSales.forEach(sale => {
+                html += `
+                    <div class="bg-spk-dark p-4 rounded-2xl border border-white/10 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                        <div>
+                            <h5 class="font-bold text-sm text-white">${sale.vipTitle}</h5>
+                            <p class="text-xs text-gray-300">Cliente: <strong class="text-spk-blue">${sale.username}</strong> (${sale.userEmail || 'Sem email'})</p>
+                            <p class="text-[11px] text-gray-400 font-mono">TX: ${sale.txId} | Valor: R$ ${sale.price}</p>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <button onclick="approveSale('${sale.txId}')" class="bg-emerald-500 hover:bg-emerald-600 text-black font-extrabold px-4 py-2 rounded-xl text-xs transition">
+                                Aprovar
+                            </button>
+                            <button onclick="rejectSale('${sale.txId}')" class="bg-rose-500/20 hover:bg-rose-500/30 text-rose-400 border border-rose-500/30 font-bold px-3 py-2 rounded-xl text-xs transition">
+                                Recusar
+                            </button>
+                        </div>
                     </div>
                 `;
-            } else {
-                container.innerHTML = `
-                    <button onclick="playAudioEffect('modal'); openLoginModal();" class="bg-spk-blue hover:bg-blue-600 text-white font-bold px-4 py-2 rounded-xl text-xs transition flex items-center gap-2 shadow-lg shadow-blue-500/20">
-                        <i class="fa-solid fa-user"></i> Entrar
-                    </button>
-                `;
-            }
-        }
-
-        function renderCategories() {
-            const container = document.getElementById("categoryContainer");
-            const categories = ["all", ...(serverConfig.categories || ["iniciante", "popular", "elite"])];
-
-            container.innerHTML = categories.map(cat => {
-                const isActive = activeCategory === cat;
-                const label = cat === 'all' ? 'Todos os VIPs' : cat.toUpperCase();
-                const activeClass = isActive ? 'bg-spk-blue text-white shadow-lg shadow-blue-500/30' : 'bg-spk-card text-gray-300 hover:text-white border border-white/10';
-                return `<button onclick="filterCategory('${cat}')" class="px-5 py-2.5 rounded-2xl text-xs font-extrabold transition uppercase tracking-wider ${activeClass}">${label}</button>`;
-            }).join("");
-        }
-
-        function filterCategory(cat) {
-            playAudioEffect('click');
-            activeCategory = cat;
-            renderCategories();
-            renderProducts();
-        }
-
-        function filterProducts() {
-            renderProducts();
-        }
-
-        function renderProducts() {
-            const container = document.getElementById("plansContainer");
-            const searchTerm = (document.getElementById("searchInput")?.value || "").toLowerCase();
-
-            const filtered = vipProducts.filter(prod => {
-                const matchCat = activeCategory === 'all' || prod.category === activeCategory;
-                const matchSearch = prod.name.toLowerCase().includes(searchTerm) || prod.description.toLowerCase().includes(searchTerm);
-                return matchCat && matchSearch;
             });
-
-            if (filtered.length === 0) {
-                container.innerHTML = `
-                    <div class="col-span-full text-center py-12 text-gray-400">
-                        <i class="fa-solid fa-box-open text-4xl mb-3 block text-gray-600"></i>
-                        <p class="text-sm font-bold">Nenhum VIP encontrado com estes critérios.</p>
-                    </div>
-                `;
-                return;
-            }
-
-            container.innerHTML = filtered.map(prod => `
-                <div class="glass-card rounded-3xl p-6 flex flex-col justify-between relative overflow-hidden group">
-                    <div>
-                        <div class="flex justify-between items-center mb-4">
-                            <span class="px-3 py-1 rounded-full text-[10px] font-black tracking-wider uppercase border ${prod.badgeColor}">${prod.badge}</span>
-                            <span class="text-xs font-bold text-gray-400 uppercase font-mono">${prod.category}</span>
-                        </div>
-                        <h3 class="text-xl font-black text-white group-hover:text-spk-blue transition mb-2">${prod.name}</h3>
-                        <p class="text-xs text-gray-400 leading-relaxed mb-4">${prod.description}</p>
-                        
-                        <div class="border-t border-white/10 pt-4 mb-6 space-y-2">
-                            ${prod.features.map(f => `
-                                <div class="flex items-center gap-2 text-xs text-gray-300">
-                                    <i class="fa-solid fa-check text-emerald-400 text-[10px]"></i>
-                                    <span>${f}</span>
-                                </div>
-                            `).join("")}
-                        </div>
-                    </div>
-
-                    <div class="border-t border-white/10 pt-4 mt-auto">
-                        <div class="flex items-baseline justify-between mb-4">
-                            <span class="text-xs text-gray-400 font-medium">Valor:</span>
-                            <span class="text-2xl font-black text-white">R$ ${prod.price.toFixed(2).replace('.', ',')}</span>
-                        </div>
-                        <button onclick="openCheckoutModal('${prod.id}')" class="w-full bg-spk-blue hover:bg-blue-600 text-white font-bold py-3.5 rounded-2xl text-xs transition flex items-center justify-center gap-2 shadow-lg shadow-blue-500/25">
-                            <i class="fa-solid fa-cart-shopping"></i> Adquirir Agora
-                        </button>
-                    </div>
-                </div>
-            `).join("");
-        }
-
-        // CHECKOUT & FLUXO DE COMPRA
-        function openCheckoutModal(productId) {
-            playAudioEffect('modal');
-            selectedVip = vipProducts.find(p => p.id === productId);
-            if (!selectedVip) return;
-
-            appliedDiscountPercent = 0;
-            document.getElementById("couponInput").value = "";
-            document.getElementById("couponMsg").classList.add("hidden");
-
-            document.getElementById("modalVipBadge").innerText = selectedVip.badge;
-            document.getElementById("modalVipTitle").innerText = selectedVip.name;
-            document.getElementById("modalVipDescription").innerText = selectedVip.description;
-            if (selectedVip.imageUrl) document.getElementById("modalVipImage").src = selectedVip.imageUrl;
-
-            updateCheckoutPriceUI();
-
-            if (window.currentUser) {
-                document.getElementById("modalUserAvatar").src = window.currentUser.avatar;
-                document.getElementById("modalUserName").innerText = window.currentUser.username;
-                document.getElementById("modalUserId").innerText = `${window.currentUser.provider.toUpperCase()} • ${window.currentUser.email || 'Sem e-mail'}`;
-            } else {
-                document.getElementById("modalUserAvatar").src = "https://placehold.co/100x100/3b82f6/ffffff?text=U";
-                document.getElementById("modalUserName").innerText = "Visitante (Não Conectado)";
-                document.getElementById("modalUserId").innerText = "Clique para fazer login antes da compra";
-            }
-
-            document.getElementById("checkoutStep1").classList.remove("hidden");
-            document.getElementById("checkoutStep2").classList.add("hidden");
-            document.getElementById("checkoutStep3").classList.add("hidden");
-
-            document.getElementById("checkoutModal").classList.remove("hidden");
-        }
-
-        function closeCheckoutModal() {
-            document.getElementById("checkoutModal").classList.add("hidden");
-        }
-
-        function applyCoupon() {
-            const input = document.getElementById("couponInput").value.trim().toUpperCase();
-            const msg = document.getElementById("couponMsg");
-
-            if (validCoupons[input]) {
-                appliedDiscountPercent = validCoupons[input];
-                msg.innerText = `Cupom aplicado! ${appliedDiscountPercent}% de desconto concedido.`;
-                msg.className = "text-[11px] font-bold text-emerald-400 block";
-                playAudioEffect('success');
-            } else {
-                appliedDiscountPercent = 0;
-                msg.innerText = "Cupom inválido ou expirado.";
-                msg.className = "text-[11px] font-bold text-rose-400 block";
-            }
-            updateCheckoutPriceUI();
-        }
-
-        function updateCheckoutPriceUI() {
-            if (!selectedVip) return;
-            const original = selectedVip.price;
-            const finalPrice = original * (1 - appliedDiscountPercent / 100);
-
-            const origElem = document.getElementById("modalVipOriginalPrice");
-            if (appliedDiscountPercent > 0) {
-                origElem.innerText = `R$ ${original.toFixed(2).replace('.', ',')}`;
-                origElem.classList.remove("hidden");
-            } else {
-                origElem.classList.add("hidden");
-            }
-            document.getElementById("modalVipPrice").innerText = `R$ ${finalPrice.toFixed(2).replace('.', ',')}`;
-        }
-
-        function goToPaymentStep() {
-            if (!window.currentUser) {
-                showToast("Faça login na sua conta para continuar a compra.", "error");
-                openLoginModal();
-                return;
-            }
-
-            playAudioEffect('click');
-            document.getElementById("displayPixType").innerText = serverConfig.pixType;
-            document.getElementById("displayPixKey").value = serverConfig.pixKey;
-            document.getElementById("pixQrCodeImg").src = serverConfig.pixQrCodeUrl;
-
-            document.getElementById("checkoutStep1").classList.add("hidden");
-            document.getElementById("checkoutStep2").classList.remove("hidden");
-        }
-
-        function copyPixKey() {
-            const input = document.getElementById("displayPixKey");
-            input.select();
-            navigator.clipboard.writeText(input.value);
-            showToast("Chave PIX copiada para a área de transferência!", "success");
-            playAudioEffect('click');
-        }
-
-        function notifyPaymentDone() {
-            if (!selectedVip || !window.currentUser) return;
-            playAudioEffect('success');
-
-            const finalPrice = selectedVip.price * (1 - appliedDiscountPercent / 100);
-            const txId = "#STORM-" + Math.floor(100000 + Math.random() * 900000);
-
-            const purchaseData = {
-                txId: txId,
-                roleName: selectedVip.name,
-                productId: selectedVip.id,
-                price: finalPrice,
-                status: "pending",
-                date: new Date().toLocaleDateString('pt-BR'),
-                userEmail: window.currentUser.email || "",
-                userName: window.currentUser.username,
-                userId: window.currentUser.id
-            };
-
-            // Salva na lista local e do Firestore
-            window.userPurchases.unshift(purchaseData);
-            localStorage.setItem("spk_shop_purchases", JSON.stringify(window.userPurchases));
-            if (window.savePurchaseToFirestore) window.savePurchaseToFirestore(purchaseData);
-
-            // Adiciona para a fila do Dono
-            window.allPendingSales.unshift(purchaseData);
-            localStorage.setItem("spk_pending_sales", JSON.stringify(window.allPendingSales));
-            updatePendingNotifBadge();
-
-            // Notifica Webhook Discord
-            sendDiscordWebhookNotification(purchaseData);
-
-            document.getElementById("successRoleName").innerText = selectedVip.name;
-            document.getElementById("successUserName").innerText = window.currentUser.username;
-            document.getElementById("successTxId").innerText = txId;
-
-            document.getElementById("checkoutStep2").classList.add("hidden");
-            document.getElementById("checkoutStep3").classList.remove("hidden");
-
-            if (typeof confetti === 'function') confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
-        }
-
-        async function sendDiscordWebhookNotification(sale) {
-            if (!serverConfig.botWebhookUrl) return;
-            try {
-                const payload = {
-                    embeds: [{
-                        title: "⚡ Nova Solicitação de VIP Registrada!",
-                        color: 3889142,
-                        fields: [
-                            { name: "VIP", value: sale.roleName, inline: true },
-                            { name: "Cliente", value: sale.userName, inline: true },
-                            { name: "E-mail", value: sale.userEmail || "Não informado", inline: true },
-                            { name: "Valor", value: `R$ ${sale.price.toFixed(2)}`, inline: true },
-                            { name: "ID Transação", value: sale.txId, inline: true }
-                        ],
-                        footer: { text: "Storm VIPs System" },
-                        timestamp: new Date().toISOString()
-                    }]
-                };
-                await fetch(serverConfig.botWebhookUrl, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
-                });
-            } catch(e) { console.warn("Erro ao enviar Webhook:", e); }
+            container.innerHTML = html;
         }
 
         // APROVAÇÃO DA VENDA PELO DONO
-        window.approveSale = function(txId) {
-            const index = window.allPendingSales.findIndex(s => s.txId === txId);
-            if (index === -1) return;
+        window.approveSale = async function(txId) {
+            playAudioEffect('click');
+            const saleIndex = window.allPendingSales.findIndex(s => s.txId === txId);
+            if (saleIndex === -1) return;
 
-            const sale = window.allPendingSales[index];
-            sale.status = "approved";
-            localStorage.setItem("spk_pending_sales", JSON.stringify(window.allPendingSales));
+            const sale = window.allPendingSales[saleIndex];
+            sale.status = 'approved';
+            localStorage.setItem("spk_shop_pending_sales", JSON.stringify(window.allPendingSales));
 
-            // Atualiza também nas compras do usuário local se for o mesmo
-            const myIndex = window.userPurchases.findIndex(s => s.txId === txId);
-            if (myIndex !== -1) {
-                window.userPurchases[myIndex].status = "approved";
-                localStorage.setItem("spk_shop_purchases", JSON.stringify(window.userPurchases));
+            // Atualiza histórico do comprador
+            window.userPurchases = window.userPurchases.map(p => p.txId === txId ? { ...p, status: 'Aprovado' } : p);
+            localStorage.setItem("spk_shop_purchases", JSON.stringify(window.userPurchases));
+
+            // Dispara Webhook no Discord
+            sendDiscordApprovedNotification(sale);
+
+            // Tenta enviar e-mail de confirmação exclusivamente para o e-mail do cliente
+            let recipientEmail = sale.userEmail ? sale.userEmail.trim() : "";
+            
+            if (!recipientEmail || !recipientEmail.includes("@")) {
+                const askedEmail = prompt(`O cliente ${sale.username} não possui e-mail cadastrado na compra. Digite o e-mail do cliente para enviar a confirmação (ou cancele):`);
+                if (askedEmail && askedEmail.includes("@")) {
+                    recipientEmail = askedEmail.trim().toLowerCase();
+                    sale.userEmail = recipientEmail;
+                }
             }
-
-            // CORREÇÃO CRÍTICA DO PROBLEMA DE E-MAIL:
-            // Busca estritamente o e-mail do comprador registrado na venda e evita enviar para o Dono
-            const recipientEmail = sale.userEmail || sale.email || sale.buyerEmail || "";
 
             if (recipientEmail && recipientEmail.includes("@")) {
-                showToast(`VIP aprovado! E-mail de confirmação enviado para: ${recipientEmail}`, "success");
-            } else {
-                showToast("VIP aprovado com sucesso! (Cliente não possuía e-mail cadastrado)", "success");
+                try {
+                    await fetch("https://api.emailjs.com/api/v1.0/email/send", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({
+                            service_id: "default_service",
+                            template_id: "template_approved",
+                            user_id: "YOUR_EMAILJS_USER_ID",
+                            template_params: {
+                                to_email: recipientEmail,
+                                user_name: sale.username,
+                                vip_title: sale.vipTitle,
+                                tx_id: sale.txId
+                            }
+                        })
+                    });
+                } catch(e) {
+                    console.warn("Envio de e-mail ao cliente:", e);
+                }
             }
 
-            playAudioEffect('success');
-            updatePendingNotifBadge();
+            if (typeof confetti === 'function') confetti({ particleCount: 70, spread: 60, origin: { y: 0.6 } });
+            showToast(`Venda ${txId} aprovada com sucesso!`, "success");
+            updateOwnerNotifBadge();
             renderOwnerNotifications();
         };
 
-        // MODAIS AUXILIARES
-        function openLoginModal() {
-            document.getElementById("loginModal").classList.remove("hidden");
-        }
-        function closeLoginModal() {
-            document.getElementById("loginModal").classList.add("hidden");
-        }
-
-        function openProfileModal(tab = 'profile') {
-            if (!window.currentUser) {
-                openLoginModal();
-                return;
-            }
-            document.getElementById("profileUserAvatar").src = window.currentUser.avatar;
-            document.getElementById("profileUserName").innerText = window.currentUser.username;
-            document.getElementById("profileUserEmail").innerText = window.currentUser.email || "E-mail não vinculado";
-            document.getElementById("profileUserId").innerText = `ID: ${window.currentUser.id}`;
-            document.getElementById("profileProviderBadge").innerText = window.currentUser.provider;
-            document.getElementById("profDetailProvider").innerText = window.currentUser.provider;
-
-            switchProfileTab(tab);
-            document.getElementById("profileModal").classList.remove("hidden");
-        }
-
-        function closeProfileModal() {
-            document.getElementById("profileModal").classList.add("hidden");
-        }
-
-        function switchProfileTab(tabName) {
-            const btnProf = document.getElementById("tabBtnProfile");
-            const btnPurch = document.getElementById("tabBtnPurchases");
-            const btnNotif = document.getElementById("tabBtnNotifications");
-
-            const cntProf = document.getElementById("tabContentProfile");
-            const cntPurch = document.getElementById("tabContentPurchases");
-            const cntNotif = document.getElementById("tabContentNotifications");
-
-            cntProf.classList.add("hidden");
-            cntPurch.classList.add("hidden");
-            cntNotif.classList.add("hidden");
-
-            btnProf.className = "px-4 py-2 rounded-xl text-xs font-bold transition text-gray-400 hover:text-white";
-            btnPurch.className = "px-4 py-2 rounded-xl text-xs font-bold transition text-gray-400 hover:text-white";
-            btnNotif.className = "px-4 py-2 rounded-xl text-xs font-bold transition text-amber-400 hover:text-amber-300 bg-amber-500/10 border border-amber-500/30";
-
-            if (tabName === 'profile') {
-                cntProf.classList.remove("hidden");
-                btnProf.className = "px-4 py-2 rounded-xl text-xs font-bold transition bg-spk-blue text-white";
-            } else if (tabName === 'purchases') {
-                cntPurch.classList.remove("hidden");
-                btnPurch.className = "px-4 py-2 rounded-xl text-xs font-bold transition bg-spk-blue text-white";
-                renderPurchasesList();
-            } else if (tabName === 'notifications') {
-                cntNotif.classList.remove("hidden");
-                renderOwnerNotifications();
-            }
-        }
-
-        function renderPurchasesList() {
-            const container = document.getElementById("purchasesListContainer");
-            if (!window.userPurchases || window.userPurchases.length === 0) {
-                container.innerHTML = `<p class="text-center text-gray-400 text-xs py-8">Você ainda não realizou nenhuma compra de VIP.</p>`;
-                return;
-            }
-
-            container.innerHTML = window.userPurchases.map(p => `
-                <div class="bg-spk-dark p-4 rounded-2xl border border-white/10 flex justify-between items-center text-xs">
-                    <div>
-                        <h5 class="font-bold text-white text-sm">${p.roleName}</h5>
-                        <p class="text-gray-400 font-mono">${p.txId} • ${p.date}</p>
-                    </div>
-                    <div class="text-right">
-                        <span class="font-bold text-white block">R$ ${p.price.toFixed(2).replace('.', ',')}</span>
-                        <span class="${p.status === 'approved' ? 'text-emerald-400' : 'text-amber-400'} font-bold">
-                            ${p.status === 'approved' ? '<i class="fa-solid fa-check-circle"></i> Aprovado' : '<i class="fa-solid fa-clock"></i> Pendente'}
-                        </span>
-                    </div>
-                </div>
-            `).join("");
-        }
-
-        function renderOwnerNotifications() {
-            const container = document.getElementById("ownerNotificationsContainer");
-            if (!window.allPendingSales || window.allPendingSales.length === 0) {
-                container.innerHTML = `<p class="text-center text-gray-400 text-xs py-8">Nenhuma notificação de venda registrada.</p>`;
-                return;
-            }
-
-            container.innerHTML = window.allPendingSales.map(s => `
-                <div class="bg-spk-dark p-4 rounded-2xl border border-white/10 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 text-xs">
-                    <div>
-                        <h5 class="font-bold text-white text-sm">${s.roleName} - R$ ${s.price.toFixed(2).replace('.', ',')}</h5>
-                        <p class="text-gray-300">Comprador: <strong>${s.userName}</strong> (${s.userEmail || 'Sem e-mail'})</p>
-                        <p class="text-gray-500 font-mono">${s.txId} • ${s.date}</p>
-                    </div>
-                    <div>
-                        ${s.status === 'pending' 
-                            ? `<button onclick="approveSale('${s.txId}')" class="bg-emerald-500 hover:bg-emerald-600 text-black font-extrabold px-4 py-2 rounded-xl text-xs transition">
-                                <i class="fa-solid fa-check"></i> Aprovar VIP
-                               </button>`
-                            : `<span class="text-emerald-400 font-bold"><i class="fa-solid fa-circle-check"></i> Já Aprovado</span>`
-                        }
-                    </div>
-                </div>
-            `).join("");
-        }
-
-        function logoutAccount() {
+        window.rejectSale = function(txId) {
             playAudioEffect('click');
+            window.allPendingSales = window.allPendingSales.filter(s => s.txId !== txId);
+            localStorage.setItem("spk_shop_pending_sales", JSON.stringify(window.allPendingSales));
+
+            window.userPurchases = window.userPurchases.map(p => p.txId === txId ? { ...p, status: 'Recusado' } : p);
+            localStorage.setItem("spk_shop_purchases", JSON.stringify(window.userPurchases));
+
+            showToast(`Venda ${txId} recusada.`, "error");
+            updateOwnerNotifBadge();
+            renderOwnerNotifications();
+        };
+
+        window.logoutAccount = async function() {
+            playAudioEffect('click');
+            if (window.firebaseSignOut) await window.firebaseSignOut();
             window.currentUser = null;
-            window.userPurchases = [];
             localStorage.removeItem("spk_shop_user");
-            localStorage.removeItem("spk_shop_purchases");
-            if (window.firebaseSignOut) window.firebaseSignOut();
-
-            closeProfileModal();
             renderUserAuth();
+            closeProfileModal();
             showToast("Você saiu da sua conta.", "info");
-        }
+        };
 
-        // CUPONS MODAL
-        function openCouponsModal() {
-            const list = document.getElementById("activeCouponsList");
-            list.innerHTML = Object.entries(validCoupons).map(([code, disc]) => `
-                <div class="bg-spk-dark p-3.5 rounded-2xl border border-white/10 flex items-center justify-between">
-                    <div>
-                        <span class="font-mono font-bold text-amber-400 text-sm block">${code}</span>
-                        <span class="text-[11px] text-gray-400">${disc}% de Desconto na loja</span>
-                    </div>
-                    <button onclick="navigator.clipboard.writeText('${code}'); showToast('Cupom copiado!', 'success');" class="bg-spk-blue/20 hover:bg-spk-blue/40 text-spk-blue font-bold px-3 py-1.5 rounded-xl text-xs border border-spk-blue/30">
-                        Copiar
-                    </button>
-                </div>
-            `).join("");
-            document.getElementById("couponsModal").classList.remove("hidden");
-        }
-        function closeCouponsModal() {
-            document.getElementById("couponsModal").classList.add("hidden");
-        }
+        // --- PAINEL DE ADMINISTRAÇÃO DO DONO ---
+        window.openAdminModal = function() {
+            if (!window.currentUser || !window.currentUser.email || window.currentUser.email.toLowerCase() !== OWNER_EMAIL.toLowerCase()) {
+                showToast("Acesso negado. Apenas o proprietário pode acessar.", "error");
+                return;
+            }
+            playAudioEffect('modal');
 
-        // PAINEL ADMIN DO DONO
-        function openAdminModal() {
             document.getElementById("cfgServerName").value = serverConfig.name;
             document.getElementById("cfgServerLogo").value = serverConfig.logo;
-            document.getElementById("cfgBotWebhook").value = serverConfig.botWebhookUrl;
-            document.getElementById("cfgBotUri").value = serverConfig.botUri;
-            document.getElementById("cfgCategoriesInput").value = (serverConfig.categories || []).join(", ");
-            
+            document.getElementById("cfgBotWebhook").value = serverConfig.botWebhookUrl || "";
+            document.getElementById("cfgBotUri").value = serverConfig.botUri || "";
+            document.getElementById("cfgCategoriesInput").value = serverConfig.categories ? serverConfig.categories.join(", ") : "";
+
             document.getElementById("cfgPixType").value = serverConfig.pixType || "CPF";
             document.getElementById("cfgPixKey").value = serverConfig.pixKey || "";
             document.getElementById("cfgPixQrCodeUrl").value = serverConfig.pixQrCodeUrl || "";
 
-            document.getElementById("cfgTerms").value = serverConfig.terms;
-            document.getElementById("cfgPrivacy").value = serverConfig.privacy;
+            document.getElementById("cfgTerms").value = serverConfig.terms || "";
+            document.getElementById("cfgPrivacy").value = serverConfig.privacy || "";
 
             renderAdminProductsList();
             renderAdminCouponsList();
             switchAdminTab('general');
 
             document.getElementById("adminModal").classList.remove("hidden");
-        }
+        };
 
-        function closeAdminModal() {
-            document.getElementById("adminModal").classList.add("hidden");
-        }
+        window.closeAdminModal = function() { document.getElementById("adminModal").classList.add("hidden"); };
 
-        function switchAdminTab(tab) {
-            document.getElementById("admSecGeneral").classList.add("hidden");
-            document.getElementById("admSecPix").classList.add("hidden");
-            document.getElementById("admSecProducts").classList.add("hidden");
-            document.getElementById("admSecTerms").classList.add("hidden");
-            document.getElementById("admSecCoupons").classList.add("hidden");
+        window.switchAdminTab = function(tab) {
+            const tabs = ['general', 'pix', 'products', 'terms', 'coupons'];
+            tabs.forEach(t => {
+                const sec = document.getElementById(`admSec${t.charAt(0).toUpperCase() + t.slice(1)}`);
+                const btn = document.getElementById(`admTab${t.charAt(0).toUpperCase() + t.slice(1, 4)}`);
+                if (sec) sec.classList.add("hidden");
+                if (btn) btn.className = "px-3.5 py-1.5 rounded-xl text-xs font-bold text-gray-400 hover:text-white transition";
+            });
 
-            document.getElementById("admTabGen").className = "px-3.5 py-1.5 rounded-xl text-xs font-bold text-gray-400 hover:text-white transition";
-            document.getElementById("admTabPix").className = "px-3.5 py-1.5 rounded-xl text-xs font-bold text-gray-400 hover:text-white transition";
-            document.getElementById("admTabProd").className = "px-3.5 py-1.5 rounded-xl text-xs font-bold text-gray-400 hover:text-white transition";
-            document.getElementById("admTabTerms").className = "px-3.5 py-1.5 rounded-xl text-xs font-bold text-gray-400 hover:text-white transition";
-            document.getElementById("admTabCoup").className = "px-3.5 py-1.5 rounded-xl text-xs font-bold text-gray-400 hover:text-white transition";
-
-            if (tab === 'general') {
-                document.getElementById("admSecGeneral").classList.remove("hidden");
-                document.getElementById("admTabGen").className = "px-3.5 py-1.5 rounded-xl text-xs font-bold bg-spk-blue text-white transition";
-            } else if (tab === 'pix') {
-                document.getElementById("admSecPix").classList.remove("hidden");
-                document.getElementById("admTabPix").className = "px-3.5 py-1.5 rounded-xl text-xs font-bold bg-spk-blue text-white transition";
-            } else if (tab === 'products') {
-                document.getElementById("admSecProducts").classList.remove("hidden");
-                document.getElementById("admTabProd").className = "px-3.5 py-1.5 rounded-xl text-xs font-bold bg-spk-blue text-white transition";
-            } else if (tab === 'terms') {
-                document.getElementById("admSecTerms").classList.remove("hidden");
-                document.getElementById("admTabTerms").className = "px-3.5 py-1.5 rounded-xl text-xs font-bold bg-spk-blue text-white transition";
-            } else if (tab === 'coupons') {
-                document.getElementById("admSecCoupons").classList.remove("hidden");
-                document.getElementById("admTabCoup").className = "px-3.5 py-1.5 rounded-xl text-xs font-bold bg-spk-blue text-white transition";
-            }
-        }
+            const activeSec = document.getElementById(`admSec${tab.charAt(0).toUpperCase() + tab.slice(1)}`);
+            const activeBtn = document.getElementById(`admTab${tab.charAt(0).toUpperCase() + tab.slice(1, 4)}`);
+            if (activeSec) activeSec.classList.remove("hidden");
+            if (activeBtn) activeBtn.className = "px-3.5 py-1.5 rounded-xl text-xs font-bold bg-spk-blue text-white transition";
+        };
 
         function renderAdminProductsList() {
             const container = document.getElementById("adminProductsList");
-            container.innerHTML = vipProducts.map((p, index) => `
-                <div class="bg-spk-dark p-4 rounded-2xl border border-white/10 space-y-3">
-                    <div class="flex justify-between items-center">
-                        <span class="font-bold text-sm text-white">#${index + 1} - ${p.name}</span>
-                        <button type="button" onclick="deleteAdminProduct(${index})" class="text-rose-400 hover:text-rose-300 text-xs font-bold"><i class="fa-solid fa-trash"></i> Excluir</button>
+            let html = "";
+            plansData.forEach((plan, idx) => {
+                html += `
+                    <div class="bg-spk-dark p-4 rounded-2xl border border-white/10 space-y-3">
+                        <div class="flex justify-between items-center">
+                            <span class="text-xs font-bold text-spk-blue uppercase">Produto #${idx + 1}</span>
+                            <button type="button" onclick="deleteProduct(${idx})" class="text-rose-400 hover:text-rose-300 text-xs font-bold"><i class="fa-solid fa-trash"></i> Excluir</button>
+                        </div>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <div>
+                                <label class="text-[10px] text-gray-400 block mb-1">Título do VIP</label>
+                                <input type="text" value="${plan.title}" onchange="plansData[${idx}].title = this.value" class="w-full bg-spk-card text-xs text-white p-2.5 rounded-xl border border-white/10 outline-none">
+                            </div>
+                            <div>
+                                <label class="text-[10px] text-gray-400 block mb-1">Preço (R$)</label>
+                                <input type="number" step="0.01" value="${plan.price}" onchange="plansData[${idx}].price = parseFloat(this.value)" class="w-full bg-spk-card text-xs text-white p-2.5 rounded-xl border border-white/10 outline-none">
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <div>
+                                <label class="text-[10px] text-gray-400 block mb-1">Estoque</label>
+                                <input type="number" value="${plan.stock || 99}" onchange="plansData[${idx}].stock = parseInt(this.value)" class="w-full bg-spk-card text-xs text-white p-2.5 rounded-xl border border-white/10 outline-none">
+                            </div>
+                            <div>
+                                <label class="text-[10px] text-gray-400 block mb-1">Categoria</label>
+                                <input type="text" value="${plan.category || 'popular'}" onchange="plansData[${idx}].category = this.value" class="w-full bg-spk-card text-xs text-white p-2.5 rounded-xl border border-white/10 outline-none">
+                            </div>
+                        </div>
                     </div>
-                    <div class="grid grid-cols-2 gap-2">
-                        <input type="text" value="${p.name}" onchange="vipProducts[${index}].name = this.value" placeholder="Nome VIP" class="bg-spk-card text-xs text-white p-2 rounded-xl border border-white/10">
-                        <input type="number" step="0.01" value="${p.price}" onchange="vipProducts[${index}].price = parseFloat(this.value)" placeholder="Preço" class="bg-spk-card text-xs text-white p-2 rounded-xl border border-white/10">
-                    </div>
-                    <input type="text" value="${p.description}" onchange="vipProducts[${index}].description = this.value" placeholder="Descrição" class="w-full bg-spk-card text-xs text-white p-2 rounded-xl border border-white/10">
-                </div>
-            `).join("");
+                `;
+            });
+            container.innerHTML = html;
         }
 
-        function addNewProduct() {
-            vipProducts.push({
-                id: "vip-custom-" + Date.now(),
-                name: "NOVO VIP",
+        window.addNewProduct = function() {
+            const newId = "vip_" + Date.now();
+            plansData.push({
+                id: newId,
+                title: "Novo VIP Exclusivo",
+                badge: "Exclusivo",
                 category: "popular",
                 price: 25.00,
-                badge: "NOVO",
-                badgeColor: "bg-blue-500/20 text-blue-300 border-blue-500/40",
-                description: "Descrição do novo VIP.",
-                imageUrl: "https://placehold.co/600x300/1e293b/3b82f6?text=NOVO+VIP",
-                features: ["Vantagem 1", "Vantagem 2"]
+                stock: 50,
+                description: "Descrição completa das vantagens deste novo VIP.",
+                benefits: ["Benefício exclusivo 1", "Benefício exclusivo 2"]
             });
             renderAdminProductsList();
-        }
+        };
 
-        function deleteAdminProduct(index) {
-            vipProducts.splice(index, 1);
+        window.deleteProduct = function(idx) {
+            plansData.splice(idx, 1);
             renderAdminProductsList();
-        }
+        };
 
         function renderAdminCouponsList() {
             const container = document.getElementById("couponsListContainer");
-            container.innerHTML = Object.entries(validCoupons).map(([code, disc]) => `
-                <div class="bg-spk-dark p-2.5 rounded-xl border border-white/10 flex justify-between items-center text-xs">
-                    <span class="font-mono font-bold text-white">${code} (${disc}%)</span>
-                    <button type="button" onclick="deleteAdminCoupon('${code}')" class="text-rose-400 hover:text-rose-300 font-bold"><i class="fa-solid fa-xmark"></i></button>
-                </div>
-            `).join("");
+            let html = "";
+            Object.keys(validCoupons).forEach(code => {
+                html += `
+                    <div class="bg-spk-dark p-3 rounded-xl border border-white/10 flex justify-between items-center">
+                        <span class="font-mono text-xs font-bold text-amber-400">${code} (${validCoupons[code]}% OFF)</span>
+                        <button type="button" onclick="removeAdminCoupon('${code}')" class="text-rose-400 hover:text-rose-300 text-xs font-bold"><i class="fa-solid fa-xmark"></i> Remover</button>
+                    </div>
+                `;
+            });
+            container.innerHTML = html;
         }
 
-        function addAdminCoupon() {
-            const code = document.getElementById("newCouponCode").value.trim().toUpperCase();
-            const disc = parseInt(document.getElementById("newCouponDiscount").value);
+        window.addAdminCoupon = function() {
+            const codeInput = document.getElementById("newCouponCode");
+            const discInput = document.getElementById("newCouponDiscount");
+            const code = codeInput.value.trim().toUpperCase();
+            const disc = parseInt(discInput.value);
+
             if (code && disc > 0) {
                 validCoupons[code] = disc;
-                document.getElementById("newCouponCode").value = "";
-                document.getElementById("newCouponDiscount").value = "";
+                codeInput.value = "";
+                discInput.value = "";
                 renderAdminCouponsList();
             }
-        }
+        };
 
-        function deleteAdminCoupon(code) {
+        window.removeAdminCoupon = function(code) {
             delete validCoupons[code];
             renderAdminCouponsList();
-        }
+        };
 
-        function saveAdminSettings(e) {
+        window.saveAdminSettings = function(e) {
             e.preventDefault();
-            serverConfig.name = document.getElementById("cfgServerName").value;
-            serverConfig.logo = document.getElementById("cfgServerLogo").value;
-            serverConfig.botWebhookUrl = document.getElementById("cfgBotWebhook").value;
-            serverConfig.botUri = document.getElementById("cfgBotUri").value;
+            playAudioEffect('click');
 
-            const catStr = document.getElementById("cfgCategoriesInput").value;
-            serverConfig.categories = catStr.split(',').map(c => c.trim().toLowerCase()).filter(c => c !== "");
+            serverConfig.name = document.getElementById("cfgServerName").value.trim();
+            serverConfig.logo = document.getElementById("cfgServerLogo").value.trim();
+            serverConfig.botWebhookUrl = document.getElementById("cfgBotWebhook").value.trim();
+            serverConfig.botUri = document.getElementById("cfgBotUri").value.trim();
+
+            const catStr = document.getElementById("cfgCategoriesInput").value.trim();
+            if (catStr) {
+                serverConfig.categories = catStr.split(',').map(s => s.trim().toLowerCase()).filter(Boolean);
+            }
 
             serverConfig.pixType = document.getElementById("cfgPixType").value;
-            serverConfig.pixKey = document.getElementById("cfgPixKey").value;
-            serverConfig.pixQrCodeUrl = document.getElementById("cfgPixQrCodeUrl").value;
+            serverConfig.pixKey = document.getElementById("cfgPixKey").value.trim();
+            serverConfig.pixQrCodeUrl = document.getElementById("cfgPixQrCodeUrl").value.trim();
 
-            serverConfig.terms = document.getElementById("cfgTerms").value;
-            serverConfig.privacy = document.getElementById("cfgPrivacy").value;
+            serverConfig.terms = document.getElementById("cfgTerms").value.trim();
+            serverConfig.privacy = document.getElementById("cfgPrivacy").value.trim();
 
-            saveConfigToStorage();
-            closeAdminModal();
+            localStorage.setItem("spk_shop_config", JSON.stringify(serverConfig));
+            localStorage.setItem("spk_shop_plans", JSON.stringify(plansData));
+            localStorage.setItem("spk_shop_coupons", JSON.stringify(validCoupons));
+
+            updateServerDisplay();
             renderCategories();
-            renderProducts();
-            showToast("Configurações salvas com sucesso!", "success");
-        }
+            renderPlans();
+            closeAdminModal();
+            showToast("Configurações atualizadas e salvas com sucesso!", "success");
+        };
 
-        // SUPORTE IA
-        function openAiSupportModal() { document.getElementById("aiSupportModal").classList.remove("hidden"); }
-        function closeAiSupportModal() { document.getElementById("aiSupportModal").classList.add("hidden"); }
+        // --- SUPORTE IA ---
+        window.openAiSupportModal = function() { document.getElementById("aiSupportModal").classList.remove("hidden"); };
+        window.closeAiSupportModal = function() { document.getElementById("aiSupportModal").classList.add("hidden"); };
 
-        function sendAiMessage() {
+        window.sendAiMessage = function() {
             const input = document.getElementById("aiChatInput");
             const text = input.value.trim();
             if (!text) return;
 
-            const chat = document.getElementById("aiChatHistory");
-            chat.innerHTML += `<div class="bg-spk-blue/20 text-white p-3 rounded-2xl border border-spk-blue/30 text-xs ml-auto max-w-[80%]">${text}</div>`;
+            playAudioEffect('click');
+            const history = document.getElementById("aiChatHistory");
+
+            history.innerHTML += `
+                <div class="bg-spk-blue/20 text-white p-3.5 rounded-2xl border border-spk-blue/30 text-xs ml-8 text-right">
+                    ${text}
+                </div>
+            `;
             input.value = "";
+            history.scrollTop = history.scrollHeight;
 
             setTimeout(() => {
-                chat.innerHTML += `<div class="bg-spk-dark text-gray-200 p-3.5 rounded-2xl border border-white/10 text-xs max-w-[85%]">
-                    Obrigado por entrar em contato! Como sou a IA da loja Storm VIPs, posso te informar que nossos VIPs possuem garantia total e entregas ágeis. Se precisar de cupons, utilize a aba de Cupons no topo!
-                </div>`;
-                chat.scrollTop = chat.scrollHeight;
+                let response = "Nosso suporte automático pode ajudar você a adquirir VIPs via PIX ou aplicar cupons de desconto no checkout!";
+                const lower = text.toLowerCase();
+                if (lower.includes("cupom") || lower.includes("desconto")) {
+                    response = "Você pode visualizar e copiar todos os cupons vigentes no menu 'Cupons' do cabeçalho!";
+                } else if (lower.includes("pix") || lower.includes("pagar")) {
+                    response = "Os pagamentos são processados via PIX instantâneo e a ativação ocorre após a confirmação pelo proprietário.";
+                }
+
+                history.innerHTML += `
+                    <div class="bg-spk-dark p-3.5 rounded-2xl border border-white/10 text-xs text-gray-200 mr-8">
+                        ${response}
+                    </div>
+                `;
+                history.scrollTop = history.scrollHeight;
             }, 600);
-        }
+        };
 
-        // AUXILIARES UI
-        function showToast(message, type = "info") {
-            const container = document.getElementById("toastContainer");
-            const toast = document.createElement("div");
-            const colors = {
-                success: "bg-emerald-500 text-black",
-                error: "bg-rose-500 text-white",
-                info: "bg-spk-blue text-white"
-            };
-            toast.className = `${colors[type] || colors.info} font-bold px-4 py-3 rounded-2xl shadow-2xl text-xs pointer-events-auto flex items-center gap-2 transition transform translate-y-2`;
-            toast.innerHTML = `<span>${message}</span>`;
-            container.appendChild(toast);
-
-            setTimeout(() => { toast.remove(); }, 4000);
-        }
-
-        function playAudioEffect(type) {
-            // Efeitos sonoros sutis de UI
-        }
-
-        function toggleMobileMenu() {
-            document.getElementById("mobileMenu").classList.toggle("hidden");
-        }
-
-        function focusSearchInput() {
-            document.getElementById("searchInput")?.focus();
-        }
-
-        function showModalInfo(title, body) {
+        // --- MODAL INFORMAÇÕES TERMOS/PRIVACIDADE ---
+        window.showModalInfo = function(title, body) {
+            playAudioEffect('modal');
             document.getElementById("infoModalTitle").innerText = title;
             document.getElementById("infoModalBody").innerText = body;
             document.getElementById("infoModal").classList.remove("hidden");
-        }
-        function closeInfoModal() {
-            document.getElementById("infoModal").classList.add("hidden");
-        }
+        };
 
-        // BACKGROUND PARTICLES
-        function initBackgroundAnimation() {
+        window.closeInfoModal = function() { document.getElementById("infoModal").classList.add("hidden"); };
+
+        // --- SISTEMA DE TOASTS ---
+        window.showToast = function(msg, type = "info") {
+            const container = document.getElementById("toastContainer");
+            if (!container) return;
+
+            const toast = document.createElement("div");
+            let bg = "bg-spk-dark text-white border-white/10";
+            if (type === "success") bg = "bg-emerald-500 text-black font-bold border-emerald-400";
+            if (type === "error") bg = "bg-rose-500 text-white font-bold border-rose-400";
+
+            toast.className = `p-3.5 rounded-2xl border text-xs shadow-2xl transition-all duration-300 transform translate-y-2 pointer-events-auto flex items-center gap-2 ${bg}`;
+            toast.innerHTML = `<span>${msg}</span>`;
+
+            container.appendChild(toast);
+            setTimeout(() => { toast.classList.remove("translate-y-2"); }, 10);
+            setTimeout(() => {
+                toast.classList.add("opacity-0", "translate-y-2");
+                setTimeout(() => toast.remove(), 300);
+            }, 3500);
+        };
+
+        // --- CANVAS DE CONSTELAÇÕES / NÉBULA ---
+        function initConstellationCanvas() {
             const canvas = document.getElementById("bgCanvas");
             if (!canvas) return;
             const ctx = canvas.getContext("2d");
-            let particles = [];
 
-            function resize() {
-                canvas.width = window.innerWidth;
-                canvas.height = window.innerHeight;
-            }
-            resize();
-            window.addEventListener("resize", resize);
+            let width = canvas.width = window.innerWidth;
+            let height = canvas.height = window.innerHeight;
 
-            for (let i = 0; i < 40; i++) {
+            window.addEventListener("resize", () => {
+                width = canvas.width = window.innerWidth;
+                height = canvas.height = window.innerHeight;
+            });
+
+            const particles = [];
+            const count = Math.floor((width * height) / 18000);
+
+            for (let i = 0; i < count; i++) {
                 particles.push({
-                    x: Math.random() * canvas.width,
-                    y: Math.random() * canvas.height,
-                    radius: Math.random() * 2 + 1,
+                    x: Math.random() * width,
+                    y: Math.random() * height,
                     vx: (Math.random() - 0.5) * 0.4,
                     vy: (Math.random() - 0.5) * 0.4,
-                    alpha: Math.random() * 0.5 + 0.1
+                    radius: Math.random() * 1.5 + 0.5
                 });
             }
 
             function animate() {
-                ctx.clearRect(0, 0, canvas.width, canvas.height);
-                particles.forEach(p => {
-                    p.x += p.vx;
-                    p.y += p.vy;
+                ctx.clearRect(0, 0, width, height);
 
-                    if (p.x < 0) p.x = canvas.width;
-                    if (p.x > canvas.width) p.x = 0;
-                    if (p.y < 0) p.y = canvas.height;
-                    if (p.y > canvas.height) p.y = 0;
+                for (let i = 0; i < particles.length; i++) {
+                    const p = particles[i];
+                    p.x += p.vx; p.y += p.vy;
+
+                    if (p.x < 0) p.x = width;
+                    if (p.x > width) p.x = 0;
+                    if (p.y < 0) p.y = height;
+                    if (p.y > height) p.y = 0;
 
                     ctx.beginPath();
                     ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
-                    ctx.fillStyle = `rgba(59, 130, 246, ${p.alpha})`;
+                    ctx.fillStyle = "rgba(59, 130, 246, 0.4)";
                     ctx.fill();
-                });
+
+                    for (let j = i + 1; j < particles.length; j++) {
+                        const p2 = particles[j];
+                        const dx = p.x - p2.x;
+                        const dy = p.y - p2.y;
+                        const dist = Math.sqrt(dx * dx + dy * dy);
+
+                        if (dist < 100) {
+                            ctx.beginPath();
+                            ctx.moveTo(p.x, p.y);
+                            ctx.lineTo(p2.x, p2.y);
+                            ctx.strokeStyle = `rgba(59, 130, 246, ${0.12 * (1 - dist / 100)})`;
+                            ctx.stroke();
+                        }
+                    }
+                }
                 requestAnimationFrame(animate);
             }
             animate();
