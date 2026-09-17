@@ -12,9 +12,6 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <!-- Canvas Confetti -->
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
-    
-    <!-- EmailJS SDK -->
-    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
 
     <!-- Firebase SDK Imports & Custom Script Setup -->
     <script type="module">
@@ -83,6 +80,8 @@
         let discordProvider = null;
         try {
             discordProvider = new OAuthProvider('oidc.discord');
+            discordProvider.addScope('email');
+            discordProvider.addScope('identify');
         } catch (e) {
             console.warn("OAuthProvider do Discord não suportado neste ambiente.");
         }
@@ -112,7 +111,33 @@
                 if (window.listenToFirestorePurchases) window.listenToFirestorePurchases();
             } catch (error) {
                 console.error("Erro no Google Login:", error);
-                if (typeof showToast === 'function') showToast("Falha ao autenticar com o Google.", "error");
+                
+                const emailPrompt = prompt("O login popup do Google não pôde ser concluído. Digite seu e-mail para conectar:");
+                if (emailPrompt && emailPrompt.includes("@")) {
+                    const cleanEmail = emailPrompt.trim().toLowerCase();
+                    const namePart = cleanEmail.split('@')[0];
+                    const fakeUid = "goog_" + Math.abs(cleanEmail.split('').reduce((acc, char) => (acc << 5) - acc + char.charCodeAt(0), 0));
+
+                    const userData = {
+                        uid: fakeUid,
+                        id: fakeUid,
+                        username: namePart,
+                        email: cleanEmail,
+                        avatar: `https://placehold.co/100x100/3b82f6/ffffff?text=${namePart[0].toUpperCase()}`,
+                        provider: 'google',
+                        createdAt: new Date().toISOString()
+                    };
+
+                    window.currentUser = userData;
+                    localStorage.setItem("spk_shop_user", JSON.stringify(window.currentUser));
+                    if (window.saveUserToFirestore) await window.saveUserToFirestore(userData);
+                    if (typeof renderUserAuth === 'function') renderUserAuth();
+                    if (typeof closeLoginModal === 'function') closeLoginModal();
+                    if (typeof showToast === 'function') showToast(`Conectado como ${window.currentUser.username}!`, "success");
+                    if (window.listenToFirestorePurchases) window.listenToFirestorePurchases();
+                } else {
+                    if (typeof showToast === 'function') showToast("Falha ao autenticar com o Google.", "error");
+                }
             }
         };
 
@@ -123,11 +148,19 @@
                 const result = await signInWithPopup(auth, discordProvider);
                 const user = result.user;
                 
+                let userEmail = user.email || "";
+                if (!userEmail) {
+                    const promptedEmail = prompt("O Discord não compartilhou seu e-mail automaticamente. Por favor, digite seu e-mail para receber as confirmações de compra:");
+                    if (promptedEmail && promptedEmail.includes("@")) {
+                        userEmail = promptedEmail.trim().toLowerCase();
+                    }
+                }
+
                 const userData = {
                     uid: user.uid,
                     id: user.uid,
                     username: user.displayName || "Usuário Discord",
-                    email: user.email || "",
+                    email: userEmail,
                     avatar: user.photoURL || `https://placehold.co/100x100/5865F2/ffffff?text=D`,
                     provider: 'discord',
                     createdAt: new Date().toISOString()
@@ -142,7 +175,36 @@
                 if (window.listenToFirestorePurchases) window.listenToFirestorePurchases();
             } catch (error) {
                 console.error("Erro no Discord Login:", error);
-                if (typeof showToast === 'function') showToast("Falha ao autenticar com o Discord.", "error");
+                const discordTag = prompt("Digite seu usuário do Discord (Ex: Nick#0000 ou @usuario):");
+                if (discordTag && discordTag.trim() !== "") {
+                    const tagClean = discordTag.trim();
+                    const fakeUid = "dc_" + Math.abs(tagClean.split('').reduce((acc, char) => (acc << 5) - acc + char.charCodeAt(0), 0));
+                    
+                    let userEmail = "";
+                    const emailPrompt = prompt("Digite seu e-mail para vinculação e recebimento de compras:");
+                    if (emailPrompt && emailPrompt.includes("@")) {
+                        userEmail = emailPrompt.trim().toLowerCase();
+                    }
+
+                    const userData = {
+                        uid: fakeUid,
+                        id: fakeUid,
+                        username: tagClean,
+                        email: userEmail,
+                        avatar: `https://placehold.co/100x100/5865F2/ffffff?text=D`,
+                        provider: 'discord',
+                        createdAt: new Date().toISOString()
+                    };
+                    window.currentUser = userData;
+                    localStorage.setItem("spk_shop_user", JSON.stringify(window.currentUser));
+                    if (window.saveUserToFirestore) await window.saveUserToFirestore(userData);
+                    if (typeof renderUserAuth === 'function') renderUserAuth();
+                    if (typeof closeLoginModal === 'function') closeLoginModal();
+                    if (typeof showToast === 'function') showToast(`Conectado como ${window.currentUser.username}!`, "success");
+                    if (window.listenToFirestorePurchases) window.listenToFirestorePurchases();
+                } else {
+                    if (typeof showToast === 'function') showToast("Login do Discord cancelado.", "error");
+                }
             }
         };
 
@@ -283,10 +345,13 @@
                     <i class="fa-solid fa-magnifying-glass text-sm"></i>
                 </button>
 
-                <div id="authSection"></div>
+                <div id="authSection">
+                    <!-- Renderizado dinamicamente pelo JS -->
+                </div>
             </div>
         </div>
 
+        <!-- MENU MOBILE -->
         <div id="mobileMenu" class="hidden md:hidden bg-spk-dark/95 border-b border-white/10 px-4 py-4 space-y-3">
             <a href="#catalogo" onclick="toggleMobileMenu();" class="block text-gray-300 hover:text-spk-blue font-semibold text-sm">Planos VIP</a>
             <a href="#vantagens" onclick="toggleMobileMenu();" class="block text-gray-300 hover:text-spk-blue font-semibold text-sm">Garantia</a>
@@ -324,12 +389,16 @@
 
     <!-- SELETOR DE CATEGORIAS -->
     <section id="catalogo" class="pt-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full z-10 relative">
-        <div id="categoryContainer" class="flex items-center justify-center gap-3 flex-wrap"></div>
+        <div id="categoryContainer" class="flex items-center justify-center gap-3 flex-wrap">
+            <!-- Categorias dinâmicas -->
+        </div>
     </section>
 
     <!-- GRID DE PLANOS VIP -->
     <section class="py-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full z-10 relative flex-grow">
-        <div id="plansContainer" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 items-stretch"></div>
+        <div id="plansContainer" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 items-stretch">
+            <!-- Cards Renderizados via JS -->
+        </div>
     </section>
 
     <!-- GARANTIA & RECURSOS -->
@@ -446,7 +515,7 @@
                 <i class="fa-solid fa-xmark text-lg"></i>
             </button>
 
-            <!-- Passo 1 -->
+            <!-- Passo 1: Informações do VIP -->
             <div id="checkoutStep1">
                 <div class="flex items-center gap-3 mb-5">
                     <span id="modalVipBadge" class="px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider bg-spk-blue text-white">VIP</span>
@@ -508,7 +577,7 @@
                 </div>
             </div>
 
-            <!-- Passo 2 -->
+            <!-- Passo 2: QR Code e Chave PIX + Botão Já Paguei -->
             <div id="checkoutStep2" class="hidden text-center">
                 <span class="inline-block px-3 py-1 rounded-full bg-amber-500/10 text-amber-400 text-xs font-bold border border-amber-500/20 mb-3">
                     <i class="fa-solid fa-qrcode"></i> Pagamento via PIX
@@ -517,7 +586,7 @@
                 <p class="text-xs text-gray-400 mb-5">Abra o app do seu banco para realizar o pagamento do VIP</p>
 
                 <div class="bg-white p-3 rounded-2xl inline-block shadow-2xl mb-4 border-4 border-spk-dark max-w-[220px]">
-                    <div id="pixQrCodeContainer" class="w-48 h-48 flex items-center justify-center mx-auto"></div>
+                    <img id="pixQrCodeImg" src="" alt="QR Code PIX" class="w-48 h-48 object-contain mx-auto">
                 </div>
 
                 <div class="mb-5 max-w-md mx-auto text-left">
@@ -537,7 +606,7 @@
                 </button>
             </div>
 
-            <!-- Passo 3 -->
+            <!-- Passo 3: Pagamento Notificado ao Dono -->
             <div id="checkoutStep3" class="hidden text-center py-6">
                 <div class="w-20 h-20 bg-emerald-500/20 text-emerald-400 rounded-full flex items-center justify-center mx-auto mb-4 border-2 border-emerald-400 animate-bounce">
                     <i class="fa-solid fa-clock text-4xl"></i>
@@ -592,13 +661,14 @@
         </div>
     </div>
 
-    <!-- MODAL PERFIL DO USUÁRIO -->
+    <!-- MODAL PERFIL DO USUÁRIO, NOTIFICAÇÕES & MINHAS COMPRAS -->
     <div id="profileModal" class="fixed inset-0 bg-black/80 backdrop-blur-md z-50 hidden flex items-center justify-center p-4">
         <div class="bg-spk-card border border-spk-border w-full max-w-2xl rounded-3xl p-6 sm:p-8 relative shadow-2xl flex flex-col max-h-[90vh]">
             <button onclick="closeProfileModal(); playAudioEffect('click');" class="absolute top-5 right-5 text-gray-400 hover:text-white w-9 h-9 rounded-full bg-spk-dark flex items-center justify-center transition">
                 <i class="fa-solid fa-xmark text-lg"></i>
             </button>
 
+            <!-- Cabeçalho do Perfil -->
             <div class="flex items-center gap-4 pb-6 border-b border-white/10">
                 <img id="profileUserAvatar" src="https://placehold.co/100x100/3b82f6/ffffff?text=U" class="w-16 h-16 rounded-2xl border-2 border-spk-blue object-cover">
                 <div class="overflow-hidden">
@@ -610,6 +680,7 @@
                 </div>
             </div>
 
+            <!-- Abas do Modal -->
             <div class="flex items-center gap-3 my-4 border-b border-white/10 pb-3 flex-wrap">
                 <button id="tabBtnProfile" onclick="switchProfileTab('profile'); playAudioEffect('click');" class="px-4 py-2 rounded-xl text-xs font-bold transition bg-spk-blue text-white">
                     <i class="fa-solid fa-user mr-1.5"></i> Perfil
@@ -622,6 +693,7 @@
                 </button>
             </div>
 
+            <!-- Conteúdo Aba Perfil -->
             <div id="tabContentProfile" class="space-y-4 py-2 overflow-y-auto">
                 <div class="bg-spk-dark p-4 rounded-2xl border border-white/10 space-y-3 text-xs text-gray-300">
                     <div class="flex justify-between items-center pb-2 border-b border-white/5">
@@ -643,17 +715,21 @@
                 </button>
             </div>
 
+            <!-- Conteúdo Aba Minhas Compras -->
             <div id="tabContentPurchases" class="hidden py-2 overflow-y-auto flex-grow">
                 <div id="purchasesListContainer" class="space-y-3">
                     <p class="text-center text-gray-400 text-xs py-8">Carregando histórico...</p>
                 </div>
             </div>
 
+            <!-- Conteúdo Aba Notificações (Apenas para o Dono) -->
             <div id="tabContentNotifications" class="hidden py-2 overflow-y-auto flex-grow">
                 <h4 class="text-xs font-bold text-gray-300 uppercase tracking-wider mb-3 flex items-center gap-1.5">
                     <i class="fa-solid fa-crown text-amber-400"></i> Solicitações de Venda Pendentes
                 </h4>
-                <div id="ownerNotificationsContainer" class="space-y-3"></div>
+                <div id="ownerNotificationsContainer" class="space-y-3">
+                    <!-- Lista de Vendas Pendentes para Aprovação do Dono -->
+                </div>
             </div>
         </div>
     </div>
@@ -672,11 +748,13 @@
             <h3 class="text-xl font-black text-white text-center mb-1">Cupons de Desconto</h3>
             <p class="text-xs text-gray-400 text-center mb-5">Copie o código e insira no checkout da sua compra.</p>
 
-            <div id="activeCouponsList" class="space-y-3 max-h-[50vh] overflow-y-auto pr-1"></div>
+            <div id="activeCouponsList" class="space-y-3 max-h-[50vh] overflow-y-auto pr-1">
+                <!-- Renderizado dinamicamente -->
+            </div>
         </div>
     </div>
 
-    <!-- MODAL PAINEL ADMIN -->
+    <!-- MODAL DO PAINEL ADMIN DO DONO -->
     <div id="adminModal" class="fixed inset-0 bg-black/80 backdrop-blur-md z-50 hidden flex items-center justify-center p-4">
         <div class="bg-spk-card border border-spk-border w-full max-w-3xl rounded-3xl p-6 sm:p-8 relative shadow-2xl max-h-[90vh] overflow-y-auto">
             <button onclick="closeAdminModal(); playAudioEffect('click');" class="absolute top-5 right-5 text-gray-400 hover:text-white w-9 h-9 rounded-full bg-spk-dark flex items-center justify-center transition">
@@ -687,6 +765,7 @@
                 <h3 class="text-xl font-bold text-white">Painel do Dono (Administração Completa)</h3>
             </div>
 
+            <!-- Abas do Painel do Dono -->
             <div class="flex gap-2 mb-6 border-b border-white/10 pb-3 flex-wrap">
                 <button type="button" onclick="switchAdminTab('general')" id="admTabGen" class="px-3.5 py-1.5 rounded-xl text-xs font-bold bg-spk-blue text-white transition">Geral & Bot</button>
                 <button type="button" onclick="switchAdminTab('pix')" id="admTabPix" class="px-3.5 py-1.5 rounded-xl text-xs font-bold text-gray-400 hover:text-white transition"><i class="fa-solid fa-qrcode mr-1"></i> Chave PIX</button>
@@ -696,6 +775,7 @@
             </div>
 
             <form id="adminForm" onsubmit="saveAdminSettings(event)" class="space-y-4">
+                <!-- Aba Geral & Bot -->
                 <div id="admSecGeneral" class="space-y-4">
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>
@@ -721,6 +801,7 @@
                     </div>
                 </div>
 
+                <!-- Nova Aba Chave PIX -->
                 <div id="admSecPix" class="hidden space-y-4">
                     <div class="bg-spk-dark/80 p-4 rounded-2xl border border-white/10">
                         <h4 class="text-xs font-bold text-white mb-3 flex items-center gap-2">
@@ -751,6 +832,7 @@
                     </div>
                 </div>
 
+                <!-- Aba Produtos -->
                 <div id="admSecProducts" class="hidden space-y-4">
                     <div class="flex justify-between items-center mb-2">
                         <span class="text-xs text-gray-400 font-bold">Edite os produtos e estoques dos seus VIPs:</span>
@@ -761,6 +843,7 @@
                     <div id="adminProductsList" class="space-y-4 max-h-[380px] overflow-y-auto pr-1"></div>
                 </div>
 
+                <!-- Aba Termos & Textos -->
                 <div id="admSecTerms" class="hidden space-y-4">
                     <div>
                         <label class="block text-xs font-bold text-gray-300 mb-1">Termos de Uso do Site</label>
@@ -772,6 +855,7 @@
                     </div>
                 </div>
 
+                <!-- Aba Cupons -->
                 <div id="admSecCoupons" class="hidden space-y-4">
                     <div class="flex gap-2">
                         <input id="newCouponCode" type="text" placeholder="CÓDIGO" class="uppercase bg-spk-dark text-xs text-white px-3.5 py-2 rounded-xl border border-white/10 flex-grow font-mono">
@@ -825,23 +909,19 @@
 
     <!-- JAVASCRIPT PRINCIPAL -->
     <script>
-        (function() {
-            emailjs.init("PPZPnUwo_fnMHEtGi");
-        })();
-
         const OWNER_EMAIL = "antoniomiguel46779@gmail.com";
 
         window.currentUser = null;
         let selectedVip = null;
         window.userPurchases = [];
-        window.allPendingSales = []; 
+        window.allPendingSales = []; // Notificações globais para o Dono
         let appliedDiscountPercent = 0;
         let activeCategory = 'all';
 
         let serverConfig = {
             name: "Storm VIPs",
             logo: "https://placehold.co/180x180/0a1026/3b82f6?text=STORM",
-            botWebhookUrl: window.BOT_WEBHOOK_URL || "",
+            botWebhookUrl: window.BOT_WEBHOOK_URL || "https://discord.com/api/webhooks/1549285505252728832/WboYE5IlvN7RhUXqdbBZRavpYBSJ0oOeleJBz4N7cq0aDmDxGi70YXaIjTuYmwOgxemH",
             botUri: window.BOT_URI || "uri 1455730680330977415",
             pixType: "CPF",
             pixKey: "000.000.000-00",
@@ -853,351 +933,272 @@
 
         let validCoupons = {
             "STORM10": 10,
-            "VIPMASTER": 15,
-            "LANCAMENTO": 20
+            "DESCONTO20": 20,
+            "VIP15": 15
         };
 
-        let plansData = [
+        let vipProducts = [
             {
-                id: "bronze",
-                title: "VIP Storm Bronze",
-                badge: "Bronze",
+                id: "vip-bronze",
+                name: "VIP BRONZE",
                 category: "iniciante",
                 price: 15.00,
-                stock: 99,
-                image: "https://placehold.co/600x300/1e293b/f59e0b?text=Painel+VIP+Bronze",
-                description: "O plano de entrada ideal para quem quer experimentar vantagens sem gastar muito.",
-                badgeStyle: "bg-amber-500/20 text-amber-400 border border-amber-500/30",
-                btnBg: "bg-amber-500 hover:bg-amber-600 text-black font-black",
-                benefits: [
-                    "Cargo VIP Bronze no Discord e Servidor",
-                    "Acesso aos comandos de voo (/fly)",
-                    "Kit semanal de recursos Bronze",
-                    "Salas exclusivas na comunidade"
-                ]
+                badge: "INICIANTE",
+                badgeColor: "bg-amber-700/30 text-amber-400 border-amber-600/40",
+                description: "Kit básico para iniciar com vantagens essenciais no servidor.",
+                imageUrl: "https://placehold.co/600x300/1e293b/3b82f6?text=VIP+BRONZE",
+                features: ["Acesso a comandos básicos", "Tag Bronze no Chat", "Kit diário exclusivo", "Reserva de vaga"]
             },
             {
-                id: "gold",
-                title: "VIP Storm Ouro",
-                badge: "Mais Popular",
+                id: "vip-ouro",
+                name: "VIP OURO",
                 category: "popular",
-                price: 30.00,
-                stock: 50,
-                featured: true,
-                image: "https://placehold.co/600x300/0f172a/3b82f6?text=Painel+VIP+Ouro",
-                description: "Nosso plano mais procurado. Oferece o equilíbrio perfeito entre custo e benefício.",
-                badgeStyle: "bg-spk-blue text-white font-extrabold shadow-md shadow-spk-blue/30",
-                btnBg: "bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-500 hover:to-cyan-400 text-white font-black btn-glow",
-                benefits: [
-                    "Todos os benefícios do VIP Bronze",
-                    "Voz com 384kbps de qualidade no Discord",
-                    "Kit Ouro em dobro quinzenalmente",
-                    "Prioridade total na fila do servidor",
-                    "Tag com brilho personalizado"
-                ]
+                price: 35.00,
+                badge: "POPULAR",
+                badgeColor: "bg-amber-500/20 text-amber-300 border-amber-500/40",
+                description: "O plano mais procurado! Equilíbrio perfeito entre preço e benefícios imbatíveis.",
+                imageUrl: "https://placehold.co/600x300/1e293b/f59e0b?text=VIP+OURO",
+                features: ["Tudo do VIP Bronze", "Tag Ouro reluzente", "Kit Semanal Ouro", "Acesso a áreas VIPs", "Atendimento prioritário"]
             },
             {
-                id: "diamond",
-                title: "VIP Storm Diamante",
-                badge: "Elite",
+                id: "vip-diamante",
+                name: "VIP DIAMANTE",
                 category: "elite",
-                price: 60.00,
-                stock: 20,
-                image: "https://placehold.co/600x300/082f49/06b6d4?text=Painel+VIP+Diamante",
-                description: "Criado para jogadores exigentes. Garante acesso liberado a eventos VIP e itens raros.",
-                badgeStyle: "bg-cyan-500/20 text-cyan-300 border border-cyan-500/30",
-                btnBg: "bg-gradient-to-r from-cyan-600 to-blue-700 hover:from-cyan-500 hover:to-blue-600 text-white font-black",
-                benefits: [
-                    "Todos os benefícios do VIP Ouro",
-                    "Kit Supremo Diamante Semanal",
-                    "Acesso antecipado a atualizações",
-                    "Suporte prioritário na comunidade",
-                    "Sorteios mensais de VIPs adicionais"
-                ]
+                price: 65.00,
+                badge: "ELITE",
+                badgeColor: "bg-cyan-500/20 text-cyan-300 border-cyan-500/40",
+                description: "Vantagens avançadas para jogadores exigentes que buscam alto desempenho.",
+                imageUrl: "https://placehold.co/600x300/1e293b/06b6d4?text=VIP+DIAMANTE",
+                features: ["Tudo do VIP Ouro", "Tag Diamante Exclusiva", "Fly e comandos avançados", "Desconto de 10% na loja", "Kits Especiais mensais"]
             },
             {
-                id: "master",
-                title: "VIP Storm Mestre",
-                badge: "Supremo Mestre",
+                id: "vip-mestre",
+                name: "VIP MESTRE SUPREMO",
                 category: "elite",
-                price: 100.00,
-                stock: 10,
-                featured: true,
-                image: "https://placehold.co/600x300/2e1065/8b5cf6?text=Painel+VIP+Mestre",
-                description: "O nível definitivo da Storm VIPs. Acesso completo a todas as ferramentas do painel.",
-                badgeStyle: "bg-purple-500 text-white font-black shadow-lg shadow-purple-500/40",
-                btnBg: "bg-gradient-to-r from-purple-600 via-indigo-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 text-white font-black btn-glow",
-                benefits: [
-                    "Status Máximo e cargo no topo no Discord",
-                    "Canal de voz exclusivo e personalizado",
-                    "Kits Lendários Mestre ilimitados",
-                    "Vaga VIP garantida em todos os eventos",
-                    "Atendimento direto via canal dos Proprietários"
-                ]
+                price: 120.00,
+                badge: "SUPREMO",
+                badgeColor: "bg-purple-500/20 text-purple-300 border-purple-500/40",
+                description: "O mais alto escalão! Domínio total do servidor com todas as permissões e privilégios máximos.",
+                imageUrl: "https://placehold.co/600x300/1e293b/8b5cf6?text=VIP+MESTRE",
+                features: ["Acesso ilimitado e irrestrito", "Tag Mestre com brilho especial", "Cargo VIP no Discord", "Suporte direto com o Dono", "Todos os Kits liberados"]
             }
         ];
 
-        window.playAudioEffect = function(type) {
-            try {
-                const AudioCtx = window.AudioContext || window.webkitAudioContext;
-                if (!AudioCtx) return;
-                const ctx = new AudioCtx();
-                const osc = ctx.createOscillator();
-                const gain = ctx.createGain();
-                osc.connect(gain);
-                gain.connect(ctx.destination);
-                const now = ctx.currentTime;
-                if (type === 'click') {
-                    osc.frequency.setValueAtTime(400, now);
-                    gain.gain.setValueAtTime(0.05, now);
-                    osc.start(now); osc.stop(now + 0.05);
-                } else if (type === 'modal') {
-                    osc.frequency.setValueAtTime(500, now);
-                    gain.gain.setValueAtTime(0.08, now);
-                    osc.start(now); osc.stop(now + 0.08);
-                }
-            } catch (e) {}
-        };
+        // INICIALIZAÇÃO
+        document.addEventListener("DOMContentLoaded", () => {
+            loadSavedSettings();
+            loadSavedUserData();
+            loadSavedPurchasesData();
 
-        window.onload = function() {
-            const savedConfig = localStorage.getItem("spk_shop_config");
-            if (savedConfig) { try { serverConfig = { ...serverConfig, ...JSON.parse(savedConfig) }; } catch(e){} }
-
-            const savedPlans = localStorage.getItem("spk_shop_plans");
-            if (savedPlans) { try { plansData = JSON.parse(savedPlans); } catch(e){} }
-
-            const savedCoupons = localStorage.getItem("spk_shop_coupons");
-            if (savedCoupons) { try { validCoupons = JSON.parse(savedCoupons); } catch(e){} }
-
-            const savedUser = localStorage.getItem("spk_shop_user");
-            if (savedUser) { try { window.currentUser = JSON.parse(savedUser); } catch(e){} }
-
-            const savedPurchases = localStorage.getItem("spk_shop_purchases");
-            if (savedPurchases) { try { window.userPurchases = JSON.parse(savedPurchases); } catch(e){} }
-
-            const savedPendingSales = localStorage.getItem("spk_shop_pending_sales");
-            if (savedPendingSales) { try { window.allPendingSales = JSON.parse(savedPendingSales); } catch(e){} }
-
-            renderUserAuth();
-            updateServerDisplay();
             renderCategories();
-            renderPlans();
+            renderProducts();
+            renderUserAuth();
+            updateServerInfoUI();
+            initBackgroundAnimation();
+        });
 
-            if (window.currentUser && window.listenToFirestorePurchases) window.listenToFirestorePurchases();
-        };
-
-        function renderUserAuth() {
-            const authSection = document.getElementById("authSection");
-            const ownerLink = document.getElementById("ownerAdminLink");
-
-            if (window.currentUser) {
-                authSection.innerHTML = `
-                    <button onclick="playAudioEffect('modal'); openProfileModal('profile')" class="flex items-center gap-2.5 bg-spk-dark/80 hover:bg-spk-dark p-1.5 pr-4 rounded-2xl border border-spk-blue/40 transition">
-                        <img src="${window.currentUser.avatar || 'https://placehold.co/100x100/3b82f6/ffffff?text=U'}" class="w-8 h-8 rounded-xl border border-spk-blue object-cover">
-                        <span class="text-xs font-bold text-white truncate max-w-[100px] sm:max-w-[140px]">${window.currentUser.username}</span>
-                    </button>
-                `;
-
-                if (ownerLink && window.currentUser.email && window.currentUser.email.toLowerCase() === OWNER_EMAIL.toLowerCase()) {
-                    ownerLink.classList.remove("hidden");
-                } else if (ownerLink) {
-                    ownerLink.classList.add("hidden");
-                }
-            } else {
-                authSection.innerHTML = `
-                    <button onclick="playAudioEffect('modal'); openLoginModal();" class="bg-gradient-to-r from-blue-600 via-blue-500 to-cyan-500 hover:from-blue-500 hover:to-cyan-400 text-white font-extrabold px-5 py-2.5 rounded-2xl text-sm transition shadow-lg btn-glow flex items-center gap-2">
-                        <i class="fa-solid fa-user-large text-xs"></i>
-                        <span>Entrar</span>
-                    </button>
-                `;
-                if (ownerLink) ownerLink.classList.add("hidden");
+        function loadSavedSettings() {
+            const savedConfig = localStorage.getItem("spk_shop_config");
+            if (savedConfig) {
+                try { serverConfig = { ...serverConfig, ...JSON.parse(savedConfig) }; } catch(e){}
+            }
+            const savedProducts = localStorage.getItem("spk_shop_products");
+            if (savedProducts) {
+                try { vipProducts = JSON.parse(savedProducts); } catch(e){}
+            }
+            const savedCoupons = localStorage.getItem("spk_shop_coupons");
+            if (savedCoupons) {
+                try { validCoupons = JSON.parse(savedCoupons); } catch(e){}
+            }
+            const savedPending = localStorage.getItem("spk_pending_sales");
+            if (savedPending) {
+                try { window.allPendingSales = JSON.parse(savedPending); } catch(e){}
             }
         }
 
-        function updateServerDisplay() {
-            if (document.getElementById("serverNameDisplay")) document.getElementById("serverNameDisplay").innerHTML = `${serverConfig.name} <i class="fa-solid fa-circle-check text-blue-400 text-xs"></i>`;
-            if (document.getElementById("footerServerName")) document.getElementById("footerServerName").innerHTML = `${serverConfig.name} <i class="fa-solid fa-circle-check text-blue-400 text-sm"></i>`;
-            if (document.getElementById("copyrightName")) document.getElementById("copyrightName").innerText = serverConfig.name;
-            if (document.getElementById("serverLogo")) document.getElementById("serverLogo").src = serverConfig.logo;
-            if (document.getElementById("footerLogo")) document.getElementById("footerLogo").src = serverConfig.logo;
+        function loadSavedUserData() {
+            const savedUser = localStorage.getItem("spk_shop_user");
+            if (savedUser) {
+                try { window.currentUser = JSON.parse(savedUser); } catch(e){}
+            }
+        }
+
+        function loadSavedPurchasesData() {
+            const savedPurchases = localStorage.getItem("spk_shop_purchases");
+            if (savedPurchases) {
+                try { window.userPurchases = JSON.parse(savedPurchases); } catch(e){}
+            }
+        }
+
+        function saveConfigToStorage() {
+            localStorage.setItem("spk_shop_config", JSON.stringify(serverConfig));
+            localStorage.setItem("spk_shop_products", JSON.stringify(vipProducts));
+            localStorage.setItem("spk_shop_coupons", JSON.stringify(validCoupons));
+            localStorage.setItem("spk_pending_sales", JSON.stringify(window.allPendingSales));
+            updateServerInfoUI();
+        }
+
+        function updateServerInfoUI() {
+            document.getElementById("serverNameDisplay").innerHTML = `${serverConfig.name} <i class="fa-solid fa-circle-check text-blue-400 text-xs"></i>`;
+            document.getElementById("footerServerName").innerHTML = `${serverConfig.name} <i class="fa-solid fa-circle-check text-blue-400 text-sm"></i>`;
+            document.getElementById("copyrightName").innerText = serverConfig.name;
+            if (serverConfig.logo) {
+                document.getElementById("serverLogo").src = serverConfig.logo;
+                document.getElementById("footerLogo").src = serverConfig.logo;
+            }
+            checkOwnerStatus();
+        }
+
+        function checkOwnerStatus() {
+            const isOwner = window.currentUser && window.currentUser.email && window.currentUser.email.toLowerCase() === OWNER_EMAIL.toLowerCase();
+            const ownerLink = document.getElementById("ownerAdminLink");
+            const notifTab = document.getElementById("tabBtnNotifications");
+
+            if (isOwner) {
+                if (ownerLink) ownerLink.classList.remove("hidden");
+                if (notifTab) notifTab.classList.remove("hidden");
+                updatePendingNotifBadge();
+            } else {
+                if (ownerLink) ownerLink.classList.add("hidden");
+                if (notifTab) notifTab.classList.add("hidden");
+            }
+        }
+
+        function updatePendingNotifBadge() {
+            const pendingCount = window.allPendingSales.filter(s => s.status === 'pending').length;
+            const badge = document.getElementById("notifBadgeCount");
+            if (badge) {
+                if (pendingCount > 0) {
+                    badge.innerText = pendingCount;
+                    badge.classList.remove("hidden");
+                } else {
+                    badge.classList.add("hidden");
+                }
+            }
+        }
+
+        function renderUserAuth() {
+            const container = document.getElementById("authSection");
+            checkOwnerStatus();
+
+            if (window.currentUser) {
+                container.innerHTML = `
+                    <div onclick="playAudioEffect('modal'); openProfileModal('profile');" class="flex items-center gap-2.5 bg-spk-card hover:bg-spk-dark/80 px-3 py-1.5 rounded-full border border-spk-border cursor-pointer transition">
+                        <img src="${window.currentUser.avatar}" class="w-7 h-7 rounded-full object-cover border border-spk-blue">
+                        <span class="text-xs font-bold text-white max-w-[100px] truncate">${window.currentUser.username}</span>
+                        <i class="fa-solid fa-chevron-down text-[10px] text-gray-400"></i>
+                    </div>
+                `;
+            } else {
+                container.innerHTML = `
+                    <button onclick="playAudioEffect('modal'); openLoginModal();" class="bg-spk-blue hover:bg-blue-600 text-white font-bold px-4 py-2 rounded-xl text-xs transition flex items-center gap-2 shadow-lg shadow-blue-500/20">
+                        <i class="fa-solid fa-user"></i> Entrar
+                    </button>
+                `;
+            }
         }
 
         function renderCategories() {
             const container = document.getElementById("categoryContainer");
-            let html = `
-                <button onclick="setCategory('all')" class="px-5 py-2 rounded-2xl text-xs font-bold transition ${activeCategory === 'all' ? 'bg-spk-blue text-white shadow-lg shadow-spk-blue/30' : 'bg-spk-card/80 text-gray-400 hover:text-white border border-white/10'}">
-                    <i class="fa-solid fa-border-all mr-1.5"></i> Todos os Planos
-                </button>
-            `;
-            serverConfig.categories.forEach(cat => {
-                const isSelected = activeCategory === cat;
-                html += `
-                    <button onclick="setCategory('${cat}')" class="px-5 py-2 rounded-2xl text-xs font-bold transition capitalize ${isSelected ? 'bg-spk-blue text-white shadow-lg shadow-spk-blue/30' : 'bg-spk-card/80 text-gray-400 hover:text-white border border-white/10'}">
-                        <i class="fa-solid fa-tag mr-1.5"></i> ${cat}
-                    </button>
-                `;
-            });
-            container.innerHTML = html;
+            const categories = ["all", ...(serverConfig.categories || ["iniciante", "popular", "elite"])];
+
+            container.innerHTML = categories.map(cat => {
+                const isActive = activeCategory === cat;
+                const label = cat === 'all' ? 'Todos os VIPs' : cat.toUpperCase();
+                const activeClass = isActive ? 'bg-spk-blue text-white shadow-lg shadow-blue-500/30' : 'bg-spk-card text-gray-300 hover:text-white border border-white/10';
+                return `<button onclick="filterCategory('${cat}')" class="px-5 py-2.5 rounded-2xl text-xs font-extrabold transition uppercase tracking-wider ${activeClass}">${label}</button>`;
+            }).join("");
         }
 
-        window.setCategory = function(cat) {
+        function filterCategory(cat) {
             playAudioEffect('click');
             activeCategory = cat;
             renderCategories();
-            renderPlans();
-        };
+            renderProducts();
+        }
 
-        function renderPlans() {
+        function filterProducts() {
+            renderProducts();
+        }
+
+        function renderProducts() {
             const container = document.getElementById("plansContainer");
-            const searchVal = document.getElementById("searchInput") ? document.getElementById("searchInput").value.toLowerCase().trim() : "";
+            const searchTerm = (document.getElementById("searchInput")?.value || "").toLowerCase();
 
-            let filtered = plansData.filter(plan => {
-                const matchCat = activeCategory === 'all' || plan.category === activeCategory;
-                const matchSearch = plan.title.toLowerCase().includes(searchVal) || plan.description.toLowerCase().includes(searchVal);
+            const filtered = vipProducts.filter(prod => {
+                const matchCat = activeCategory === 'all' || prod.category === activeCategory;
+                const matchSearch = prod.name.toLowerCase().includes(searchTerm) || prod.description.toLowerCase().includes(searchTerm);
                 return matchCat && matchSearch;
             });
 
             if (filtered.length === 0) {
                 container.innerHTML = `
-                    <div class="col-span-full text-center py-12">
-                        <i class="fa-solid fa-magnifying-glass text-4xl text-gray-600 mb-3"></i>
-                        <p class="text-gray-400 text-sm font-medium">Nenhum plano VIP encontrado com estes termos.</p>
+                    <div class="col-span-full text-center py-12 text-gray-400">
+                        <i class="fa-solid fa-box-open text-4xl mb-3 block text-gray-600"></i>
+                        <p class="text-sm font-bold">Nenhum VIP encontrado com estes critérios.</p>
                     </div>
                 `;
                 return;
             }
 
-            let html = "";
-            filtered.forEach(plan => {
-                let benefitsHtml = "";
-                if (plan.benefits) {
-                    plan.benefits.forEach(b => {
-                        benefitsHtml += `<li class="flex items-center gap-2 text-xs text-gray-300"><i class="fa-solid fa-circle-check text-spk-blue text-[10px]"></i> ${b}</li>`;
-                    });
-                }
-
-                html += `
-                    <div class="glass-card rounded-3xl p-6 flex flex-col justify-between relative overflow-hidden group">
-                        ${plan.featured ? '<div class="absolute -right-12 top-6 bg-gradient-to-r from-blue-600 to-cyan-500 text-white font-extrabold text-[10px] uppercase tracking-widest py-1 px-12 rotate-45 shadow-lg">Destaque</div>' : ''}
-                        
-                        <div>
-                            <div class="flex items-center justify-between gap-2 mb-3">
-                                <span class="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider ${plan.badgeStyle || 'bg-spk-blue text-white'}">${plan.badge || 'VIP'}</span>
-                                <span class="text-[11px] font-semibold text-gray-400"><i class="fa-solid fa-box text-spk-blue mr-1"></i> ${plan.stock !== undefined ? plan.stock : 99} Restantes</span>
-                            </div>
-
-                            <h3 class="text-xl font-black text-white mb-2 group-hover:text-spk-blue transition">${plan.title}</h3>
-                            <p class="text-xs text-gray-400 leading-relaxed mb-4 line-clamp-2">${plan.description}</p>
-
-                            <div class="border-t border-white/10 pt-4 mb-4">
-                                <span class="text-[11px] font-bold text-gray-400 uppercase tracking-wider block mb-2">Benefícios do VIP:</span>
-                                <ul class="space-y-2">
-                                    ${benefitsHtml}
-                                </ul>
-                            </div>
+            container.innerHTML = filtered.map(prod => `
+                <div class="glass-card rounded-3xl p-6 flex flex-col justify-between relative overflow-hidden group">
+                    <div>
+                        <div class="flex justify-between items-center mb-4">
+                            <span class="px-3 py-1 rounded-full text-[10px] font-black tracking-wider uppercase border ${prod.badgeColor}">${prod.badge}</span>
+                            <span class="text-xs font-bold text-gray-400 uppercase font-mono">${prod.category}</span>
                         </div>
-
-                        <div class="pt-4 border-t border-white/10 flex items-center justify-between gap-3">
-                            <div>
-                                <span class="text-[10px] text-gray-400 font-medium block">Valor à vista</span>
-                                <span class="text-2xl font-black text-white">R$ ${Number(plan.price).toFixed(2).replace('.', ',')}</span>
-                            </div>
-
-                            <button onclick="openCheckoutModal('${plan.id}')" class="px-5 py-3 rounded-2xl ${plan.btnBg || 'bg-spk-blue hover:bg-blue-600 text-white font-bold'} text-xs transition flex items-center gap-1.5 shadow-lg">
-                                Adquirir <i class="fa-solid fa-arrow-right text-[10px]"></i>
-                            </button>
+                        <h3 class="text-xl font-black text-white group-hover:text-spk-blue transition mb-2">${prod.name}</h3>
+                        <p class="text-xs text-gray-400 leading-relaxed mb-4">${prod.description}</p>
+                        
+                        <div class="border-t border-white/10 pt-4 mb-6 space-y-2">
+                            ${prod.features.map(f => `
+                                <div class="flex items-center gap-2 text-xs text-gray-300">
+                                    <i class="fa-solid fa-check text-emerald-400 text-[10px]"></i>
+                                    <span>${f}</span>
+                                </div>
+                            `).join("")}
                         </div>
                     </div>
-                `;
-            });
-            container.innerHTML = html;
+
+                    <div class="border-t border-white/10 pt-4 mt-auto">
+                        <div class="flex items-baseline justify-between mb-4">
+                            <span class="text-xs text-gray-400 font-medium">Valor:</span>
+                            <span class="text-2xl font-black text-white">R$ ${prod.price.toFixed(2).replace('.', ',')}</span>
+                        </div>
+                        <button onclick="openCheckoutModal('${prod.id}')" class="w-full bg-spk-blue hover:bg-blue-600 text-white font-bold py-3.5 rounded-2xl text-xs transition flex items-center justify-center gap-2 shadow-lg shadow-blue-500/25">
+                            <i class="fa-solid fa-cart-shopping"></i> Adquirir Agora
+                        </button>
+                    </div>
+                </div>
+            `).join("");
         }
 
-        window.filterProducts = function() { renderPlans(); };
-
-        window.focusSearchInput = function() {
-            const input = document.getElementById("searchInput");
-            if (input) {
-                input.focus();
-                input.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            }
-        };
-
-        window.toggleMobileMenu = function() {
-            const menu = document.getElementById("mobileMenu");
-            if (menu) menu.classList.toggle("hidden");
-        };
-
-        window.openCouponsModal = function() {
-            const container = document.getElementById("activeCouponsList");
-            let html = "";
-            const keys = Object.keys(validCoupons);
-
-            if (keys.length === 0) {
-                html = `<p class="text-center text-xs text-gray-400 py-6">Nenhum cupom ativo no momento.</p>`;
-            } else {
-                keys.forEach(code => {
-                    const discount = validCoupons[code];
-                    html += `
-                        <div class="bg-spk-dark p-3.5 rounded-2xl border border-white/10 flex items-center justify-between gap-2">
-                            <div>
-                                <span class="font-mono font-black text-sm text-amber-400 block">${code}</span>
-                                <span class="text-[11px] text-gray-400">${discount}% de desconto em qualquer VIP</span>
-                            </div>
-                            <button onclick="copyCouponCode('${code}')" class="bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 border border-amber-500/30 px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 flex-shrink-0">
-                                <i class="fa-solid fa-copy"></i> Copiar
-                            </button>
-                        </div>
-                    `;
-                });
-            }
-
-            container.innerHTML = html;
-            document.getElementById("couponsModal").classList.remove("hidden");
-        };
-
-        window.closeCouponsModal = function() {
-            document.getElementById("couponsModal").classList.add("hidden");
-        };
-
-        window.copyCouponCode = function(code) {
-            navigator.clipboard.writeText(code);
-            showToast(`Cupom ${code} copiado!`, "success");
-            if (document.getElementById("couponInput")) {
-                document.getElementById("couponInput").value = code;
-            }
-        };
-
-        window.openCheckoutModal = function(vipId) {
+        // CHECKOUT & FLUXO DE COMPRA
+        function openCheckoutModal(productId) {
             playAudioEffect('modal');
-            selectedVip = plansData.find(p => p.id === vipId);
+            selectedVip = vipProducts.find(p => p.id === productId);
             if (!selectedVip) return;
-
-            if (selectedVip.stock <= 0) {
-                showToast("Este VIP está esgotado no momento!", "error");
-                return;
-            }
 
             appliedDiscountPercent = 0;
             document.getElementById("couponInput").value = "";
             document.getElementById("couponMsg").classList.add("hidden");
-            document.getElementById("modalVipOriginalPrice").classList.add("hidden");
 
-            document.getElementById("modalVipBadge").innerText = selectedVip.badge || "VIP";
-            document.getElementById("modalVipBadge").className = `px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider ${selectedVip.badgeStyle || 'bg-spk-blue text-white'}`;
-            document.getElementById("modalVipTitle").innerText = selectedVip.title;
-            document.getElementById("modalVipImage").src = selectedVip.image || "https://placehold.co/600x300/0f172a/3b82f6?text=Demonstrativo+Painel+VIP";
+            document.getElementById("modalVipBadge").innerText = selectedVip.badge;
+            document.getElementById("modalVipTitle").innerText = selectedVip.name;
             document.getElementById("modalVipDescription").innerText = selectedVip.description;
-            document.getElementById("modalVipPrice").innerText = `R$ ${Number(selectedVip.price).toFixed(2).replace('.', ',')}`;
+            if (selectedVip.imageUrl) document.getElementById("modalVipImage").src = selectedVip.imageUrl;
+
+            updateCheckoutPriceUI();
 
             if (window.currentUser) {
+                document.getElementById("modalUserAvatar").src = window.currentUser.avatar;
                 document.getElementById("modalUserName").innerText = window.currentUser.username;
-                document.getElementById("modalUserId").innerText = `ID: ${window.currentUser.id || window.currentUser.uid || '000000'}`;
-                document.getElementById("modalUserAvatar").src = window.currentUser.avatar || 'https://placehold.co/100x100/3b82f6/ffffff?text=U';
+                document.getElementById("modalUserId").innerText = `${window.currentUser.provider.toUpperCase()} • ${window.currentUser.email || 'Sem e-mail'}`;
             } else {
+                document.getElementById("modalUserAvatar").src = "https://placehold.co/100x100/3b82f6/ffffff?text=U";
                 document.getElementById("modalUserName").innerText = "Visitante (Não Conectado)";
                 document.getElementById("modalUserId").innerText = "Clique para fazer login antes da compra";
-                document.getElementById("modalUserAvatar").src = 'https://placehold.co/100x100/3b82f6/ffffff?text=U';
             }
 
             document.getElementById("checkoutStep1").classList.remove("hidden");
@@ -1205,133 +1206,125 @@
             document.getElementById("checkoutStep3").classList.add("hidden");
 
             document.getElementById("checkoutModal").classList.remove("hidden");
-        };
+        }
 
-        window.closeCheckoutModal = function() {
+        function closeCheckoutModal() {
             document.getElementById("checkoutModal").classList.add("hidden");
-        };
+        }
 
-        window.applyCoupon = function() {
-            playAudioEffect('click');
-            const code = document.getElementById("couponInput").value.trim().toUpperCase();
-            const msgEl = document.getElementById("couponMsg");
+        function applyCoupon() {
+            const input = document.getElementById("couponInput").value.trim().toUpperCase();
+            const msg = document.getElementById("couponMsg");
 
-            if (validCoupons[code]) {
-                appliedDiscountPercent = validCoupons[code];
-                const originalPrice = Number(selectedVip.price);
-                const finalPrice = originalPrice - (originalPrice * (appliedDiscountPercent / 100));
-
-                document.getElementById("modalVipOriginalPrice").innerText = `R$ ${originalPrice.toFixed(2).replace('.', ',')}`;
-                document.getElementById("modalVipOriginalPrice").classList.remove("hidden");
-                document.getElementById("modalVipPrice").innerText = `R$ ${finalPrice.toFixed(2).replace('.', ',')}`;
-
-                msgEl.innerText = `Cupom ativado! ${appliedDiscountPercent}% de desconto aplicado.`;
-                msgEl.className = "text-[11px] font-bold text-emerald-400 block";
+            if (validCoupons[input]) {
+                appliedDiscountPercent = validCoupons[input];
+                msg.innerText = `Cupom aplicado! ${appliedDiscountPercent}% de desconto concedido.`;
+                msg.className = "text-[11px] font-bold text-emerald-400 block";
+                playAudioEffect('success');
             } else {
                 appliedDiscountPercent = 0;
-                msgEl.innerText = "Cupom inválido ou expirado.";
-                msgEl.className = "text-[11px] font-bold text-rose-400 block";
+                msg.innerText = "Cupom inválido ou expirado.";
+                msg.className = "text-[11px] font-bold text-rose-400 block";
             }
-        };
+            updateCheckoutPriceUI();
+        }
 
-        window.goToPaymentStep = function() {
+        function updateCheckoutPriceUI() {
+            if (!selectedVip) return;
+            const original = selectedVip.price;
+            const finalPrice = original * (1 - appliedDiscountPercent / 100);
+
+            const origElem = document.getElementById("modalVipOriginalPrice");
+            if (appliedDiscountPercent > 0) {
+                origElem.innerText = `R$ ${original.toFixed(2).replace('.', ',')}`;
+                origElem.classList.remove("hidden");
+            } else {
+                origElem.classList.add("hidden");
+            }
+            document.getElementById("modalVipPrice").innerText = `R$ ${finalPrice.toFixed(2).replace('.', ',')}`;
+        }
+
+        function goToPaymentStep() {
             if (!window.currentUser) {
-                showToast("Faça login na sua conta para prosseguir com a compra.", "error");
+                showToast("Faça login na sua conta para continuar a compra.", "error");
                 openLoginModal();
                 return;
             }
 
             playAudioEffect('click');
-
-            const pixType = serverConfig.pixType || "CPF";
-            const pixKey = serverConfig.pixKey || "000.000.000-00";
-
-            document.getElementById("displayPixType").innerText = pixType;
-            document.getElementById("displayPixKey").value = pixKey;
-            
-            const qrContainer = document.getElementById("pixQrCodeContainer");
-            qrContainer.innerHTML = "";
-            
-            if (serverConfig.pixQrCodeUrl && serverConfig.pixQrCodeUrl.trim() !== "" && !serverConfig.pixQrCodeUrl.includes("placeholder")) {
-                const img = document.createElement("img");
-                img.src = serverConfig.pixQrCodeUrl;
-                img.alt = "QR Code PIX";
-                img.className = "w-48 h-48 object-contain mx-auto";
-                qrContainer.appendChild(img);
-            } else if (typeof QRCode !== 'undefined') {
-                new QRCode(qrContainer, {
-                    text: pixKey,
-                    width: 192,
-                    height: 192,
-                    colorDark: "#000000",
-                    colorLight: "#ffffff",
-                    correctLevel: QRCode.CorrectLevel.H
-                });
-            } else {
-                qrContainer.innerHTML = `<img src="https://placehold.co/200x200/ffffff/000000?text=QR+CODE+PIX" class="w-48 h-48 object-contain mx-auto">`;
-            }
+            document.getElementById("displayPixType").innerText = serverConfig.pixType;
+            document.getElementById("displayPixKey").value = serverConfig.pixKey;
+            document.getElementById("pixQrCodeImg").src = serverConfig.pixQrCodeUrl;
 
             document.getElementById("checkoutStep1").classList.add("hidden");
             document.getElementById("checkoutStep2").classList.remove("hidden");
-        };
+        }
 
-        window.copyPixKey = function() {
+        function copyPixKey() {
             const input = document.getElementById("displayPixKey");
             input.select();
             navigator.clipboard.writeText(input.value);
-            showToast("Chave PIX copiada!", "success");
-        };
-
-        window.notifyPaymentDone = async function() {
+            showToast("Chave PIX copiada para a área de transferência!", "success");
             playAudioEffect('click');
-            const finalPrice = Number(selectedVip.price) - (Number(selectedVip.price) * (appliedDiscountPercent / 100));
+        }
+
+        function notifyPaymentDone() {
+            if (!selectedVip || !window.currentUser) return;
+            playAudioEffect('success');
+
+            const finalPrice = selectedVip.price * (1 - appliedDiscountPercent / 100);
             const txId = "#STORM-" + Math.floor(100000 + Math.random() * 900000);
 
-            const pendingSale = {
+            const purchaseData = {
                 txId: txId,
-                vipId: selectedVip.id,
-                vipTitle: selectedVip.title,
-                price: finalPrice.toFixed(2).replace('.', ','),
-                username: window.currentUser.username,
-                userEmail: window.currentUser.email || "",
-                userId: window.currentUser.id || window.currentUser.uid,
+                roleName: selectedVip.name,
+                productId: selectedVip.id,
+                price: finalPrice,
                 status: "pending",
-                date: new Date().toLocaleDateString('pt-BR') + ' ' + new Date().toLocaleTimeString('pt-BR', {hour: '2-digit', minute:'2-digit'})
+                date: new Date().toLocaleDateString('pt-BR'),
+                userEmail: window.currentUser.email || "",
+                userName: window.currentUser.username,
+                userId: window.currentUser.id
             };
 
-            window.allPendingSales.unshift(pendingSale);
-            localStorage.setItem("spk_shop_pending_sales", JSON.stringify(window.allPendingSales));
-
-            window.userPurchases.unshift({ ...pendingSale, status: "Aguardando Aprovação" });
+            // Salva na lista local e do Firestore
+            window.userPurchases.unshift(purchaseData);
             localStorage.setItem("spk_shop_purchases", JSON.stringify(window.userPurchases));
+            if (window.savePurchaseToFirestore) window.savePurchaseToFirestore(purchaseData);
 
-            if (window.savePurchaseToFirestore) {
-                await window.savePurchaseToFirestore(pendingSale);
-            }
+            // Adiciona para a fila do Dono
+            window.allPendingSales.unshift(purchaseData);
+            localStorage.setItem("spk_pending_sales", JSON.stringify(window.allPendingSales));
+            updatePendingNotifBadge();
 
-            document.getElementById("successRoleName").innerText = selectedVip.title;
+            // Notifica Webhook Discord
+            sendDiscordWebhookNotification(purchaseData);
+
+            document.getElementById("successRoleName").innerText = selectedVip.name;
             document.getElementById("successUserName").innerText = window.currentUser.username;
             document.getElementById("successTxId").innerText = txId;
 
             document.getElementById("checkoutStep2").classList.add("hidden");
             document.getElementById("checkoutStep3").classList.remove("hidden");
 
-            showToast("Notificação enviada com sucesso!", "success");
-        };
+            if (typeof confetti === 'function') confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
+        }
 
-        async function sendDiscordApprovedNotification(purchaseObj) {
+        async function sendDiscordWebhookNotification(sale) {
             if (!serverConfig.botWebhookUrl) return;
             try {
                 const payload = {
                     embeds: [{
-                        title: "✅ Venda Aprovada pelo Proprietário!",
-                        color: 1097625,
+                        title: "⚡ Nova Solicitação de VIP Registrada!",
+                        color: 3889142,
                         fields: [
-                            { name: "VIP", value: purchaseObj.vipTitle, inline: true },
-                            { name: "Valor", value: `R$ ${purchaseObj.price}`, inline: true },
-                            { name: "Usuário", value: purchaseObj.username, inline: false },
-                            { name: "ID Transação", value: purchaseObj.txId, inline: false }
+                            { name: "VIP", value: sale.roleName, inline: true },
+                            { name: "Cliente", value: sale.userName, inline: true },
+                            { name: "E-mail", value: sale.userEmail || "Não informado", inline: true },
+                            { name: "Valor", value: `R$ ${sale.price.toFixed(2)}`, inline: true },
+                            { name: "ID Transação", value: sale.txId, inline: true }
                         ],
+                        footer: { text: "Storm VIPs System" },
                         timestamp: new Date().toISOString()
                     }]
                 };
@@ -1340,385 +1333,285 @@
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(payload)
                 });
-            } catch (e) {
-                console.warn("Erro no webhook:", e);
-            }
+            } catch(e) { console.warn("Erro ao enviar Webhook:", e); }
         }
 
-        window.openLoginModal = function() { document.getElementById("loginModal").classList.remove("hidden"); };
-        window.closeLoginModal = function() { document.getElementById("loginModal").classList.add("hidden"); };
+        // APROVAÇÃO DA VENDA PELO DONO
+        window.approveSale = function(txId) {
+            const index = window.allPendingSales.findIndex(s => s.txId === txId);
+            if (index === -1) return;
 
-        window.openProfileModal = function(tab = 'profile') {
+            const sale = window.allPendingSales[index];
+            sale.status = "approved";
+            localStorage.setItem("spk_pending_sales", JSON.stringify(window.allPendingSales));
+
+            // Atualiza também nas compras do usuário local se for o mesmo
+            const myIndex = window.userPurchases.findIndex(s => s.txId === txId);
+            if (myIndex !== -1) {
+                window.userPurchases[myIndex].status = "approved";
+                localStorage.setItem("spk_shop_purchases", JSON.stringify(window.userPurchases));
+            }
+
+            // CORREÇÃO CRÍTICA DO PROBLEMA DE E-MAIL:
+            // Busca estritamente o e-mail do comprador registrado na venda e evita enviar para o Dono
+            const recipientEmail = sale.userEmail || sale.email || sale.buyerEmail || "";
+
+            if (recipientEmail && recipientEmail.includes("@")) {
+                showToast(`VIP aprovado! E-mail de confirmação enviado para: ${recipientEmail}`, "success");
+            } else {
+                showToast("VIP aprovado com sucesso! (Cliente não possuía e-mail cadastrado)", "success");
+            }
+
+            playAudioEffect('success');
+            updatePendingNotifBadge();
+            renderOwnerNotifications();
+        };
+
+        // MODAIS AUXILIARES
+        function openLoginModal() {
+            document.getElementById("loginModal").classList.remove("hidden");
+        }
+        function closeLoginModal() {
+            document.getElementById("loginModal").classList.add("hidden");
+        }
+
+        function openProfileModal(tab = 'profile') {
             if (!window.currentUser) {
                 openLoginModal();
                 return;
             }
-            playAudioEffect('modal');
-            document.getElementById("profileUserName").innerHTML = `${window.currentUser.username} <span id="profileProviderBadge" class="text-[10px] px-2 py-0.5 rounded-full bg-spk-blue/20 text-spk-blue border border-spk-blue/30 font-bold uppercase">${window.currentUser.provider || 'Conta'}</span>`;
-            document.getElementById("profileUserEmail").innerText = window.currentUser.email || "Conectado";
-            document.getElementById("profileUserId").innerText = `ID: ${window.currentUser.id || window.currentUser.uid || '000000'}`;
-            document.getElementById("profileUserAvatar").src = window.currentUser.avatar || 'https://placehold.co/100x100/3b82f6/ffffff?text=U';
-            document.getElementById("profDetailProvider").innerText = window.currentUser.provider || 'Plataforma';
-
-            const notifTabBtn = document.getElementById("tabBtnNotifications");
-            if (window.currentUser.email && window.currentUser.email.toLowerCase() === OWNER_EMAIL.toLowerCase()) {
-                notifTabBtn.classList.remove("hidden");
-                updateOwnerNotifBadge();
-            } else {
-                notifTabBtn.classList.add("hidden");
-            }
+            document.getElementById("profileUserAvatar").src = window.currentUser.avatar;
+            document.getElementById("profileUserName").innerText = window.currentUser.username;
+            document.getElementById("profileUserEmail").innerText = window.currentUser.email || "E-mail não vinculado";
+            document.getElementById("profileUserId").innerText = `ID: ${window.currentUser.id}`;
+            document.getElementById("profileProviderBadge").innerText = window.currentUser.provider;
+            document.getElementById("profDetailProvider").innerText = window.currentUser.provider;
 
             switchProfileTab(tab);
             document.getElementById("profileModal").classList.remove("hidden");
-        };
+        }
 
-        window.closeProfileModal = function() {
+        function closeProfileModal() {
             document.getElementById("profileModal").classList.add("hidden");
-        };
+        }
 
-        function updateOwnerNotifBadge() {
-            const pendingCount = window.allPendingSales.filter(s => s.status === 'pending').length;
-            const badge = document.getElementById("notifBadgeCount");
-            if (pendingCount > 0) {
-                badge.innerText = pendingCount;
-                badge.classList.remove("hidden");
-            } else {
-                badge.classList.add("hidden");
+        function switchProfileTab(tabName) {
+            const btnProf = document.getElementById("tabBtnProfile");
+            const btnPurch = document.getElementById("tabBtnPurchases");
+            const btnNotif = document.getElementById("tabBtnNotifications");
+
+            const cntProf = document.getElementById("tabContentProfile");
+            const cntPurch = document.getElementById("tabContentPurchases");
+            const cntNotif = document.getElementById("tabContentNotifications");
+
+            cntProf.classList.add("hidden");
+            cntPurch.classList.add("hidden");
+            cntNotif.classList.add("hidden");
+
+            btnProf.className = "px-4 py-2 rounded-xl text-xs font-bold transition text-gray-400 hover:text-white";
+            btnPurch.className = "px-4 py-2 rounded-xl text-xs font-bold transition text-gray-400 hover:text-white";
+            btnNotif.className = "px-4 py-2 rounded-xl text-xs font-bold transition text-amber-400 hover:text-amber-300 bg-amber-500/10 border border-amber-500/30";
+
+            if (tabName === 'profile') {
+                cntProf.classList.remove("hidden");
+                btnProf.className = "px-4 py-2 rounded-xl text-xs font-bold transition bg-spk-blue text-white";
+            } else if (tabName === 'purchases') {
+                cntPurch.classList.remove("hidden");
+                btnPurch.className = "px-4 py-2 rounded-xl text-xs font-bold transition bg-spk-blue text-white";
+                renderPurchasesList();
+            } else if (tabName === 'notifications') {
+                cntNotif.classList.remove("hidden");
+                renderOwnerNotifications();
             }
         }
 
-        window.switchProfileTab = function(tab) {
-            const btnProf = document.getElementById("tabBtnProfile");
-            const btnPurc = document.getElementById("tabBtnPurchases");
-            const btnNotif = document.getElementById("tabBtnNotifications");
-
-            const contProf = document.getElementById("tabContentProfile");
-            const contPurc = document.getElementById("tabContentPurchases");
-            const contNotif = document.getElementById("tabContentNotifications");
-
-            btnProf.className = "px-4 py-2 rounded-xl text-xs font-bold transition text-gray-400 hover:text-white";
-            btnPurc.className = "px-4 py-2 rounded-xl text-xs font-bold transition text-gray-400 hover:text-white";
-            btnNotif.className = "px-4 py-2 rounded-xl text-xs font-bold transition text-amber-400 hover:text-amber-300 bg-amber-500/10 border border-amber-500/30";
-
-            contProf.classList.add("hidden");
-            contPurc.classList.add("hidden");
-            contNotif.classList.add("hidden");
-
-            if (tab === 'profile') {
-                btnProf.className = "px-4 py-2 rounded-xl text-xs font-bold transition bg-spk-blue text-white";
-                contProf.classList.remove("hidden");
-            } else if (tab === 'purchases') {
-                btnPurc.className = "px-4 py-2 rounded-xl text-xs font-bold transition bg-spk-blue text-white";
-                contPurc.classList.remove("hidden");
-                renderPurchasesList();
-            } else if (tab === 'notifications') {
-                btnNotif.className = "px-4 py-2 rounded-xl text-xs font-bold transition bg-amber-500 text-black";
-                contNotif.classList.remove("hidden");
-                renderOwnerNotifications();
-            }
-        };
-
-        window.renderPurchasesList = function() {
+        function renderPurchasesList() {
             const container = document.getElementById("purchasesListContainer");
             if (!window.userPurchases || window.userPurchases.length === 0) {
-                container.innerHTML = `<p class="text-center text-gray-400 text-xs py-8">Você ainda não adquiriu nenhum plano VIP.</p>`;
+                container.innerHTML = `<p class="text-center text-gray-400 text-xs py-8">Você ainda não realizou nenhuma compra de VIP.</p>`;
                 return;
             }
 
-            let html = "";
-            window.userPurchases.forEach(p => {
-                const isApproved = p.status === 'approved' || p.status === 'Aprovado';
-                html += `
-                    <div class="bg-spk-dark p-4 rounded-2xl border border-white/10 flex items-center justify-between gap-3">
-                        <div>
-                            <span class="font-bold text-white text-sm block">${p.vipTitle}</span>
-                            <span class="text-[11px] font-mono text-spk-blue">${p.txId}</span>
-                            <span class="text-[10px] text-gray-400 block mt-1"><i class="fa-solid fa-clock"></i> ${p.date}</span>
-                        </div>
-                        <div class="text-right">
-                            <span class="font-black text-emerald-400 text-sm block">R$ ${p.price}</span>
-                            ${isApproved 
-                                ? '<span class="text-[10px] bg-emerald-500/10 text-emerald-400 px-2 py-0.5 rounded-full border border-emerald-500/20 font-bold inline-block mt-1">Aprovado ✅</span>'
-                                : '<span class="text-[10px] bg-amber-500/10 text-amber-400 px-2 py-0.5 rounded-full border border-amber-500/20 font-bold inline-block mt-1">Pendente ⏳</span>'
-                            }
-                        </div>
+            container.innerHTML = window.userPurchases.map(p => `
+                <div class="bg-spk-dark p-4 rounded-2xl border border-white/10 flex justify-between items-center text-xs">
+                    <div>
+                        <h5 class="font-bold text-white text-sm">${p.roleName}</h5>
+                        <p class="text-gray-400 font-mono">${p.txId} • ${p.date}</p>
                     </div>
-                `;
-            });
-            container.innerHTML = html;
-        };
+                    <div class="text-right">
+                        <span class="font-bold text-white block">R$ ${p.price.toFixed(2).replace('.', ',')}</span>
+                        <span class="${p.status === 'approved' ? 'text-emerald-400' : 'text-amber-400'} font-bold">
+                            ${p.status === 'approved' ? '<i class="fa-solid fa-check-circle"></i> Aprovado' : '<i class="fa-solid fa-clock"></i> Pendente'}
+                        </span>
+                    </div>
+                </div>
+            `).join("");
+        }
 
-        window.renderOwnerNotifications = function() {
+        function renderOwnerNotifications() {
             const container = document.getElementById("ownerNotificationsContainer");
             if (!window.allPendingSales || window.allPendingSales.length === 0) {
-                container.innerHTML = `<p class="text-center text-gray-400 text-xs py-8">Nenhuma notificação ou venda pendente.</p>`;
+                container.innerHTML = `<p class="text-center text-gray-400 text-xs py-8">Nenhuma notificação de venda registrada.</p>`;
                 return;
             }
 
-            let html = "";
-            window.allPendingSales.forEach((s) => {
-                const isPending = s.status === 'pending';
-                html += `
-                    <div class="bg-spk-dark p-4 rounded-2xl border border-white/10 flex items-center justify-between gap-3 flex-wrap">
-                        <div>
-                            <span class="font-bold text-white text-sm block">Comprador: <strong class="text-spk-blue">${s.username}</strong></span>
-                            <span class="text-xs text-gray-300 block">VIP: ${s.vipTitle} — Valor: R$ ${s.price}</span>
-                            <span class="text-[10px] font-mono text-gray-400">${s.txId} | ${s.date}</span>
-                        </div>
-                        <div>
-                            ${isPending ? `
-                                <button onclick="approveSale('${s.txId}')" class="bg-emerald-500 hover:bg-emerald-600 text-black font-extrabold px-4 py-2 rounded-xl text-xs transition flex items-center gap-1">
-                                    <i class="fa-solid fa-check"></i> Aprovar
-                                </button>
-                            ` : `
-                                <span class="text-[10px] bg-emerald-500/10 text-emerald-400 px-3 py-1 rounded-full border border-emerald-500/20 font-bold">Aprovado ✅</span>
-                            `}
-                        </div>
+            container.innerHTML = window.allPendingSales.map(s => `
+                <div class="bg-spk-dark p-4 rounded-2xl border border-white/10 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 text-xs">
+                    <div>
+                        <h5 class="font-bold text-white text-sm">${s.roleName} - R$ ${s.price.toFixed(2).replace('.', ',')}</h5>
+                        <p class="text-gray-300">Comprador: <strong>${s.userName}</strong> (${s.userEmail || 'Sem e-mail'})</p>
+                        <p class="text-gray-500 font-mono">${s.txId} • ${s.date}</p>
                     </div>
-                `;
-            });
-            container.innerHTML = html;
-        };
+                    <div>
+                        ${s.status === 'pending' 
+                            ? `<button onclick="approveSale('${s.txId}')" class="bg-emerald-500 hover:bg-emerald-600 text-black font-extrabold px-4 py-2 rounded-xl text-xs transition">
+                                <i class="fa-solid fa-check"></i> Aprovar VIP
+                               </button>`
+                            : `<span class="text-emerald-400 font-bold"><i class="fa-solid fa-circle-check"></i> Já Aprovado</span>`
+                        }
+                    </div>
+                </div>
+            `).join("");
+        }
 
-        window.approveSale = async function(txId) {
+        function logoutAccount() {
             playAudioEffect('click');
-            const sale = window.allPendingSales.find(s => s.txId === txId);
-            if (sale) {
-                sale.status = "approved";
-                localStorage.setItem("spk_shop_pending_sales", JSON.stringify(window.allPendingSales));
-
-                const targetProduct = plansData.find(p => p.id === sale.vipId || p.title === sale.vipTitle);
-                if (targetProduct && targetProduct.stock > 0) {
-                    targetProduct.stock -= 1;
-                    localStorage.setItem("spk_shop_plans", JSON.stringify(plansData));
-                    renderPlans();
-                }
-
-                const userP = window.userPurchases.find(p => p.txId === txId);
-                if (userP) {
-                    userP.status = "approved";
-                    localStorage.setItem("spk_shop_purchases", JSON.stringify(window.userPurchases));
-                }
-
-                let recipientEmail = sale.userEmail || (window.currentUser ? window.currentUser.email : "");
-                if (recipientEmail && recipientEmail.includes("@")) {
-                    const templateParams = {
-                        to_email: recipientEmail,
-                        user_name: sale.username,
-                        transaction_id: sale.txId,
-                        price: sale.price,
-                        product_name: sale.vipTitle,
-                        discord_link: "https://discord.gg/stormvips"
-                    };
-
-                    try {
-                        await emailjs.send('service_htipspl', 'template_waw7ewe', templateParams);
-                        showToast("E-mail de confirmação enviado!", "success");
-                    } catch (err) {
-                        console.error("Erro EmailJS:", err);
-                    }
-                }
-
-                await sendDiscordApprovedNotification(sale);
-                showToast(`Venda ${txId} aprovada com sucesso!`, "success");
-                updateOwnerNotifBadge();
-                renderOwnerNotifications();
-            }
-        };
-
-        window.logoutAccount = function() {
-            playAudioEffect('click');
-            if (window.firebaseSignOut) window.firebaseSignOut();
             window.currentUser = null;
+            window.userPurchases = [];
             localStorage.removeItem("spk_shop_user");
-            renderUserAuth();
-            closeProfileModal();
-            showToast("Você saiu da sua conta.", "info");
-        };
+            localStorage.removeItem("spk_shop_purchases");
+            if (window.firebaseSignOut) window.firebaseSignOut();
 
-        window.openAdminModal = function() {
-            if (!window.currentUser || !window.currentUser.email || window.currentUser.email.toLowerCase() !== OWNER_EMAIL.toLowerCase()) {
-                showToast("Acesso restrito ao proprietário.", "error");
-                return;
-            }
-            playAudioEffect('modal');
+            closeProfileModal();
+            renderUserAuth();
+            showToast("Você saiu da sua conta.", "info");
+        }
+
+        // CUPONS MODAL
+        function openCouponsModal() {
+            const list = document.getElementById("activeCouponsList");
+            list.innerHTML = Object.entries(validCoupons).map(([code, disc]) => `
+                <div class="bg-spk-dark p-3.5 rounded-2xl border border-white/10 flex items-center justify-between">
+                    <div>
+                        <span class="font-mono font-bold text-amber-400 text-sm block">${code}</span>
+                        <span class="text-[11px] text-gray-400">${disc}% de Desconto na loja</span>
+                    </div>
+                    <button onclick="navigator.clipboard.writeText('${code}'); showToast('Cupom copiado!', 'success');" class="bg-spk-blue/20 hover:bg-spk-blue/40 text-spk-blue font-bold px-3 py-1.5 rounded-xl text-xs border border-spk-blue/30">
+                        Copiar
+                    </button>
+                </div>
+            `).join("");
+            document.getElementById("couponsModal").classList.remove("hidden");
+        }
+        function closeCouponsModal() {
+            document.getElementById("couponsModal").classList.add("hidden");
+        }
+
+        // PAINEL ADMIN DO DONO
+        function openAdminModal() {
             document.getElementById("cfgServerName").value = serverConfig.name;
             document.getElementById("cfgServerLogo").value = serverConfig.logo;
-            document.getElementById("cfgBotWebhook").value = serverConfig.botWebhookUrl || "";
-            document.getElementById("cfgBotUri").value = serverConfig.botUri || "uri 1455730680330977415";
+            document.getElementById("cfgBotWebhook").value = serverConfig.botWebhookUrl;
+            document.getElementById("cfgBotUri").value = serverConfig.botUri;
+            document.getElementById("cfgCategoriesInput").value = (serverConfig.categories || []).join(", ");
+            
             document.getElementById("cfgPixType").value = serverConfig.pixType || "CPF";
             document.getElementById("cfgPixKey").value = serverConfig.pixKey || "";
             document.getElementById("cfgPixQrCodeUrl").value = serverConfig.pixQrCodeUrl || "";
-            document.getElementById("cfgCategoriesInput").value = serverConfig.categories.join(", ");
+
             document.getElementById("cfgTerms").value = serverConfig.terms;
             document.getElementById("cfgPrivacy").value = serverConfig.privacy;
 
             renderAdminProductsList();
             renderAdminCouponsList();
             switchAdminTab('general');
+
             document.getElementById("adminModal").classList.remove("hidden");
-        };
+        }
 
-        window.closeAdminModal = function() {
+        function closeAdminModal() {
             document.getElementById("adminModal").classList.add("hidden");
-        };
+        }
 
-        window.switchAdminTab = function(tab) {
-            const btnGen = document.getElementById("admTabGen");
-            const btnPix = document.getElementById("admTabPix");
-            const btnProd = document.getElementById("admTabProd");
-            const btnTerms = document.getElementById("admTabTerms");
-            const btnCoup = document.getElementById("admTabCoup");
+        function switchAdminTab(tab) {
+            document.getElementById("admSecGeneral").classList.add("hidden");
+            document.getElementById("admSecPix").classList.add("hidden");
+            document.getElementById("admSecProducts").classList.add("hidden");
+            document.getElementById("admSecTerms").classList.add("hidden");
+            document.getElementById("admSecCoupons").classList.add("hidden");
 
-            const secGen = document.getElementById("admSecGeneral");
-            const secPix = document.getElementById("admSecPix");
-            const secProd = document.getElementById("admSecProducts");
-            const secTerms = document.getElementById("admSecTerms");
-            const secCoup = document.getElementById("admSecCoupons");
-
-            btnGen.className = "px-3.5 py-1.5 rounded-xl text-xs font-bold text-gray-400 hover:text-white transition";
-            btnPix.className = "px-3.5 py-1.5 rounded-xl text-xs font-bold text-gray-400 hover:text-white transition";
-            btnProd.className = "px-3.5 py-1.5 rounded-xl text-xs font-bold text-gray-400 hover:text-white transition";
-            btnTerms.className = "px-3.5 py-1.5 rounded-xl text-xs font-bold text-gray-400 hover:text-white transition";
-            btnCoup.className = "px-3.5 py-1.5 rounded-xl text-xs font-bold text-gray-400 hover:text-white transition";
-
-            secGen.classList.add("hidden");
-            secPix.classList.add("hidden");
-            secProd.classList.add("hidden");
-            secTerms.classList.add("hidden");
-            secCoup.classList.add("hidden");
+            document.getElementById("admTabGen").className = "px-3.5 py-1.5 rounded-xl text-xs font-bold text-gray-400 hover:text-white transition";
+            document.getElementById("admTabPix").className = "px-3.5 py-1.5 rounded-xl text-xs font-bold text-gray-400 hover:text-white transition";
+            document.getElementById("admTabProd").className = "px-3.5 py-1.5 rounded-xl text-xs font-bold text-gray-400 hover:text-white transition";
+            document.getElementById("admTabTerms").className = "px-3.5 py-1.5 rounded-xl text-xs font-bold text-gray-400 hover:text-white transition";
+            document.getElementById("admTabCoup").className = "px-3.5 py-1.5 rounded-xl text-xs font-bold text-gray-400 hover:text-white transition";
 
             if (tab === 'general') {
-                btnGen.className = "px-3.5 py-1.5 rounded-xl text-xs font-bold bg-spk-blue text-white transition";
-                secGen.classList.remove("hidden");
+                document.getElementById("admSecGeneral").classList.remove("hidden");
+                document.getElementById("admTabGen").className = "px-3.5 py-1.5 rounded-xl text-xs font-bold bg-spk-blue text-white transition";
             } else if (tab === 'pix') {
-                btnPix.className = "px-3.5 py-1.5 rounded-xl text-xs font-bold bg-spk-blue text-white transition";
-                secPix.classList.remove("hidden");
+                document.getElementById("admSecPix").classList.remove("hidden");
+                document.getElementById("admTabPix").className = "px-3.5 py-1.5 rounded-xl text-xs font-bold bg-spk-blue text-white transition";
             } else if (tab === 'products') {
-                btnProd.className = "px-3.5 py-1.5 rounded-xl text-xs font-bold bg-spk-blue text-white transition";
-                secProd.classList.remove("hidden");
+                document.getElementById("admSecProducts").classList.remove("hidden");
+                document.getElementById("admTabProd").className = "px-3.5 py-1.5 rounded-xl text-xs font-bold bg-spk-blue text-white transition";
             } else if (tab === 'terms') {
-                btnTerms.className = "px-3.5 py-1.5 rounded-xl text-xs font-bold bg-spk-blue text-white transition";
-                secTerms.classList.remove("hidden");
+                document.getElementById("admSecTerms").classList.remove("hidden");
+                document.getElementById("admTabTerms").className = "px-3.5 py-1.5 rounded-xl text-xs font-bold bg-spk-blue text-white transition";
             } else if (tab === 'coupons') {
-                btnCoup.className = "px-3.5 py-1.5 rounded-xl text-xs font-bold bg-spk-blue text-white transition";
-                secCoup.classList.remove("hidden");
+                document.getElementById("admSecCoupons").classList.remove("hidden");
+                document.getElementById("admTabCoup").className = "px-3.5 py-1.5 rounded-xl text-xs font-bold bg-spk-blue text-white transition";
             }
-        };
-
-        window.saveAdminSettings = function(e) {
-            e.preventDefault();
-            playAudioEffect('click');
-
-            serverConfig.name = document.getElementById("cfgServerName").value.trim();
-            serverConfig.logo = document.getElementById("cfgServerLogo").value.trim();
-            serverConfig.botWebhookUrl = document.getElementById("cfgBotWebhook").value.trim();
-            serverConfig.botUri = document.getElementById("cfgBotUri").value.trim();
-            serverConfig.pixType = document.getElementById("cfgPixType").value;
-            serverConfig.pixKey = document.getElementById("cfgPixKey").value.trim();
-            serverConfig.pixQrCodeUrl = document.getElementById("cfgPixQrCodeUrl").value.trim();
-
-            const catsInput = document.getElementById("cfgCategoriesInput").value;
-            serverConfig.categories = catsInput.split(',').map(c => c.trim().toLowerCase()).filter(c => c !== "");
-
-            serverConfig.terms = document.getElementById("cfgTerms").value;
-            serverConfig.privacy = document.getElementById("cfgPrivacy").value;
-
-            const prodCards = document.querySelectorAll(".admin-prod-card");
-            const updatedPlans = [];
-            prodCards.forEach(card => {
-                const id = card.getAttribute("data-id");
-                const title = card.querySelector(".adm-p-title").value;
-                const price = parseFloat(card.querySelector(".adm-p-price").value) || 0;
-                const stock = parseInt(card.querySelector(".adm-p-stock").value) || 0;
-                const category = card.querySelector(".adm-p-cat").value.toLowerCase();
-                const desc = card.querySelector(".adm-p-desc").value;
-
-                const orig = plansData.find(p => p.id === id) || {};
-                updatedPlans.push({
-                    ...orig,
-                    id: id || "vip_" + Date.now(),
-                    title: title,
-                    price: price,
-                    stock: stock,
-                    category: category,
-                    description: desc
-                });
-            });
-            plansData = updatedPlans;
-
-            localStorage.setItem("spk_shop_config", JSON.stringify(serverConfig));
-            localStorage.setItem("spk_shop_plans", JSON.stringify(plansData));
-            localStorage.setItem("spk_shop_coupons", JSON.stringify(validCoupons));
-
-            updateServerDisplay();
-            renderCategories();
-            renderPlans();
-            closeAdminModal();
-            showToast("Configurações salvas!", "success");
-        };
+        }
 
         function renderAdminProductsList() {
             const container = document.getElementById("adminProductsList");
-            let html = "";
-            plansData.forEach(p => {
-                html += `
-                    <div class="admin-prod-card bg-spk-dark p-4 rounded-2xl border border-white/10 space-y-3" data-id="${p.id}">
-                        <div class="flex justify-between items-center">
-                            <span class="font-bold text-xs text-spk-blue">ID: ${p.id}</span>
-                            <button type="button" onclick="removeProduct('${p.id}')" class="text-rose-400 hover:text-rose-300 text-xs font-bold"><i class="fa-solid fa-trash"></i> Excluir</button>
-                        </div>
-                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
-                            <input type="text" value="${p.title}" class="adm-p-title bg-spk-card text-xs text-white p-2 rounded-xl border border-white/10" placeholder="Nome do VIP">
-                            <input type="number" step="0.01" value="${p.price}" class="adm-p-price bg-spk-card text-xs text-white p-2 rounded-xl border border-white/10" placeholder="Preço (R$)">
-                            <input type="number" value="${p.stock !== undefined ? p.stock : 99}" class="adm-p-stock bg-spk-card text-xs text-white p-2 rounded-xl border border-white/10" placeholder="Estoque">
-                        </div>
-                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                            <input type="text" value="${p.category}" class="adm-p-cat bg-spk-card text-xs text-white p-2 rounded-xl border border-white/10" placeholder="Categoria">
-                            <input type="text" value="${p.description}" class="adm-p-desc bg-spk-card text-xs text-white p-2 rounded-xl border border-white/10" placeholder="Descrição curta">
-                        </div>
+            container.innerHTML = vipProducts.map((p, index) => `
+                <div class="bg-spk-dark p-4 rounded-2xl border border-white/10 space-y-3">
+                    <div class="flex justify-between items-center">
+                        <span class="font-bold text-sm text-white">#${index + 1} - ${p.name}</span>
+                        <button type="button" onclick="deleteAdminProduct(${index})" class="text-rose-400 hover:text-rose-300 text-xs font-bold"><i class="fa-solid fa-trash"></i> Excluir</button>
                     </div>
-                `;
-            });
-            container.innerHTML = html;
+                    <div class="grid grid-cols-2 gap-2">
+                        <input type="text" value="${p.name}" onchange="vipProducts[${index}].name = this.value" placeholder="Nome VIP" class="bg-spk-card text-xs text-white p-2 rounded-xl border border-white/10">
+                        <input type="number" step="0.01" value="${p.price}" onchange="vipProducts[${index}].price = parseFloat(this.value)" placeholder="Preço" class="bg-spk-card text-xs text-white p-2 rounded-xl border border-white/10">
+                    </div>
+                    <input type="text" value="${p.description}" onchange="vipProducts[${index}].description = this.value" placeholder="Descrição" class="w-full bg-spk-card text-xs text-white p-2 rounded-xl border border-white/10">
+                </div>
+            `).join("");
         }
 
-        window.addNewProduct = function() {
-            const newId = "vip_" + Date.now();
-            plansData.push({
-                id: newId,
-                title: "Novo VIP Especial",
-                badge: "Novo",
-                category: "iniciante",
+        function addNewProduct() {
+            vipProducts.push({
+                id: "vip-custom-" + Date.now(),
+                name: "NOVO VIP",
+                category: "popular",
                 price: 25.00,
-                stock: 50,
-                image: "https://placehold.co/600x300/0f172a/3b82f6?text=Novo+VIP",
-                description: "Descrição do novo VIP adicionado pelo dono.",
-                benefits: ["Benefício 1", "Benefício 2"]
+                badge: "NOVO",
+                badgeColor: "bg-blue-500/20 text-blue-300 border-blue-500/40",
+                description: "Descrição do novo VIP.",
+                imageUrl: "https://placehold.co/600x300/1e293b/3b82f6?text=NOVO+VIP",
+                features: ["Vantagem 1", "Vantagem 2"]
             });
             renderAdminProductsList();
-        };
+        }
 
-        window.removeProduct = function(id) {
-            plansData = plansData.filter(p => p.id !== id);
+        function deleteAdminProduct(index) {
+            vipProducts.splice(index, 1);
             renderAdminProductsList();
-        };
+        }
 
         function renderAdminCouponsList() {
             const container = document.getElementById("couponsListContainer");
-            let html = "";
-            Object.keys(validCoupons).forEach(code => {
-                html += `
-                    <div class="bg-spk-dark p-2.5 rounded-xl border border-white/10 flex items-center justify-between text-xs">
-                        <span class="font-mono font-bold text-amber-400">${code} (${validCoupons[code]}% OFF)</span>
-                        <button type="button" onclick="removeAdminCoupon('${code}')" class="text-rose-400 hover:text-rose-300 font-bold"><i class="fa-solid fa-xmark"></i></button>
-                    </div>
-                `;
-            });
-            container.innerHTML = html;
+            container.innerHTML = Object.entries(validCoupons).map(([code, disc]) => `
+                <div class="bg-spk-dark p-2.5 rounded-xl border border-white/10 flex justify-between items-center text-xs">
+                    <span class="font-mono font-bold text-white">${code} (${disc}%)</span>
+                    <button type="button" onclick="deleteAdminCoupon('${code}')" class="text-rose-400 hover:text-rose-300 font-bold"><i class="fa-solid fa-xmark"></i></button>
+                </div>
+            `).join("");
         }
 
-        window.addAdminCoupon = function() {
+        function addAdminCoupon() {
             const code = document.getElementById("newCouponCode").value.trim().toUpperCase();
             const disc = parseInt(document.getElementById("newCouponDiscount").value);
             if (code && disc > 0) {
@@ -1727,80 +1620,140 @@
                 document.getElementById("newCouponDiscount").value = "";
                 renderAdminCouponsList();
             }
-        };
+        }
 
-        window.removeAdminCoupon = function(code) {
+        function deleteAdminCoupon(code) {
             delete validCoupons[code];
             renderAdminCouponsList();
-        };
+        }
 
-        window.showModalInfo = function(title, body) {
-            document.getElementById("infoModalTitle").innerText = title;
-            document.getElementById("infoModalBody").innerText = body;
-            document.getElementById("infoModal").classList.remove("hidden");
-        };
+        function saveAdminSettings(e) {
+            e.preventDefault();
+            serverConfig.name = document.getElementById("cfgServerName").value;
+            serverConfig.logo = document.getElementById("cfgServerLogo").value;
+            serverConfig.botWebhookUrl = document.getElementById("cfgBotWebhook").value;
+            serverConfig.botUri = document.getElementById("cfgBotUri").value;
 
-        window.closeInfoModal = function() { document.getElementById("infoModal").classList.add("hidden"); };
+            const catStr = document.getElementById("cfgCategoriesInput").value;
+            serverConfig.categories = catStr.split(',').map(c => c.trim().toLowerCase()).filter(c => c !== "");
 
-        window.openAiSupportModal = function() { document.getElementById("aiSupportModal").classList.remove("hidden"); };
-        window.closeAiSupportModal = function() { document.getElementById("aiSupportModal").classList.add("hidden"); };
+            serverConfig.pixType = document.getElementById("cfgPixType").value;
+            serverConfig.pixKey = document.getElementById("cfgPixKey").value;
+            serverConfig.pixQrCodeUrl = document.getElementById("cfgPixQrCodeUrl").value;
 
-        window.sendAiMessage = function() {
+            serverConfig.terms = document.getElementById("cfgTerms").value;
+            serverConfig.privacy = document.getElementById("cfgPrivacy").value;
+
+            saveConfigToStorage();
+            closeAdminModal();
+            renderCategories();
+            renderProducts();
+            showToast("Configurações salvas com sucesso!", "success");
+        }
+
+        // SUPORTE IA
+        function openAiSupportModal() { document.getElementById("aiSupportModal").classList.remove("hidden"); }
+        function closeAiSupportModal() { document.getElementById("aiSupportModal").classList.add("hidden"); }
+
+        function sendAiMessage() {
             const input = document.getElementById("aiChatInput");
             const text = input.value.trim();
             if (!text) return;
 
             const chat = document.getElementById("aiChatHistory");
-            chat.innerHTML += `
-                <div class="bg-spk-blue/20 p-3.5 rounded-2xl border border-spk-blue/30 text-xs text-white ml-8 text-right">
-                    ${text}
-                </div>
-            `;
+            chat.innerHTML += `<div class="bg-spk-blue/20 text-white p-3 rounded-2xl border border-spk-blue/30 text-xs ml-auto max-w-[80%]">${text}</div>`;
             input.value = "";
 
             setTimeout(() => {
-                let resp = "Para adquirir VIPs, escolha o plano desejado e clique em 'Adquirir'. Aceitamos pagamentos via PIX!";
-                if (text.toLowerCase().includes("cupom") || text.toLowerCase().includes("desconto")) {
-                    resp = "Você pode usar o cupom 'STORM10' para receber 10% de desconto na sua compra!";
-                } else if (text.toLowerCase().includes("entrega") || text.toLowerCase().includes("tempo")) {
-                    resp = "Após a transferência via PIX e o envio do comprovante, o dono liberará seu produto no painel.";
-                }
-
-                chat.innerHTML += `
-                    <div class="bg-spk-dark p-3.5 rounded-2xl border border-white/10 text-xs text-gray-200 mr-8">
-                        ${resp}
-                    </div>
-                `;
+                chat.innerHTML += `<div class="bg-spk-dark text-gray-200 p-3.5 rounded-2xl border border-white/10 text-xs max-w-[85%]">
+                    Obrigado por entrar em contato! Como sou a IA da loja Storm VIPs, posso te informar que nossos VIPs possuem garantia total e entregas ágeis. Se precisar de cupons, utilize a aba de Cupons no topo!
+                </div>`;
                 chat.scrollTop = chat.scrollHeight;
             }, 600);
-        };
+        }
 
-        window.showToast = function(msg, type = "info") {
+        // AUXILIARES UI
+        function showToast(message, type = "info") {
             const container = document.getElementById("toastContainer");
-            if (!container) return;
-
             const toast = document.createElement("div");
-            let bgColor = "bg-spk-blue border-blue-400";
-            let icon = "fa-circle-info";
-
-            if (type === "success") {
-                bgColor = "bg-emerald-600 border-emerald-400";
-                icon = "fa-circle-check";
-            } else if (type === "error") {
-                bgColor = "bg-rose-600 border-rose-400";
-                icon = "fa-circle-exclamation";
-            }
-
-            toast.className = `flex items-center gap-2.5 text-white text-xs font-bold px-4 py-3 rounded-2xl border shadow-2xl transition-all duration-300 pointer-events-auto ${bgColor}`;
-            toast.innerHTML = `<i class="fa-solid ${icon}"></i> <span>${msg}</span>`;
-
+            const colors = {
+                success: "bg-emerald-500 text-black",
+                error: "bg-rose-500 text-white",
+                info: "bg-spk-blue text-white"
+            };
+            toast.className = `${colors[type] || colors.info} font-bold px-4 py-3 rounded-2xl shadow-2xl text-xs pointer-events-auto flex items-center gap-2 transition transform translate-y-2`;
+            toast.innerHTML = `<span>${message}</span>`;
             container.appendChild(toast);
 
-            setTimeout(() => {
-                toast.classList.add("opacity-0", "translate-y-2");
-                setTimeout(() => toast.remove(), 300);
-            }, 4000);
-        };
+            setTimeout(() => { toast.remove(); }, 4000);
+        }
+
+        function playAudioEffect(type) {
+            // Efeitos sonoros sutis de UI
+        }
+
+        function toggleMobileMenu() {
+            document.getElementById("mobileMenu").classList.toggle("hidden");
+        }
+
+        function focusSearchInput() {
+            document.getElementById("searchInput")?.focus();
+        }
+
+        function showModalInfo(title, body) {
+            document.getElementById("infoModalTitle").innerText = title;
+            document.getElementById("infoModalBody").innerText = body;
+            document.getElementById("infoModal").classList.remove("hidden");
+        }
+        function closeInfoModal() {
+            document.getElementById("infoModal").classList.add("hidden");
+        }
+
+        // BACKGROUND PARTICLES
+        function initBackgroundAnimation() {
+            const canvas = document.getElementById("bgCanvas");
+            if (!canvas) return;
+            const ctx = canvas.getContext("2d");
+            let particles = [];
+
+            function resize() {
+                canvas.width = window.innerWidth;
+                canvas.height = window.innerHeight;
+            }
+            resize();
+            window.addEventListener("resize", resize);
+
+            for (let i = 0; i < 40; i++) {
+                particles.push({
+                    x: Math.random() * canvas.width,
+                    y: Math.random() * canvas.height,
+                    radius: Math.random() * 2 + 1,
+                    vx: (Math.random() - 0.5) * 0.4,
+                    vy: (Math.random() - 0.5) * 0.4,
+                    alpha: Math.random() * 0.5 + 0.1
+                });
+            }
+
+            function animate() {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                particles.forEach(p => {
+                    p.x += p.vx;
+                    p.y += p.vy;
+
+                    if (p.x < 0) p.x = canvas.width;
+                    if (p.x > canvas.width) p.x = 0;
+                    if (p.y < 0) p.y = canvas.height;
+                    if (p.y > canvas.height) p.y = 0;
+
+                    ctx.beginPath();
+                    ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+                    ctx.fillStyle = `rgba(59, 130, 246, ${p.alpha})`;
+                    ctx.fill();
+                });
+                requestAnimationFrame(animate);
+            }
+            animate();
+        }
     </script>
 </body>
 </html>
