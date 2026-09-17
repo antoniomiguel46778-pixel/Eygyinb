@@ -517,7 +517,7 @@
                 <p class="text-xs text-gray-400 mb-5">Abra o app do seu banco para realizar o pagamento do VIP</p>
 
                 <div class="bg-white p-3 rounded-2xl inline-block shadow-2xl mb-4 border-4 border-spk-dark max-w-[220px]">
-                    <img id="pixQrCodeImg" src="" alt="QR Code PIX" class="w-48 h-48 object-contain mx-auto">
+                    <div id="pixQrCodeContainer" class="w-48 h-48 flex items-center justify-center mx-auto"></div>
                 </div>
 
                 <div class="mb-5 max-w-md mx-auto text-left">
@@ -1243,11 +1243,33 @@
 
             playAudioEffect('click');
 
-            document.getElementById("displayPixType").innerText = serverConfig.pixType || "CPF";
-            document.getElementById("displayPixKey").value = serverConfig.pixKey || "000.000.000-00";
+            const pixType = serverConfig.pixType || "CPF";
+            const pixKey = serverConfig.pixKey || "000.000.000-00";
+
+            document.getElementById("displayPixType").innerText = pixType;
+            document.getElementById("displayPixKey").value = pixKey;
             
-            const qrImg = document.getElementById("pixQrCodeImg");
-            qrImg.src = serverConfig.pixQrCodeUrl || "https://placehold.co/200x200/ffffff/000000?text=QR+CODE+PIX";
+            const qrContainer = document.getElementById("pixQrCodeContainer");
+            qrContainer.innerHTML = "";
+            
+            if (serverConfig.pixQrCodeUrl && serverConfig.pixQrCodeUrl.trim() !== "" && !serverConfig.pixQrCodeUrl.includes("placeholder")) {
+                const img = document.createElement("img");
+                img.src = serverConfig.pixQrCodeUrl;
+                img.alt = "QR Code PIX";
+                img.className = "w-48 h-48 object-contain mx-auto";
+                qrContainer.appendChild(img);
+            } else if (typeof QRCode !== 'undefined') {
+                new QRCode(qrContainer, {
+                    text: pixKey,
+                    width: 192,
+                    height: 192,
+                    colorDark: "#000000",
+                    colorLight: "#ffffff",
+                    correctLevel: QRCode.CorrectLevel.H
+                });
+            } else {
+                qrContainer.innerHTML = `<img src="https://placehold.co/200x200/ffffff/000000?text=QR+CODE+PIX" class="w-48 h-48 object-contain mx-auto">`;
+            }
 
             document.getElementById("checkoutStep1").classList.add("hidden");
             document.getElementById("checkoutStep2").classList.remove("hidden");
@@ -1489,12 +1511,12 @@
                         discord_link: "https://discord.gg/stormvips"
                     };
 
-                    emailjs.send('service_htipspl', 'template_waw7ewe', templateParams)
-                        .then(() => {
-                            showToast("E-mail de confirmação enviado!", "success");
-                        }, (err) => {
-                            console.error("Erro EmailJS:", err);
-                        });
+                    try {
+                        await emailjs.send('service_htipspl', 'template_waw7ewe', templateParams);
+                        showToast("E-mail de confirmação enviado!", "success");
+                    } catch (err) {
+                        console.error("Erro EmailJS:", err);
+                    }
                 }
 
                 await sendDiscordApprovedNotification(sale);
@@ -1753,7 +1775,6 @@
             }, 600);
         };
 
-        // CORREÇÃO CRÍTICA: Função showToast totalmente implementada
         window.showToast = function(msg, type = "info") {
             const container = document.getElementById("toastContainer");
             if (!container) return;
@@ -1783,4 +1804,3 @@
     </script>
 </body>
 </html>
-
