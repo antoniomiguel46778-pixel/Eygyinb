@@ -112,33 +112,7 @@
                 if (window.listenToFirestorePurchases) window.listenToFirestorePurchases();
             } catch (error) {
                 console.error("Erro no Google Login:", error);
-                
-                const emailPrompt = prompt("O login popup do Google não pôde ser concluído. Digite seu e-mail para conectar:");
-                if (emailPrompt && emailPrompt.includes("@")) {
-                    const cleanEmail = emailPrompt.trim().toLowerCase();
-                    const namePart = cleanEmail.split('@')[0];
-                    const fakeUid = "goog_" + Math.abs(cleanEmail.split('').reduce((acc, char) => (acc << 5) - acc + char.charCodeAt(0), 0));
-
-                    const userData = {
-                        uid: fakeUid,
-                        id: fakeUid,
-                        username: namePart,
-                        email: cleanEmail,
-                        avatar: `https://placehold.co/100x100/3b82f6/ffffff?text=${namePart[0].toUpperCase()}`,
-                        provider: 'google',
-                        createdAt: new Date().toISOString()
-                    };
-
-                    window.currentUser = userData;
-                    localStorage.setItem("spk_shop_user", JSON.stringify(window.currentUser));
-                    if (window.saveUserToFirestore) await window.saveUserToFirestore(userData);
-                    if (typeof renderUserAuth === 'function') renderUserAuth();
-                    if (typeof closeLoginModal === 'function') closeLoginModal();
-                    if (typeof showToast === 'function') showToast(`Conectado como ${window.currentUser.username}!`, "success");
-                    if (window.listenToFirestorePurchases) window.listenToFirestorePurchases();
-                } else {
-                    if (typeof showToast === 'function') showToast("Falha ao autenticar com o Google.", "error");
-                }
+                if (typeof showToast === 'function') showToast("Falha ao autenticar com o Google.", "error");
             }
         };
 
@@ -168,31 +142,7 @@
                 if (window.listenToFirestorePurchases) window.listenToFirestorePurchases();
             } catch (error) {
                 console.error("Erro no Discord Login:", error);
-                const discordTag = prompt("Digite seu usuário do Discord (Ex: Nick#0000 ou @usuario):");
-                if (discordTag && discordTag.trim() !== "") {
-                    const tagClean = discordTag.trim();
-                    const fakeUid = "dc_" + Math.abs(tagClean.split('').reduce((acc, char) => (acc << 5) - acc + char.charCodeAt(0), 0));
-                    const emailInput = prompt("Digite seu e-mail para receber as confirmações de compra do VIP:") || "";
-                    
-                    const userData = {
-                        uid: fakeUid,
-                        id: fakeUid,
-                        username: tagClean,
-                        email: emailInput.trim(),
-                        avatar: `https://placehold.co/100x100/5865F2/ffffff?text=D`,
-                        provider: 'discord',
-                        createdAt: new Date().toISOString()
-                    };
-                    window.currentUser = userData;
-                    localStorage.setItem("spk_shop_user", JSON.stringify(window.currentUser));
-                    if (window.saveUserToFirestore) await window.saveUserToFirestore(userData);
-                    if (typeof renderUserAuth === 'function') renderUserAuth();
-                    if (typeof closeLoginModal === 'function') closeLoginModal();
-                    if (typeof showToast === 'function') showToast(`Conectado como ${window.currentUser.username}!`, "success");
-                    if (window.listenToFirestorePurchases) window.listenToFirestorePurchases();
-                } else {
-                    if (typeof showToast === 'function') showToast("Login do Discord cancelado.", "error");
-                }
+                if (typeof showToast === 'function') showToast("Falha ao autenticar com o Discord.", "error");
             }
         };
 
@@ -333,13 +283,10 @@
                     <i class="fa-solid fa-magnifying-glass text-sm"></i>
                 </button>
 
-                <div id="authSection">
-                    <!-- Renderizado dinamicamente pelo JS -->
-                </div>
+                <div id="authSection"></div>
             </div>
         </div>
 
-        <!-- MENU MOBILE -->
         <div id="mobileMenu" class="hidden md:hidden bg-spk-dark/95 border-b border-white/10 px-4 py-4 space-y-3">
             <a href="#catalogo" onclick="toggleMobileMenu();" class="block text-gray-300 hover:text-spk-blue font-semibold text-sm">Planos VIP</a>
             <a href="#vantagens" onclick="toggleMobileMenu();" class="block text-gray-300 hover:text-spk-blue font-semibold text-sm">Garantia</a>
@@ -377,16 +324,12 @@
 
     <!-- SELETOR DE CATEGORIAS -->
     <section id="catalogo" class="pt-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full z-10 relative">
-        <div id="categoryContainer" class="flex items-center justify-center gap-3 flex-wrap">
-            <!-- Categorias dinâmicas -->
-        </div>
+        <div id="categoryContainer" class="flex items-center justify-center gap-3 flex-wrap"></div>
     </section>
 
     <!-- GRID DE PLANOS VIP -->
     <section class="py-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full z-10 relative flex-grow">
-        <div id="plansContainer" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 items-stretch">
-            <!-- Cards Renderizados via JS -->
-        </div>
+        <div id="plansContainer" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 items-stretch"></div>
     </section>
 
     <!-- GARANTIA & RECURSOS -->
@@ -503,7 +446,7 @@
                 <i class="fa-solid fa-xmark text-lg"></i>
             </button>
 
-            <!-- Passo 1: Informações do VIP -->
+            <!-- Passo 1 -->
             <div id="checkoutStep1">
                 <div class="flex items-center gap-3 mb-5">
                     <span id="modalVipBadge" class="px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider bg-spk-blue text-white">VIP</span>
@@ -565,7 +508,7 @@
                 </div>
             </div>
 
-            <!-- Passo 2: QR Code e Chave PIX + Botão Já Paguei -->
+            <!-- Passo 2 -->
             <div id="checkoutStep2" class="hidden text-center">
                 <span class="inline-block px-3 py-1 rounded-full bg-amber-500/10 text-amber-400 text-xs font-bold border border-amber-500/20 mb-3">
                     <i class="fa-solid fa-qrcode"></i> Pagamento via PIX
@@ -573,7 +516,6 @@
                 <h3 class="text-xl font-black text-white mb-1">Escaneie o QR Code ou Copie a Chave PIX</h3>
                 <p class="text-xs text-gray-400 mb-5">Abra o app do seu banco para realizar o pagamento do VIP</p>
 
-                <!-- Exibição da Imagem do QR Code fornecida no Painel do Dono -->
                 <div class="bg-white p-3 rounded-2xl inline-block shadow-2xl mb-4 border-4 border-spk-dark max-w-[220px]">
                     <img id="pixQrCodeImg" src="" alt="QR Code PIX" class="w-48 h-48 object-contain mx-auto">
                 </div>
@@ -595,7 +537,7 @@
                 </button>
             </div>
 
-            <!-- Passo 3: Pagamento Notificado ao Dono -->
+            <!-- Passo 3 -->
             <div id="checkoutStep3" class="hidden text-center py-6">
                 <div class="w-20 h-20 bg-emerald-500/20 text-emerald-400 rounded-full flex items-center justify-center mx-auto mb-4 border-2 border-emerald-400 animate-bounce">
                     <i class="fa-solid fa-clock text-4xl"></i>
@@ -650,14 +592,13 @@
         </div>
     </div>
 
-    <!-- MODAL PERFIL DO USUÁRIO, NOTIFICAÇÕES & MINHAS COMPRAS -->
+    <!-- MODAL PERFIL DO USUÁRIO -->
     <div id="profileModal" class="fixed inset-0 bg-black/80 backdrop-blur-md z-50 hidden flex items-center justify-center p-4">
         <div class="bg-spk-card border border-spk-border w-full max-w-2xl rounded-3xl p-6 sm:p-8 relative shadow-2xl flex flex-col max-h-[90vh]">
             <button onclick="closeProfileModal(); playAudioEffect('click');" class="absolute top-5 right-5 text-gray-400 hover:text-white w-9 h-9 rounded-full bg-spk-dark flex items-center justify-center transition">
                 <i class="fa-solid fa-xmark text-lg"></i>
             </button>
 
-            <!-- Cabeçalho do Perfil -->
             <div class="flex items-center gap-4 pb-6 border-b border-white/10">
                 <img id="profileUserAvatar" src="https://placehold.co/100x100/3b82f6/ffffff?text=U" class="w-16 h-16 rounded-2xl border-2 border-spk-blue object-cover">
                 <div class="overflow-hidden">
@@ -669,7 +610,6 @@
                 </div>
             </div>
 
-            <!-- Abas do Modal -->
             <div class="flex items-center gap-3 my-4 border-b border-white/10 pb-3 flex-wrap">
                 <button id="tabBtnProfile" onclick="switchProfileTab('profile'); playAudioEffect('click');" class="px-4 py-2 rounded-xl text-xs font-bold transition bg-spk-blue text-white">
                     <i class="fa-solid fa-user mr-1.5"></i> Perfil
@@ -682,7 +622,6 @@
                 </button>
             </div>
 
-            <!-- Conteúdo Aba Perfil -->
             <div id="tabContentProfile" class="space-y-4 py-2 overflow-y-auto">
                 <div class="bg-spk-dark p-4 rounded-2xl border border-white/10 space-y-3 text-xs text-gray-300">
                     <div class="flex justify-between items-center pb-2 border-b border-white/5">
@@ -704,21 +643,17 @@
                 </button>
             </div>
 
-            <!-- Conteúdo Aba Minhas Compras -->
             <div id="tabContentPurchases" class="hidden py-2 overflow-y-auto flex-grow">
                 <div id="purchasesListContainer" class="space-y-3">
                     <p class="text-center text-gray-400 text-xs py-8">Carregando histórico...</p>
                 </div>
             </div>
 
-            <!-- Conteúdo Aba Notificações (Apenas para o Dono) -->
             <div id="tabContentNotifications" class="hidden py-2 overflow-y-auto flex-grow">
                 <h4 class="text-xs font-bold text-gray-300 uppercase tracking-wider mb-3 flex items-center gap-1.5">
                     <i class="fa-solid fa-crown text-amber-400"></i> Solicitações de Venda Pendentes
                 </h4>
-                <div id="ownerNotificationsContainer" class="space-y-3">
-                    <!-- Lista de Vendas Pendentes para Aprovação do Dono -->
-                </div>
+                <div id="ownerNotificationsContainer" class="space-y-3"></div>
             </div>
         </div>
     </div>
@@ -737,13 +672,11 @@
             <h3 class="text-xl font-black text-white text-center mb-1">Cupons de Desconto</h3>
             <p class="text-xs text-gray-400 text-center mb-5">Copie o código e insira no checkout da sua compra.</p>
 
-            <div id="activeCouponsList" class="space-y-3 max-h-[50vh] overflow-y-auto pr-1">
-                <!-- Renderizado dinamicamente -->
-            </div>
+            <div id="activeCouponsList" class="space-y-3 max-h-[50vh] overflow-y-auto pr-1"></div>
         </div>
     </div>
 
-    <!-- MODAL DO PAINEL ADMIN DO DONO -->
+    <!-- MODAL PAINEL ADMIN -->
     <div id="adminModal" class="fixed inset-0 bg-black/80 backdrop-blur-md z-50 hidden flex items-center justify-center p-4">
         <div class="bg-spk-card border border-spk-border w-full max-w-3xl rounded-3xl p-6 sm:p-8 relative shadow-2xl max-h-[90vh] overflow-y-auto">
             <button onclick="closeAdminModal(); playAudioEffect('click');" class="absolute top-5 right-5 text-gray-400 hover:text-white w-9 h-9 rounded-full bg-spk-dark flex items-center justify-center transition">
@@ -754,7 +687,6 @@
                 <h3 class="text-xl font-bold text-white">Painel do Dono (Administração Completa)</h3>
             </div>
 
-            <!-- Abas do Painel do Dono -->
             <div class="flex gap-2 mb-6 border-b border-white/10 pb-3 flex-wrap">
                 <button type="button" onclick="switchAdminTab('general')" id="admTabGen" class="px-3.5 py-1.5 rounded-xl text-xs font-bold bg-spk-blue text-white transition">Geral & Bot</button>
                 <button type="button" onclick="switchAdminTab('pix')" id="admTabPix" class="px-3.5 py-1.5 rounded-xl text-xs font-bold text-gray-400 hover:text-white transition"><i class="fa-solid fa-qrcode mr-1"></i> Chave PIX</button>
@@ -764,7 +696,6 @@
             </div>
 
             <form id="adminForm" onsubmit="saveAdminSettings(event)" class="space-y-4">
-                <!-- Aba Geral & Bot -->
                 <div id="admSecGeneral" class="space-y-4">
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>
@@ -790,7 +721,6 @@
                     </div>
                 </div>
 
-                <!-- Nova Aba Chave PIX -->
                 <div id="admSecPix" class="hidden space-y-4">
                     <div class="bg-spk-dark/80 p-4 rounded-2xl border border-white/10">
                         <h4 class="text-xs font-bold text-white mb-3 flex items-center gap-2">
@@ -821,7 +751,6 @@
                     </div>
                 </div>
 
-                <!-- Aba Produtos -->
                 <div id="admSecProducts" class="hidden space-y-4">
                     <div class="flex justify-between items-center mb-2">
                         <span class="text-xs text-gray-400 font-bold">Edite os produtos e estoques dos seus VIPs:</span>
@@ -832,7 +761,6 @@
                     <div id="adminProductsList" class="space-y-4 max-h-[380px] overflow-y-auto pr-1"></div>
                 </div>
 
-                <!-- Aba Termos & Textos -->
                 <div id="admSecTerms" class="hidden space-y-4">
                     <div>
                         <label class="block text-xs font-bold text-gray-300 mb-1">Termos de Uso do Site</label>
@@ -844,7 +772,6 @@
                     </div>
                 </div>
 
-                <!-- Aba Cupons -->
                 <div id="admSecCoupons" class="hidden space-y-4">
                     <div class="flex gap-2">
                         <input id="newCouponCode" type="text" placeholder="CÓDIGO" class="uppercase bg-spk-dark text-xs text-white px-3.5 py-2 rounded-xl border border-white/10 flex-grow font-mono">
@@ -898,7 +825,6 @@
 
     <!-- JAVASCRIPT PRINCIPAL -->
     <script>
-        // Inicialização EmailJS
         (function() {
             emailjs.init("PPZPnUwo_fnMHEtGi");
         })();
@@ -908,14 +834,14 @@
         window.currentUser = null;
         let selectedVip = null;
         window.userPurchases = [];
-        window.allPendingSales = []; // Notificações globais para o Dono
+        window.allPendingSales = []; 
         let appliedDiscountPercent = 0;
         let activeCategory = 'all';
 
         let serverConfig = {
             name: "Storm VIPs",
             logo: "https://placehold.co/180x180/0a1026/3b82f6?text=STORM",
-            botWebhookUrl: window.BOT_WEBHOOK_URL || "https://discord.com/api/webhooks/1549285505252728832/WboYE5IlvN7RhUXqdbBZRavpYBSJ0oOeleJBz4N7cq0aDmDxGi70YXaIjTuYmwOgxemH",
+            botWebhookUrl: window.BOT_WEBHOOK_URL || "",
             botUri: window.BOT_URI || "uri 1455730680330977415",
             pixType: "CPF",
             pixKey: "000.000.000-00",
@@ -940,7 +866,7 @@
                 price: 15.00,
                 stock: 99,
                 image: "https://placehold.co/600x300/1e293b/f59e0b?text=Painel+VIP+Bronze",
-                description: "O plano de entrada ideal para quem quer experimentar vantagens sem gastar muito. Acesso a comandos utilitários e cargo exclusivo.",
+                description: "O plano de entrada ideal para quem quer experimentar vantagens sem gastar muito.",
                 badgeStyle: "bg-amber-500/20 text-amber-400 border border-amber-500/30",
                 btnBg: "bg-amber-500 hover:bg-amber-600 text-black font-black",
                 benefits: [
@@ -959,7 +885,7 @@
                 stock: 50,
                 featured: true,
                 image: "https://placehold.co/600x300/0f172a/3b82f6?text=Painel+VIP+Ouro",
-                description: "Nosso plano mais procurado. Oferece o equilíbrio perfeito entre custo e benefício com multiplicadores de recompensas ativados.",
+                description: "Nosso plano mais procurado. Oferece o equilíbrio perfeito entre custo e benefício.",
                 badgeStyle: "bg-spk-blue text-white font-extrabold shadow-md shadow-spk-blue/30",
                 btnBg: "bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-500 hover:to-cyan-400 text-white font-black btn-glow",
                 benefits: [
@@ -978,7 +904,7 @@
                 price: 60.00,
                 stock: 20,
                 image: "https://placehold.co/600x300/082f49/06b6d4?text=Painel+VIP+Diamante",
-                description: "Criado para jogadores exigentes. Garante acesso liberado a eventos VIP e itens raros direto na conta.",
+                description: "Criado para jogadores exigentes. Garante acesso liberado a eventos VIP e itens raros.",
                 badgeStyle: "bg-cyan-500/20 text-cyan-300 border border-cyan-500/30",
                 btnBg: "bg-gradient-to-r from-cyan-600 to-blue-700 hover:from-cyan-500 hover:to-blue-600 text-white font-black",
                 benefits: [
@@ -998,7 +924,7 @@
                 stock: 10,
                 featured: true,
                 image: "https://placehold.co/600x300/2e1065/8b5cf6?text=Painel+VIP+Mestre",
-                description: "O nível definitivo da Storm VIPs. Acesso completo a todas as ferramentas do painel, canal VIP direto com os Donos e itens lendários.",
+                description: "O nível definitivo da Storm VIPs. Acesso completo a todas as ferramentas do painel.",
                 badgeStyle: "bg-purple-500 text-white font-black shadow-lg shadow-purple-500/40",
                 btnBg: "bg-gradient-to-r from-purple-600 via-indigo-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 text-white font-black btn-glow",
                 benefits: [
@@ -1056,7 +982,6 @@
             updateServerDisplay();
             renderCategories();
             renderPlans();
-            initConstellationCanvas();
 
             if (window.currentUser && window.listenToFirestorePurchases) window.listenToFirestorePurchases();
         };
@@ -1203,7 +1128,6 @@
             if (menu) menu.classList.toggle("hidden");
         };
 
-        // --- GESTÃO DE CUPONS ---
         window.openCouponsModal = function() {
             const container = document.getElementById("activeCouponsList");
             let html = "";
@@ -1244,7 +1168,6 @@
             }
         };
 
-        // --- CHECKOUT & FLUXO PIX DO CLIENTE ---
         window.openCheckoutModal = function(vipId) {
             playAudioEffect('modal');
             selectedVip = plansData.find(p => p.id === vipId);
@@ -1311,7 +1234,6 @@
             }
         };
 
-        // Avança para a Tela de Pagamento PIX com o Link do QR Code e Chave PIX
         window.goToPaymentStep = function() {
             if (!window.currentUser) {
                 showToast("Faça login na sua conta para prosseguir com a compra.", "error");
@@ -1338,7 +1260,6 @@
             showToast("Chave PIX copiada!", "success");
         };
 
-        // Botão "Já Paguei" -> Envia notificação para o Perfil do Dono
         window.notifyPaymentDone = async function() {
             playAudioEffect('click');
             const finalPrice = Number(selectedVip.price) - (Number(selectedVip.price) * (appliedDiscountPercent / 100));
@@ -1356,11 +1277,9 @@
                 date: new Date().toLocaleDateString('pt-BR') + ' ' + new Date().toLocaleTimeString('pt-BR', {hour: '2-digit', minute:'2-digit'})
             };
 
-            // Salva na lista de pendentes do Dono local e envia Firestore/Webhook
             window.allPendingSales.unshift(pendingSale);
             localStorage.setItem("spk_shop_pending_sales", JSON.stringify(window.allPendingSales));
 
-            // Salva no histórico do cliente como pendente
             window.userPurchases.unshift({ ...pendingSale, status: "Aguardando Aprovação" });
             localStorage.setItem("spk_shop_purchases", JSON.stringify(window.userPurchases));
 
@@ -1375,10 +1294,9 @@
             document.getElementById("checkoutStep2").classList.add("hidden");
             document.getElementById("checkoutStep3").classList.remove("hidden");
 
-            showToast("Notificação de pagamento enviada com sucesso ao Dono!", "success");
+            showToast("Notificação enviada com sucesso!", "success");
         };
 
-        // --- DISCORD WEBHOOK ---
         async function sendDiscordApprovedNotification(purchaseObj) {
             if (!serverConfig.botWebhookUrl) return;
             try {
@@ -1401,15 +1319,13 @@
                     body: JSON.stringify(payload)
                 });
             } catch (e) {
-                console.warn("Erro ao enviar webhook:", e);
+                console.warn("Erro no webhook:", e);
             }
         }
 
-        // --- MODAL DE LOGIN ---
         window.openLoginModal = function() { document.getElementById("loginModal").classList.remove("hidden"); };
         window.closeLoginModal = function() { document.getElementById("loginModal").classList.add("hidden"); };
 
-        // --- PERFIL DO USUÁRIO, COMPRAS & NOTIFICAÇÕES DO DONO ---
         window.openProfileModal = function(tab = 'profile') {
             if (!window.currentUser) {
                 openLoginModal();
@@ -1417,12 +1333,11 @@
             }
             playAudioEffect('modal');
             document.getElementById("profileUserName").innerHTML = `${window.currentUser.username} <span id="profileProviderBadge" class="text-[10px] px-2 py-0.5 rounded-full bg-spk-blue/20 text-spk-blue border border-spk-blue/30 font-bold uppercase">${window.currentUser.provider || 'Conta'}</span>`;
-            document.getElementById("profileUserEmail").innerText = window.currentUser.email || "Conectado via ID Direto";
+            document.getElementById("profileUserEmail").innerText = window.currentUser.email || "Conectado";
             document.getElementById("profileUserId").innerText = `ID: ${window.currentUser.id || window.currentUser.uid || '000000'}`;
             document.getElementById("profileUserAvatar").src = window.currentUser.avatar || 'https://placehold.co/100x100/3b82f6/ffffff?text=U';
             document.getElementById("profDetailProvider").innerText = window.currentUser.provider || 'Plataforma';
 
-            // Habilita aba de Notificações se for o Dono
             const notifTabBtn = document.getElementById("tabBtnNotifications");
             if (window.currentUser.email && window.currentUser.email.toLowerCase() === OWNER_EMAIL.toLowerCase()) {
                 notifTabBtn.classList.remove("hidden");
@@ -1511,7 +1426,6 @@
             container.innerHTML = html;
         };
 
-        // Renderiza as Vendas Pendentes no Perfil do Dono
         window.renderOwnerNotifications = function() {
             const container = document.getElementById("ownerNotificationsContainer");
             if (!window.allPendingSales || window.allPendingSales.length === 0) {
@@ -1520,12 +1434,12 @@
             }
 
             let html = "";
-            window.allPendingSales.forEach((s, idx) => {
+            window.allPendingSales.forEach((s) => {
                 const isPending = s.status === 'pending';
                 html += `
                     <div class="bg-spk-dark p-4 rounded-2xl border border-white/10 flex items-center justify-between gap-3 flex-wrap">
                         <div>
-                            <span class="font-bold text-white text-sm block">Venda de conta: <strong class="text-spk-blue">${s.username}</strong></span>
+                            <span class="font-bold text-white text-sm block">Comprador: <strong class="text-spk-blue">${s.username}</strong></span>
                             <span class="text-xs text-gray-300 block">VIP: ${s.vipTitle} — Valor: R$ ${s.price}</span>
                             <span class="text-[10px] font-mono text-gray-400">${s.txId} | ${s.date}</span>
                         </div>
@@ -1544,7 +1458,6 @@
             container.innerHTML = html;
         };
 
-        // Ação de Aprovação do Dono (Reduz estoque e dispara e-mail EmailJS)
         window.approveSale = async function(txId) {
             playAudioEffect('click');
             const sale = window.allPendingSales.find(s => s.txId === txId);
@@ -1552,29 +1465,20 @@
                 sale.status = "approved";
                 localStorage.setItem("spk_shop_pending_sales", JSON.stringify(window.allPendingSales));
 
-                // Redução de Estoque do Produto
                 const targetProduct = plansData.find(p => p.id === sale.vipId || p.title === sale.vipTitle);
-                if (targetProduct) {
-                    if (targetProduct.stock > 0) {
-                        targetProduct.stock -= 1;
-                        localStorage.setItem("spk_shop_plans", JSON.stringify(plansData));
-                        renderPlans();
-                    }
+                if (targetProduct && targetProduct.stock > 0) {
+                    targetProduct.stock -= 1;
+                    localStorage.setItem("spk_shop_plans", JSON.stringify(plansData));
+                    renderPlans();
                 }
 
-                // Atualiza histórico local de compras
                 const userP = window.userPurchases.find(p => p.txId === txId);
                 if (userP) {
                     userP.status = "approved";
                     localStorage.setItem("spk_shop_purchases", JSON.stringify(window.userPurchases));
                 }
 
-                // Envio de E-mail via EmailJS para o comprador
-                let recipientEmail = sale.userEmail;
-                if (!recipientEmail && window.currentUser && window.currentUser.email) {
-                    recipientEmail = window.currentUser.email;
-                }
-
+                let recipientEmail = sale.userEmail || (window.currentUser ? window.currentUser.email : "");
                 if (recipientEmail && recipientEmail.includes("@")) {
                     const templateParams = {
                         to_email: recipientEmail,
@@ -1587,15 +1491,13 @@
 
                     emailjs.send('service_htipspl', 'template_waw7ewe', templateParams)
                         .then(() => {
-                            showToast("E-mail de confirmação enviado para o comprador!", "success");
+                            showToast("E-mail de confirmação enviado!", "success");
                         }, (err) => {
-                            console.error("Erro ao enviar e-mail EmailJS:", err);
+                            console.error("Erro EmailJS:", err);
                         });
                 }
 
-                // Dispara Webhook no Discord
                 await sendDiscordApprovedNotification(sale);
-
                 showToast(`Venda ${txId} aprovada com sucesso!`, "success");
                 updateOwnerNotifBadge();
                 renderOwnerNotifications();
@@ -1609,10 +1511,9 @@
             localStorage.removeItem("spk_shop_user");
             renderUserAuth();
             closeProfileModal();
-            showToast("Você saiu da sua conta com sucesso.", "info");
+            showToast("Você saiu da sua conta.", "info");
         };
 
-        // --- PAINEL ADMIN DO DONO ---
         window.openAdminModal = function() {
             if (!window.currentUser || !window.currentUser.email || window.currentUser.email.toLowerCase() !== OWNER_EMAIL.toLowerCase()) {
                 showToast("Acesso restrito ao proprietário.", "error");
@@ -1701,7 +1602,6 @@
             serverConfig.terms = document.getElementById("cfgTerms").value;
             serverConfig.privacy = document.getElementById("cfgPrivacy").value;
 
-            // Salvar Produtos
             const prodCards = document.querySelectorAll(".admin-prod-card");
             const updatedPlans = [];
             prodCards.forEach(card => {
@@ -1733,7 +1633,7 @@
             renderCategories();
             renderPlans();
             closeAdminModal();
-            showToast("Configurações do sistema salvas com sucesso!", "success");
+            showToast("Configurações salvas!", "success");
         };
 
         function renderAdminProductsList() {
@@ -1772,7 +1672,7 @@
                 stock: 50,
                 image: "https://placehold.co/600x300/0f172a/3b82f6?text=Novo+VIP",
                 description: "Descrição do novo VIP adicionado pelo dono.",
-                benefits: ["Benefício de exemplo 1", "Benefício de exemplo 2"]
+                benefits: ["Benefício 1", "Benefício 2"]
             });
             renderAdminProductsList();
         };
@@ -1812,7 +1712,6 @@
             renderAdminCouponsList();
         };
 
-        // --- MODAIS DE INFORMAÇÕES E IA ---
         window.showModalInfo = function(title, body) {
             document.getElementById("infoModalTitle").innerText = title;
             document.getElementById("infoModalBody").innerText = body;
@@ -1838,11 +1737,11 @@
             input.value = "";
 
             setTimeout(() => {
-                let resp = "Para adquirir VIPs, escolha o plano desejado e clique em 'Adquirir'. Aceitamos pagamentos diretos via PIX!";
+                let resp = "Para adquirir VIPs, escolha o plano desejado e clique em 'Adquirir'. Aceitamos pagamentos via PIX!";
                 if (text.toLowerCase().includes("cupom") || text.toLowerCase().includes("desconto")) {
-                    resp = "Você pode utilizar o cupom 'STORM10' para receber 10% de desconto na sua compra no checkout!";
+                    resp = "Você pode usar o cupom 'STORM10' para receber 10% de desconto na sua compra!";
                 } else if (text.toLowerCase().includes("entrega") || text.toLowerCase().includes("tempo")) {
-                    resp = "Após a transferência via PIX e notificação do pagamento, o proprietário fará a aprovação diretamente no painel.";
+                    resp = "Após a transferência via PIX e o envio do comprovante, o dono liberará seu produto no painel.";
                 }
 
                 chat.innerHTML += `
@@ -1854,89 +1753,33 @@
             }, 600);
         };
 
-        // --- SISTEMA DE TOAST NOTIFICATION ---
+        // CORREÇÃO CRÍTICA: Função showToast totalmente implementada
         window.showToast = function(msg, type = "info") {
             const container = document.getElementById("toastContainer");
             if (!container) return;
 
             const toast = document.createElement("div");
-            const bgColor = type === "success" ? "bg-emerald-500" : type === "error" ? "bg-rose-500" : "bg-spk-blue";
-            
-            toast.className = `${bgColor} text-white font-bold text-xs px-4 py-3 rounded-2xl shadow-2xl transition duration-300 opacity-0 translate-y-2 pointer-events-auto flex items-center gap-2`;
-            toast.innerHTML = `<i class="fa-solid fa-circle-info"></i> ${msg}`;
+            let bgColor = "bg-spk-blue border-blue-400";
+            let icon = "fa-circle-info";
+
+            if (type === "success") {
+                bgColor = "bg-emerald-600 border-emerald-400";
+                icon = "fa-circle-check";
+            } else if (type === "error") {
+                bgColor = "bg-rose-600 border-rose-400";
+                icon = "fa-circle-exclamation";
+            }
+
+            toast.className = `flex items-center gap-2.5 text-white text-xs font-bold px-4 py-3 rounded-2xl border shadow-2xl transition-all duration-300 pointer-events-auto ${bgColor}`;
+            toast.innerHTML = `<i class="fa-solid ${icon}"></i> <span>${msg}</span>`;
 
             container.appendChild(toast);
-            setTimeout(() => { toast.classList.remove("opacity-0", "translate-y-2"); }, 10);
 
             setTimeout(() => {
-                toast.classList.add("opacity-0");
-                setTimeout(() => { toast.remove(); }, 300);
-            }, 3500);
+                toast.classList.add("opacity-0", "translate-y-2");
+                setTimeout(() => toast.remove(), 300);
+            }, 4000);
         };
-
-        // --- CANVAS DE CONSTELAÇÃO/PARTÍCULAS ---
-        function initConstellationCanvas() {
-            const canvas = document.getElementById("bgCanvas");
-            if (!canvas) return;
-            const ctx = canvas.getContext("2d");
-
-            let width = canvas.width = window.innerWidth;
-            let height = canvas.height = window.innerHeight;
-
-            window.addEventListener("resize", () => {
-                width = canvas.width = window.innerWidth;
-                height = canvas.height = window.innerHeight;
-            });
-
-            const particles = [];
-            const numParticles = Math.min(Math.floor(width / 25), 40);
-
-            for (let i = 0; i < numParticles; i++) {
-                particles.push({
-                    x: Math.random() * width,
-                    y: Math.random() * height,
-                    vx: (Math.random() - 0.5) * 0.5,
-                    vy: (Math.random() - 0.5) * 0.5,
-                    radius: Math.random() * 1.5 + 1
-                });
-            }
-
-            function animate() {
-                ctx.clearRect(0, 0, width, height);
-
-                for (let i = 0; i < particles.length; i++) {
-                    const p = particles[i];
-                    p.x += p.vx;
-                    p.y += p.vy;
-
-                    if (p.x < 0 || p.x > width) p.vx *= -1;
-                    if (p.y < 0 || p.y > height) p.vy *= -1;
-
-                    ctx.beginPath();
-                    ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
-                    ctx.fillStyle = "rgba(59, 130, 246, 0.4)";
-                    ctx.fill();
-
-                    for (let j = i + 1; j < particles.length; j++) {
-                        const p2 = particles[j];
-                        const dx = p.x - p2.x;
-                        const dy = p.y - p2.y;
-                        const dist = Math.sqrt(dx * dx + dy * dy);
-
-                        if (dist < 120) {
-                            ctx.beginPath();
-                            ctx.moveTo(p.x, p.y);
-                            ctx.lineTo(p2.x, p2.y);
-                            ctx.strokeStyle = `rgba(59, 130, 246, ${0.15 * (1 - dist / 120)})`;
-                            ctx.lineWidth = 0.8;
-                            ctx.stroke();
-                        }
-                    }
-                }
-                requestAnimationFrame(animate);
-            }
-            animate();
-        }
     </script>
 </body>
 </html>
