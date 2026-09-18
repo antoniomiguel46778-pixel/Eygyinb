@@ -86,6 +86,11 @@
         }
 
         window.loginWithGoogle = async function() {
+            const termsCheck = document.getElementById("loginTermsCheckbox");
+            if (termsCheck && !termsCheck.checked) {
+                if (typeof showToast === 'function') showToast("Você precisa aceitar os termos de uso antes de entrar.", "error");
+                return;
+            }
             try {
                 const result = await signInWithPopup(auth, googleProvider);
                 const user = result.user;
@@ -139,6 +144,11 @@
         };
 
         window.loginWithDiscord = async function() {
+            const termsCheck = document.getElementById("loginTermsCheckbox");
+            if (termsCheck && !termsCheck.checked) {
+                if (typeof showToast === 'function') showToast("Você precisa aceitar os termos de uso antes de entrar.", "error");
+                return;
+            }
             try {
                 if (!discordProvider) throw new Error("Discord Provider Indisponível");
                 const result = await signInWithPopup(auth, discordProvider);
@@ -302,9 +312,9 @@
     <div class="fixed bottom-[-10%] right-[-10%] w-[600px] h-[600px] bg-spk-purple/15 rounded-full blur-[160px] pointer-events-none z-0"></div>
 
     <!-- HEADER NAVBAR MELHORADO -->
-    <header class="sticky top-0 z-40 w-full glass-spk shadow-xl border-b border-white/10">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between gap-4 relative z-10">
-            <div class="flex items-center space-x-3">
+    <header class="sticky top-0 z-40 w-full glass-spk shadow-xl">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between relative z-10 gap-4">
+            <div class="flex items-center space-x-3 flex-shrink-0">
                 <button onclick="toggleMobileMenu()" class="md:hidden text-gray-300 hover:text-white p-2 text-xl">
                     <i class="fa-solid fa-bars"></i>
                 </button>
@@ -318,13 +328,7 @@
                 </div>
             </div>
 
-            <!-- Pesquisa integrada no Header -->
-            <div class="hidden lg:flex items-center flex-1 max-w-md mx-6 relative">
-                <input id="headerSearchInput" type="text" placeholder="Pesquisar VIPs..." onkeyup="filterProducts(this.value)" class="w-full bg-spk-dark/90 text-white placeholder-gray-400 px-4 py-2.5 pl-10 rounded-xl border border-white/10 focus:border-spk-blue outline-none text-xs transition">
-                <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 text-xs"></i>
-            </div>
-
-            <nav class="hidden md:flex items-center space-x-6 text-sm font-semibold">
+            <nav class="hidden lg:flex items-center space-x-6 text-sm font-semibold">
                 <a href="#catalogo" class="text-gray-300 hover:text-spk-blue transition flex items-center gap-2">
                     <i class="fa-solid fa-gem text-spk-blue"></i> Planos VIP
                 </a>
@@ -334,21 +338,30 @@
                 <a href="#quem-somos" class="text-gray-300 hover:text-spk-blue transition flex items-center gap-2">
                     <i class="fa-solid fa-users text-purple-400"></i> Quem Somos
                 </a>
-                <button onclick="openCouponsModal();" class="text-amber-400 hover:text-amber-300 transition flex items-center gap-2 bg-amber-500/10 px-3.5 py-1.5 rounded-full border border-amber-500/30 text-xs">
+                <button onclick="openCouponsModal();" class="text-amber-400 hover:text-amber-300 transition flex items-center gap-2 bg-amber-500/10 px-3.5 py-1.5 rounded-full border border-amber-500/30">
                     <i class="fa-solid fa-ticket"></i> Cupons
+                </button>
+                <button onclick="openAiSupportModal();" class="text-spk-blue hover:text-blue-300 transition flex items-center gap-2 bg-spk-blue/10 px-3.5 py-1.5 rounded-full border border-spk-blue/30">
+                    <i class="fa-solid fa-wand-magic-sparkles"></i> Suporte IA
                 </button>
             </nav>
 
-            <div class="flex items-center space-x-3">
-                <div id="authSection"></div>
+            <!-- BARRA DE PESQUISA MODERNA E INTEGRADA NO HEADER -->
+            <div class="flex items-center gap-3 flex-grow max-w-md justify-end">
+                <div class="relative w-full max-w-xs hidden sm:block">
+                    <input id="headerSearchInput" type="text" placeholder="Pesquisar no site..." onkeyup="syncSearchAndFilter(this.value)" class="w-full bg-spk-dark/90 text-white placeholder-gray-400 pl-9 pr-4 py-2 rounded-xl border border-white/10 focus:border-spk-blue outline-none text-xs transition">
+                    <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-xs"></i>
+                </div>
+
+                <div id="authSection" class="flex-shrink-0"></div>
             </div>
         </div>
 
         <!-- MENU MOBILE -->
         <div id="mobileMenu" class="hidden md:hidden bg-spk-dark/95 border-b border-white/10 px-4 py-4 space-y-3">
-            <div class="relative mb-3">
-                <input id="mobileSearchInput" type="text" placeholder="Pesquisar..." onkeyup="filterProducts(this.value)" class="w-full bg-spk-card text-white text-xs p-3 pl-9 rounded-xl border border-white/10">
-                <i class="fa-solid fa-magnifying-glass absolute left-3 top-3.5 text-gray-400 text-xs"></i>
+            <div class="relative w-full mb-2 sm:hidden">
+                <input id="mobileSearchInput" type="text" placeholder="Pesquisar VIPs..." onkeyup="syncSearchAndFilter(this.value)" class="w-full bg-spk-card text-white placeholder-gray-400 pl-9 pr-4 py-2 rounded-xl border border-white/10 outline-none text-xs">
+                <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-xs"></i>
             </div>
             <a href="#catalogo" onclick="toggleMobileMenu();" class="block text-gray-300 hover:text-spk-blue font-semibold text-sm">Planos VIP</a>
             <a href="#vantagens" onclick="toggleMobileMenu();" class="block text-gray-300 hover:text-spk-blue font-semibold text-sm">Garantia</a>
@@ -378,7 +391,7 @@
             </p>
 
             <div class="mt-8 max-w-md mx-auto relative">
-                <input id="searchInput" type="text" placeholder="Buscar VIP (Bronze, Ouro, Diamante, Mestre)..." onkeyup="filterProducts(this.value)" class="w-full bg-spk-dark/80 text-white placeholder-gray-400 px-5 py-3.5 pl-12 rounded-2xl border border-white/10 focus:border-spk-blue outline-none shadow-xl transition text-sm">
+                <input id="searchInput" type="text" placeholder="Buscar VIP (Bronze, Ouro, Diamante, Mestre)..." onkeyup="syncSearchAndFilter(this.value)" class="w-full bg-spk-dark/80 text-white placeholder-gray-400 px-5 py-3.5 pl-12 rounded-2xl border border-white/10 focus:border-spk-blue outline-none shadow-xl transition text-sm">
                 <i class="fa-solid fa-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"></i>
             </div>
         </div>
@@ -508,7 +521,7 @@
                 <i class="fa-solid fa-xmark text-lg"></i>
             </button>
 
-            <!-- Passo 1: Informações do VIP e Aceite de Termos -->
+            <!-- Passo 1: Informações do VIP -->
             <div id="checkoutStep1">
                 <div class="flex items-center gap-3 mb-5">
                     <span id="modalVipBadge" class="px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider bg-spk-blue text-white">VIP</span>
@@ -544,7 +557,7 @@
                     <p id="couponMsg" class="text-[11px] font-bold hidden"></p>
                 </div>
 
-                <div class="mb-5">
+                <div class="mb-6">
                     <label class="block text-xs font-bold text-gray-300 uppercase tracking-wider mb-2">Conta Vinculada para Recebimento</label>
                     <div onclick="openLoginModal();" class="flex items-center gap-3 bg-spk-dark p-3.5 rounded-2xl border border-white/10 cursor-pointer hover:border-spk-blue/50 transition">
                         <img id="modalUserAvatar" src="https://placehold.co/100x100/3b82f6/ffffff?text=U" class="w-10 h-10 rounded-full border border-spk-blue object-cover">
@@ -556,16 +569,6 @@
                     </div>
                 </div>
 
-                <!-- TERMOS E CONDIÇÕES NA PARTE DE BAIXO (SEGUNDA FOTO) -->
-                <div class="bg-spk-dark/90 p-4 rounded-2xl border border-white/10 mb-5">
-                    <label class="flex items-start gap-3 cursor-pointer select-none">
-                        <input type="checkbox" id="termsCheck" onchange="togglePayButton()" class="w-4 h-4 mt-0.5 rounded accent-spk-blue cursor-pointer">
-                        <span class="text-xs text-gray-300 leading-relaxed">
-                            Eu li e concordo com os <button type="button" onclick="showModalInfo('Termos de Uso', serverConfig.terms)" class="text-spk-blue underline hover:text-blue-300">Termos de Uso</button> e a <button type="button" onclick="showModalInfo('Política de Privacidade', serverConfig.privacy)" class="text-spk-blue underline hover:text-blue-300">Política de Privacidade</button> da loja Storm VIPs.
-                        </span>
-                    </label>
-                </div>
-
                 <div class="flex items-center justify-between bg-spk-dark/90 p-4 rounded-2xl border border-white/10 mb-5">
                     <div>
                         <span class="text-xs text-gray-400 block font-medium">Preço Final:</span>
@@ -574,13 +577,13 @@
                             <span id="modalVipPrice" class="text-2xl font-black text-white">R$ 0,00</span>
                         </div>
                     </div>
-                    <button id="btnProceedPayment" onclick="goToPaymentStep()" disabled class="bg-gradient-to-r from-blue-600 via-blue-500 to-cyan-500 opacity-50 cursor-not-allowed text-white font-black px-6 py-3.5 rounded-2xl transition flex items-center gap-2 text-sm shadow-xl">
+                    <button onclick="goToPaymentStep()" class="bg-gradient-to-r from-blue-600 via-blue-500 to-cyan-500 hover:from-blue-500 hover:to-cyan-400 text-white font-black px-6 py-3.5 rounded-2xl transition flex items-center gap-2 text-sm shadow-xl btn-glow">
                         <i class="fa-solid fa-money-bill-wave"></i> Fazer Pagamento
                     </button>
                 </div>
             </div>
 
-            <!-- Passo 2: QR Code e Chave PIX + Botão Já Paguei -->
+            <!-- Passo 2: QR Code e Chave PIX + Termos de Pagamento -->
             <div id="checkoutStep2" class="hidden text-center">
                 <span class="inline-block px-3 py-1 rounded-full bg-amber-500/10 text-amber-400 text-xs font-bold border border-amber-500/20 mb-3">
                     <i class="fa-solid fa-qrcode"></i> Pagamento via PIX
@@ -602,6 +605,14 @@
                             <i class="fa-solid fa-copy"></i> Copiar
                         </button>
                     </div>
+                </div>
+
+                <!-- TERMOS NO PAGAMENTO DA TELA DO CHECKOUT -->
+                <div class="max-w-md mx-auto mb-5 text-left bg-spk-dark/80 p-3.5 rounded-2xl border border-white/10 flex items-start gap-3">
+                    <input id="paymentTermsCheckbox" type="checkbox" class="mt-0.5 w-4 h-4 rounded accent-spk-blue cursor-pointer">
+                    <label for="paymentTermsCheckbox" class="text-xs text-gray-300 cursor-pointer select-none leading-relaxed">
+                        Concordo com os <button type="button" onclick="showModalInfo('Termos de Uso', serverConfig.terms)" class="text-spk-blue underline">Termos de Uso</button> e confirmo que estou ciente de que a liberação ocorrerá assim que o pagamento for verificado.
+                    </label>
                 </div>
 
                 <button onclick="notifyPaymentDone()" class="w-full max-w-md bg-emerald-500 hover:bg-emerald-600 text-black font-black py-4 rounded-2xl text-sm transition shadow-lg flex items-center justify-center gap-2 mx-auto">
@@ -631,7 +642,7 @@
         </div>
     </div>
 
-    <!-- MODAL DE LOGIN -->
+    <!-- MODAL DE LOGIN COM ACEITE DE TERMOS -->
     <div id="loginModal" class="fixed inset-0 bg-black/80 backdrop-blur-md z-50 hidden flex items-center justify-center p-4">
         <div class="bg-spk-card border border-spk-border w-full max-w-md rounded-3xl p-6 sm:p-8 relative shadow-2xl text-center">
             <button onclick="closeLoginModal();" class="absolute top-5 right-5 text-gray-400 hover:text-white w-9 h-9 rounded-full bg-spk-dark flex items-center justify-center transition">
@@ -643,9 +654,9 @@
             </div>
 
             <h3 class="text-2xl font-black text-white mb-2">Acessar Conta</h3>
-            <p class="text-xs text-gray-400 mb-6">Escolha um método para se autenticar e receber suas recompensas.</p>
+            <p class="text-xs text-gray-400 mb-5">Escolha um método para se autenticar e receber suas recompensas.</p>
 
-            <div class="space-y-3">
+            <div class="space-y-3 mb-5">
                 <button onclick="loginWithGoogle()" class="w-full bg-white hover:bg-gray-100 text-gray-900 font-bold py-3.5 px-4 rounded-2xl transition flex items-center justify-center gap-3 shadow-lg text-sm">
                     <svg class="w-5 h-5" viewBox="0 0 24 24">
                         <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
@@ -660,6 +671,14 @@
                     <i class="fa-brands fa-discord text-lg"></i>
                     <span>Entrar com Discord</span>
                 </button>
+            </div>
+
+            <!-- TERMOS DE USO NO MODAL DE LOGIN -->
+            <div class="text-left bg-spk-dark/80 p-3 rounded-xl border border-white/10 flex items-start gap-2.5">
+                <input id="loginTermsCheckbox" type="checkbox" checked class="mt-0.5 w-4 h-4 rounded accent-spk-blue cursor-pointer">
+                <label for="loginTermsCheckbox" class="text-[11px] text-gray-300 cursor-pointer select-none leading-relaxed">
+                    Li e concordo com os <button type="button" onclick="showModalInfo('Termos de Uso', serverConfig.terms)" class="text-spk-blue underline">Termos de Uso</button> e a <button type="button" onclick="showModalInfo('Política de Privacidade', serverConfig.privacy)" class="text-spk-blue underline">Política de Privacidade</button>.
+                </label>
             </div>
         </div>
     </div>
@@ -691,6 +710,7 @@
                 <button id="tabBtnPurchases" onclick="switchProfileTab('purchases');" class="px-4 py-2 rounded-xl text-xs font-bold transition text-gray-400 hover:text-white">
                     <i class="fa-solid fa-bag-shopping mr-1.5"></i> Minhas Compras
                 </button>
+                <!-- Somente visível para o dono -->
                 <button id="tabBtnNotifications" onclick="switchProfileTab('notifications');" class="hidden px-4 py-2 rounded-xl text-xs font-bold transition text-amber-400 hover:text-amber-300 bg-amber-500/10 border border-amber-500/30">
                     <i class="fa-solid fa-bell mr-1.5"></i> Notificações / Vendas <span id="notifBadgeCount" class="bg-rose-500 text-white text-[10px] px-1.5 py-0.2 rounded-full ml-1 hidden">0</span>
                 </button>
@@ -725,7 +745,7 @@
                 </div>
             </div>
 
-            <!-- Conteúdo Aba Notificações -->
+            <!-- Conteúdo Aba Notificações (Apenas para o Dono) -->
             <div id="tabContentNotifications" class="hidden py-2 overflow-y-auto flex-grow">
                 <h4 class="text-xs font-bold text-gray-300 uppercase tracking-wider mb-3 flex items-center gap-1.5">
                     <i class="fa-solid fa-crown text-amber-400"></i> Solicitações de Venda Pendentes
@@ -764,6 +784,7 @@
                 <h3 class="text-xl font-bold text-white">Painel do Dono (Administração Completa)</h3>
             </div>
 
+            <!-- Abas do Painel do Dono -->
             <div class="flex gap-2 mb-6 border-b border-white/10 pb-3 flex-wrap">
                 <button type="button" onclick="switchAdminTab('general')" id="admTabGen" class="px-3.5 py-1.5 rounded-xl text-xs font-bold bg-spk-blue text-white transition">Geral & Bot</button>
                 <button type="button" onclick="switchAdminTab('email')" id="admTabEmail" class="px-3.5 py-1.5 rounded-xl text-xs font-bold text-gray-400 hover:text-white transition"><i class="fa-solid fa-envelope mr-1"></i> Config E-mail</button>
@@ -774,6 +795,7 @@
             </div>
 
             <form id="adminForm" onsubmit="saveAdminSettings(event)" class="space-y-4">
+                <!-- Aba Geral & Bot -->
                 <div id="admSecGeneral" class="space-y-4">
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>
@@ -799,11 +821,14 @@
                     </div>
                 </div>
 
+                <!-- Nova Aba Config E-mail (EmailJS) -->
                 <div id="admSecEmail" class="hidden space-y-4">
                     <div class="bg-spk-dark/80 p-4 rounded-2xl border border-white/10 space-y-3">
                         <h4 class="text-xs font-bold text-white mb-2 flex items-center gap-2">
-                            <i class="fa-solid fa-envelope-circle-check text-spk-blue"></i> Configurações do EmailJS
+                            <i class="fa-solid fa-envelope-circle-check text-spk-blue"></i> Configurações do EmailJS (Envio de Comprovantes)
                         </h4>
+                        <p class="text-[11px] text-gray-400">Crie uma conta gratuita em <a href="https://www.emailjs.com/" target="_blank" class="text-spk-blue underline">emailjs.com</a> para configurar o disparo automático.</p>
+                        
                         <div>
                             <label class="block text-xs font-bold text-gray-300 mb-1">EmailJS Service ID</label>
                             <input id="cfgEmailServiceId" type="text" placeholder="service_xxxxxx" class="w-full bg-spk-dark text-sm text-white px-3.5 py-2.5 rounded-xl border border-white/10 outline-none font-mono">
@@ -819,31 +844,41 @@
                     </div>
                 </div>
 
+                <!-- Aba Chave PIX -->
                 <div id="admSecPix" class="hidden space-y-4">
-                    <div class="bg-spk-dark/80 p-4 rounded-2xl border border-white/10 space-y-4">
-                        <div>
-                            <label class="block text-xs font-bold text-gray-300 mb-1">Tipo de Chave PIX</label>
-                            <select id="cfgPixType" class="w-full bg-spk-dark text-sm text-white px-3.5 py-2.5 rounded-xl border border-white/10 outline-none">
-                                <option value="CPF">CPF</option>
-                                <option value="E-mail">E-mail</option>
-                                <option value="Telefone">Telefone</option>
-                                <option value="Chave Aleatória">Chave Aleatória</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label class="block text-xs font-bold text-gray-300 mb-1">Chave PIX</label>
-                            <input id="cfgPixKey" type="text" placeholder="Digite sua chave PIX..." class="w-full bg-spk-dark text-sm text-white px-3.5 py-2.5 rounded-xl border border-white/10 outline-none font-mono">
-                        </div>
-                        <div>
-                            <label class="block text-xs font-bold text-gray-300 mb-1">Link do QR Code (URL da Imagem)</label>
-                            <input id="cfgPixQrCodeUrl" type="text" placeholder="https://site.com/qr-code.png" class="w-full bg-spk-dark text-sm text-white px-3.5 py-2.5 rounded-xl border border-white/10 outline-none">
+                    <div class="bg-spk-dark/80 p-4 rounded-2xl border border-white/10">
+                        <h4 class="text-xs font-bold text-white mb-3 flex items-center gap-2">
+                            <i class="fa-solid fa-key text-amber-400"></i> Configurações do PIX para Recebimento
+                        </h4>
+                        
+                        <div class="space-y-4">
+                            <div>
+                                <label class="block text-xs font-bold text-gray-300 mb-1">Tipo de Chave PIX</label>
+                                <select id="cfgPixType" class="w-full bg-spk-dark text-sm text-white px-3.5 py-2.5 rounded-xl border border-white/10 outline-none">
+                                    <option value="CPF">CPF</option>
+                                    <option value="E-mail">E-mail</option>
+                                    <option value="Telefone">Telefone</option>
+                                    <option value="Chave Aleatória">Chave Aleatória</option>
+                                </select>
+                            </div>
+
+                            <div>
+                                <label class="block text-xs font-bold text-gray-300 mb-1">Chave PIX</label>
+                                <input id="cfgPixKey" type="text" placeholder="Digite sua chave PIX aqui..." class="w-full bg-spk-dark text-sm text-white px-3.5 py-2.5 rounded-xl border border-white/10 outline-none font-mono">
+                            </div>
+
+                            <div>
+                                <label class="block text-xs font-bold text-gray-300 mb-1">Link do QR Code (URL da Imagem)</label>
+                                <input id="cfgPixQrCodeUrl" type="text" placeholder="https://site.com/imagem-qr-code.png" class="w-full bg-spk-dark text-sm text-white px-3.5 py-2.5 rounded-xl border border-white/10 outline-none">
+                            </div>
                         </div>
                     </div>
                 </div>
 
+                <!-- Aba Produtos -->
                 <div id="admSecProducts" class="hidden space-y-4">
                     <div class="flex justify-between items-center mb-2">
-                        <span class="text-xs text-gray-400 font-bold">Gerenciar VIPs:</span>
+                        <span class="text-xs text-gray-400 font-bold">Edite produtos, fotos, destaque e estoque:</span>
                         <button type="button" onclick="addNewProduct()" class="bg-emerald-500 hover:bg-emerald-600 text-white font-bold px-3 py-1.5 rounded-xl text-xs transition">
                             + Criar VIP
                         </button>
@@ -851,9 +886,10 @@
                     <div id="adminProductsList" class="space-y-4 max-h-[380px] overflow-y-auto pr-1"></div>
                 </div>
 
+                <!-- Aba Termos & Textos -->
                 <div id="admSecTerms" class="hidden space-y-4">
                     <div>
-                        <label class="block text-xs font-bold text-gray-300 mb-1">Termos de Uso</label>
+                        <label class="block text-xs font-bold text-gray-300 mb-1">Termos de Uso do Site</label>
                         <textarea id="cfgTerms" rows="4" class="w-full bg-spk-dark text-xs text-white p-3.5 rounded-xl border border-white/10 outline-none leading-relaxed"></textarea>
                     </div>
                     <div>
@@ -862,6 +898,7 @@
                     </div>
                 </div>
 
+                <!-- Aba Cupons -->
                 <div id="admSecCoupons" class="hidden space-y-4">
                     <div class="flex gap-2">
                         <input id="newCouponCode" type="text" placeholder="CÓDIGO" class="uppercase bg-spk-dark text-xs text-white px-3.5 py-2 rounded-xl border border-white/10 flex-grow font-mono">
@@ -913,92 +950,6 @@
 
     <div id="toastContainer" class="fixed bottom-5 right-5 z-50 flex flex-col gap-2 pointer-events-none"></div>
 
-    <!-- ANIMAÇÃO DE PARTICULAS E BOLINHAS NO CANVAS -->
-    <script>
-        (function initCanvasAnimation() {
-            const canvas = document.getElementById("bgCanvas");
-            if (!canvas) return;
-            const ctx = canvas.getContext("2d");
-
-            let width, height;
-            let particles = [];
-
-            function resize() {
-                width = canvas.width = window.innerWidth;
-                height = canvas.height = window.innerHeight;
-            }
-
-            class Particle {
-                constructor() {
-                    this.reset();
-                }
-
-                reset() {
-                    this.x = Math.random() * width;
-                    this.y = Math.random() * height;
-                    this.radius = Math.random() * 4 + 1; 
-                    this.vx = (Math.random() - 0.5) * 0.6; 
-                    this.vy = (Math.random() - 0.5) * 0.6;
-                    this.alpha = Math.random() * 0.5 + 0.2;
-                    this.color = Math.random() > 0.5 ? '59, 130, 246' : '139, 92, 246'; // Azul ou Roxo
-                }
-
-                update() {
-                    this.x += this.vx;
-                    this.y += this.vy;
-
-                    if (this.x < 0 || this.x > width) this.vx *= -1;
-                    if (this.y < 0 || this.y > height) this.vy *= -1;
-                }
-
-                draw() {
-                    ctx.beginPath();
-                    ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
-                    ctx.fillStyle = `rgba(${this.color}, ${this.alpha})`;
-                    ctx.fill();
-                }
-            }
-
-            function setup() {
-                resize();
-                particles = [];
-                const totalParticles = Math.floor((width * height) / 12000);
-                for (let i = 0; i < totalParticles; i++) {
-                    particles.push(new Particle());
-                }
-            }
-
-            function loop() {
-                ctx.clearRect(0, 0, width, height);
-
-                for (let i = 0; i < particles.length; i++) {
-                    particles[i].update();
-                    particles[i].draw();
-
-                    for (let j = i + 1; j < particles.length; j++) {
-                        const dx = particles[i].x - particles[j].x;
-                        const dy = particles[i].y - particles[j].y;
-                        const dist = Math.sqrt(dx * dx + dy * dy);
-
-                        if (dist < 120) {
-                            ctx.beginPath();
-                            ctx.moveTo(particles[i].x, particles[i].y);
-                            ctx.lineTo(particles[j].x, particles[j].y);
-                            ctx.strokeStyle = `rgba(59, 130, 246, ${0.15 * (1 - dist / 120)})`;
-                            ctx.lineWidth = 0.8;
-                            ctx.stroke();
-                        }
-                    }
-                }
-                requestAnimationFrame(loop);
-            }
-
-            window.addEventListener('resize', () => { resize(); });
-            setup();
-            loop();
-        })();
-    </script>
-
     <!-- JAVASCRIPT PRINCIPAL -->
     <script>
         const OWNER_EMAIL = "antoniomiguel46779@gmail.com";
@@ -1013,7 +964,7 @@
         let serverConfig = {
             name: "Storm VIPs",
             logo: "https://placehold.co/180x180/0a1026/3b82f6?text=STORM",
-            botWebhookUrl: window.BOT_WEBHOOK_URL || "",
+            botWebhookUrl: window.BOT_WEBHOOK_URL || "https://discord.com/api/webhooks/1549285505252728832/WboYE5IlvN7RhUXqdbBZRavpYBSJ0oOeleJBz4N7cq0aDmDxGi70YXaIjTuYmwOgxemH",
             botUri: window.BOT_URI || "uri 1455730680330977415",
             emailServiceId: "",
             emailTemplateId: "",
@@ -1114,10 +1065,76 @@
             }
         ];
 
-        // Efeitos sonoros desativados a seu pedido
-        window.playAudioEffect = function(type) { return; };
+        // SISTEMA DE PARTICULAS (BOLINHAS EM MOVIMENTO NO FUNDO)
+        function initParticlesBackground() {
+            const canvas = document.getElementById("bgCanvas");
+            if (!canvas) return;
+            const ctx = canvas.getContext("2d");
+
+            let width = (canvas.width = window.innerWidth);
+            let height = (canvas.height = window.innerHeight);
+
+            window.addEventListener("resize", () => {
+                width = canvas.width = window.innerWidth;
+                height = canvas.height = window.innerHeight;
+            });
+
+            const particles = [];
+            const particleCount = 45;
+
+            class Particle {
+                constructor() {
+                    this.x = Math.random() * width;
+                    this.y = Math.random() * height;
+                    this.radius = Math.random() * 3.5 + 1.5;
+                    this.vx = (Math.random() - 0.5) * 0.6;
+                    this.vy = (Math.random() - 0.5) * 0.6;
+                    this.alpha = Math.random() * 0.5 + 0.2;
+                    this.color = Math.random() > 0.5 ? '#3b82f6' : '#8b5cf6';
+                }
+
+                update() {
+                    this.x += this.vx;
+                    this.y += this.vy;
+
+                    if (this.x < 0) this.x = width;
+                    if (this.x > width) this.x = 0;
+                    if (this.y < 0) this.y = height;
+                    if (this.y > height) this.y = 0;
+                }
+
+                draw() {
+                    ctx.save();
+                    ctx.globalAlpha = this.alpha;
+                    ctx.beginPath();
+                    ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+                    ctx.fillStyle = this.color;
+                    ctx.shadowBlur = 12;
+                    ctx.shadowColor = this.color;
+                    ctx.fill();
+                    ctx.restore();
+                }
+            }
+
+            for (let i = 0; i < particleCount; i++) {
+                particles.push(new Particle());
+            }
+
+            function animate() {
+                ctx.clearRect(0, 0, width, height);
+                particles.forEach(p => {
+                    p.update();
+                    p.draw();
+                });
+                requestAnimationFrame(animate);
+            }
+
+            animate();
+        }
 
         window.onload = function() {
+            initParticlesBackground();
+
             const savedConfig = localStorage.getItem("spk_shop_config");
             if (savedConfig) { try { serverConfig = { ...serverConfig, ...JSON.parse(savedConfig) }; } catch(e){} }
 
@@ -1204,9 +1221,21 @@
             renderPlans();
         };
 
-        function renderPlans(searchQuery = "") {
+        window.syncSearchAndFilter = function(val) {
+            const mainSearch = document.getElementById("searchInput");
+            const headerSearch = document.getElementById("headerSearchInput");
+            const mobileSearch = document.getElementById("mobileSearchInput");
+
+            if (mainSearch && mainSearch.value !== val) mainSearch.value = val;
+            if (headerSearch && headerSearch.value !== val) headerSearch.value = val;
+            if (mobileSearch && mobileSearch.value !== val) mobileSearch.value = val;
+
+            renderPlans();
+        };
+
+        function renderPlans() {
             const container = document.getElementById("plansContainer");
-            const searchVal = searchQuery.toLowerCase().trim() || (document.getElementById("searchInput") ? document.getElementById("searchInput").value.toLowerCase().trim() : "");
+            const searchVal = document.getElementById("searchInput") ? document.getElementById("searchInput").value.toLowerCase().trim() : "";
 
             let filtered = plansData.filter(plan => {
                 const matchCat = activeCategory === 'all' || plan.category === activeCategory;
@@ -1274,7 +1303,15 @@
             container.innerHTML = html;
         }
 
-        window.filterProducts = function(val = "") { renderPlans(val); };
+        window.filterProducts = function() { renderPlans(); };
+
+        window.focusSearchInput = function() {
+            const input = document.getElementById("searchInput");
+            if (input) {
+                input.focus();
+                input.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+        };
 
         window.toggleMobileMenu = function() {
             const menu = document.getElementById("mobileMenu");
@@ -1330,11 +1367,6 @@
             document.getElementById("couponMsg").classList.add("hidden");
             document.getElementById("modalVipOriginalPrice").classList.add("hidden");
 
-            // Resetar o Aceite dos Termos
-            const termsCheck = document.getElementById("termsCheck");
-            if (termsCheck) termsCheck.checked = false;
-            togglePayButton();
-
             document.getElementById("modalVipBadge").innerText = selectedVip.badge || "VIP";
             document.getElementById("modalVipBadge").className = `px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider ${selectedVip.badgeStyle || 'bg-spk-blue text-white'}`;
             document.getElementById("modalVipTitle").innerText = selectedVip.title;
@@ -1357,22 +1389,6 @@
             document.getElementById("checkoutStep3").classList.add("hidden");
 
             document.getElementById("checkoutModal").classList.remove("hidden");
-        };
-
-        window.togglePayButton = function() {
-            const termsCheck = document.getElementById("termsCheck");
-            const btn = document.getElementById("btnProceedPayment");
-            if (termsCheck && btn) {
-                if (termsCheck.checked) {
-                    btn.disabled = false;
-                    btn.classList.remove("opacity-50", "cursor-not-allowed");
-                    btn.classList.add("btn-glow");
-                } else {
-                    btn.disabled = true;
-                    btn.classList.add("opacity-50", "cursor-not-allowed");
-                    btn.classList.remove("btn-glow");
-                }
-            }
         };
 
         window.closeCheckoutModal = function() {
@@ -1426,6 +1442,12 @@
         };
 
         window.notifyPaymentDone = async function() {
+            const paymentCheck = document.getElementById("paymentTermsCheckbox");
+            if (paymentCheck && !paymentCheck.checked) {
+                showToast("Você precisa aceitar os termos antes de confirmar o pagamento.", "error");
+                return;
+            }
+            
             if (selectedVip) {
                 const planRef = plansData.find(p => p.id === selectedVip.id);
                 if (planRef) {
@@ -1855,8 +1877,8 @@
             serverConfig.botWebhookUrl = document.getElementById("cfgBotWebhook").value;
             serverConfig.botUri = document.getElementById("cfgBotUri").value;
 
-            const cats = document.getElementById("cfgCategoriesInput").value.split(",").map(c => c.trim().toLowerCase()).filter(c => c !== "");
-            if (cats.length > 0) serverConfig.categories = cats;
+            const catsStr = document.getElementById("cfgCategoriesInput").value;
+            serverConfig.categories = catsStr.split(',').map(c => c.trim().toLowerCase()).filter(c => c.length > 0);
 
             serverConfig.emailServiceId = document.getElementById("cfgEmailServiceId").value;
             serverConfig.emailTemplateId = document.getElementById("cfgEmailTemplateId").value;
@@ -1881,48 +1903,44 @@
             showToast("Configurações salvas com sucesso!", "success");
         };
 
-        window.showModalInfo = function(title, content) {
+        window.showModalInfo = function(title, text) {
             document.getElementById("infoModalTitle").innerText = title;
-            document.getElementById("infoModalBody").innerText = content;
+            document.getElementById("infoModalBody").innerText = text;
             document.getElementById("infoModal").classList.remove("hidden");
         };
 
-        window.closeInfoModal = function() {
-            document.getElementById("infoModal").classList.add("hidden");
-        };
+        window.closeInfoModal = function() { document.getElementById("infoModal").classList.add("hidden"); };
 
-        window.openAiSupportModal = function() {
-            document.getElementById("aiSupportModal").classList.remove("hidden");
-        };
-
-        window.closeAiSupportModal = function() {
-            document.getElementById("aiSupportModal").classList.add("hidden");
-        };
+        window.openAiSupportModal = function() { document.getElementById("aiSupportModal").classList.remove("hidden"); };
+        window.closeAiSupportModal = function() { document.getElementById("aiSupportModal").classList.add("hidden"); };
 
         window.sendAiMessage = function() {
             const input = document.getElementById("aiChatInput");
+            const history = document.getElementById("aiChatHistory");
             const text = input.value.trim();
             if (!text) return;
 
-            const history = document.getElementById("aiChatHistory");
             history.innerHTML += `
-                <div class="bg-spk-blue/20 p-3.5 rounded-2xl border border-spk-blue/30 text-xs text-white ml-8 text-right">
+                <div class="bg-spk-blue/20 p-3.5 rounded-2xl border border-spk-blue/30 text-xs text-white ml-8">
                     ${text}
                 </div>
             `;
             input.value = "";
 
             setTimeout(() => {
-                let reply = "Para ativação do VIP, certifique-se de realizar o pagamento do PIX e notificar pelo botão 'Já Paguei'!";
-                if (text.toLowerCase().includes("cupom") || text.toLowerCase().includes("desconto")) {
-                    reply = "Você pode conferir os cupons disponíveis clicando no botão 'Cupons' no topo da loja.";
-                } else if (text.toLowerCase().includes("pix") || text.toLowerCase().includes("pagar")) {
-                    reply = "O pagamento via PIX é instantâneo e aprovado direto pelo proprietário da loja.";
+                let answer = "Para comprar um VIP, basta escolher o plano desejado e clicar em 'Adquirir'. O pagamento via PIX é prático e liberado com agilidade!";
+                const lower = text.toLowerCase();
+                if (lower.includes("cupom") || lower.includes("desconto")) {
+                    answer = "Aproveite nossos cupons ativos no botão 'Cupons' no topo da página. Por exemplo, use STORM10 para garantir 10% de desconto!";
+                } else if (lower.includes("pix") || lower.includes("pagar")) {
+                    answer = "Aceitamos pagamento via PIX. Escaneie o QR Code fornecido no checkout ou copie a chave PIX informada.";
+                } else if (lower.includes("garantia") || lower.includes("reembolso")) {
+                    answer = "Garantimos a entrega completa de todos os VIPs e benefícios oferecidos com suporte 24h.";
                 }
 
                 history.innerHTML += `
-                    <div class="bg-spk-dark p-3.5 rounded-2xl border border-white/10 text-xs text-gray-200 mr-8">
-                        ${reply}
+                    <div class="bg-spk-dark p-3.5 rounded-2xl border border-white/10 text-xs text-gray-200">
+                        ${answer}
                     </div>
                 `;
                 history.scrollTop = history.scrollHeight;
@@ -1934,15 +1952,16 @@
             if (!container) return;
 
             const toast = document.createElement("div");
-            let bg = "bg-spk-card border-spk-blue text-white";
-            if (type === "success") bg = "bg-emerald-900/90 border-emerald-500 text-emerald-100";
-            if (type === "error") bg = "bg-rose-900/90 border-rose-500 text-rose-100";
+            let bg = "bg-spk-card text-white border-spk-blue";
+            if (type === "success") bg = "bg-emerald-950 text-emerald-200 border-emerald-500";
+            if (type === "error") bg = "bg-rose-950 text-rose-200 border-rose-500";
 
-            toast.className = `p-4 rounded-2xl border shadow-2xl text-xs font-bold transition-all duration-300 transform translate-y-2 pointer-events-auto flex items-center gap-2 ${bg}`;
-            toast.innerHTML = `<span>${msg}</span>`;
+            toast.className = `p-4 rounded-2xl border ${bg} shadow-2xl text-xs font-bold pointer-events-auto flex items-center gap-2 transition duration-300 transform translate-y-2`;
+            toast.innerHTML = `<i class="fa-solid ${type === 'success' ? 'fa-circle-check' : type === 'error' ? 'fa-triangle-exclamation' : 'fa-info-circle'}"></i> <span>${msg}</span>`;
 
             container.appendChild(toast);
-            setTimeout(() => { toast.classList.remove("translate-y-2"); }, 10);
+            setTimeout(() => toast.classList.remove("translate-y-2"), 10);
+
             setTimeout(() => {
                 toast.classList.add("opacity-0", "translate-y-2");
                 setTimeout(() => toast.remove(), 300);
