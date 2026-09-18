@@ -86,7 +86,6 @@
         }
 
         window.loginWithGoogle = async function() {
-            if (typeof playAudioEffect === 'function') playAudioEffect('click');
             try {
                 const result = await signInWithPopup(auth, googleProvider);
                 const user = result.user;
@@ -140,7 +139,6 @@
         };
 
         window.loginWithDiscord = async function() {
-            if (typeof playAudioEffect === 'function') playAudioEffect('click');
             try {
                 if (!discordProvider) throw new Error("Discord Provider Indisponível");
                 const result = await signInWithPopup(auth, discordProvider);
@@ -303,14 +301,14 @@
     <div class="fixed top-[-10%] left-[-10%] w-[500px] h-[500px] bg-spk-blue/15 rounded-full blur-[140px] pointer-events-none z-0"></div>
     <div class="fixed bottom-[-10%] right-[-10%] w-[600px] h-[600px] bg-spk-purple/15 rounded-full blur-[160px] pointer-events-none z-0"></div>
 
-    <!-- HEADER NAVBAR -->
-    <header class="sticky top-0 z-40 w-full glass-spk">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between relative z-10">
+    <!-- HEADER NAVBAR MELHORADO -->
+    <header class="sticky top-0 z-40 w-full glass-spk shadow-xl border-b border-white/10">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between gap-4 relative z-10">
             <div class="flex items-center space-x-3">
                 <button onclick="toggleMobileMenu()" class="md:hidden text-gray-300 hover:text-white p-2 text-xl">
                     <i class="fa-solid fa-bars"></i>
                 </button>
-                <div class="flex items-center space-x-3 cursor-pointer select-none" onclick="playAudioEffect('click'); location.reload();">
+                <div class="flex items-center space-x-3 cursor-pointer select-none" onclick="location.reload();">
                     <img id="serverLogo" src="https://placehold.co/120x120/0a1026/3b82f6?text=STORM" alt="Storm VIPs Logo" class="w-11 h-11 rounded-2xl object-cover border-2 border-spk-blue shadow-lg shadow-spk-blue/30">
                     <div class="flex flex-col">
                         <h1 id="serverNameDisplay" class="font-black text-xl tracking-wider text-white flex items-center gap-1.5">
@@ -320,35 +318,38 @@
                 </div>
             </div>
 
-            <nav class="hidden md:flex items-center space-x-8 text-sm font-semibold">
-                <a href="#catalogo" onclick="playAudioEffect('click')" class="text-gray-300 hover:text-spk-blue transition flex items-center gap-2">
+            <!-- Pesquisa integrada no Header -->
+            <div class="hidden lg:flex items-center flex-1 max-w-md mx-6 relative">
+                <input id="headerSearchInput" type="text" placeholder="Pesquisar VIPs..." onkeyup="filterProducts(this.value)" class="w-full bg-spk-dark/90 text-white placeholder-gray-400 px-4 py-2.5 pl-10 rounded-xl border border-white/10 focus:border-spk-blue outline-none text-xs transition">
+                <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 text-xs"></i>
+            </div>
+
+            <nav class="hidden md:flex items-center space-x-6 text-sm font-semibold">
+                <a href="#catalogo" class="text-gray-300 hover:text-spk-blue transition flex items-center gap-2">
                     <i class="fa-solid fa-gem text-spk-blue"></i> Planos VIP
                 </a>
-                <a href="#vantagens" onclick="playAudioEffect('click')" class="text-gray-300 hover:text-spk-blue transition flex items-center gap-2">
+                <a href="#vantagens" class="text-gray-300 hover:text-spk-blue transition flex items-center gap-2">
                     <i class="fa-solid fa-shield-halved text-emerald-400"></i> Garantia
                 </a>
-                <a href="#quem-somos" onclick="playAudioEffect('click')" class="text-gray-300 hover:text-spk-blue transition flex items-center gap-2">
+                <a href="#quem-somos" class="text-gray-300 hover:text-spk-blue transition flex items-center gap-2">
                     <i class="fa-solid fa-users text-purple-400"></i> Quem Somos
                 </a>
-                <button onclick="playAudioEffect('modal'); openCouponsModal();" class="text-amber-400 hover:text-amber-300 transition flex items-center gap-2 bg-amber-500/10 px-3.5 py-1.5 rounded-full border border-amber-500/30">
+                <button onclick="openCouponsModal();" class="text-amber-400 hover:text-amber-300 transition flex items-center gap-2 bg-amber-500/10 px-3.5 py-1.5 rounded-full border border-amber-500/30 text-xs">
                     <i class="fa-solid fa-ticket"></i> Cupons
-                </button>
-                <button onclick="playAudioEffect('modal'); openAiSupportModal();" class="text-spk-blue hover:text-blue-300 transition flex items-center gap-2 bg-spk-blue/10 px-3.5 py-1.5 rounded-full border border-spk-blue/30">
-                    <i class="fa-solid fa-wand-magic-sparkles"></i> Suporte IA
                 </button>
             </nav>
 
             <div class="flex items-center space-x-3">
-                <button onclick="playAudioEffect('click'); focusSearchInput();" class="w-10 h-10 rounded-full bg-white/5 hover:bg-white/10 text-gray-300 flex items-center justify-center transition border border-white/10" title="Pesquisar">
-                    <i class="fa-solid fa-magnifying-glass text-sm"></i>
-                </button>
-
                 <div id="authSection"></div>
             </div>
         </div>
 
         <!-- MENU MOBILE -->
         <div id="mobileMenu" class="hidden md:hidden bg-spk-dark/95 border-b border-white/10 px-4 py-4 space-y-3">
+            <div class="relative mb-3">
+                <input id="mobileSearchInput" type="text" placeholder="Pesquisar..." onkeyup="filterProducts(this.value)" class="w-full bg-spk-card text-white text-xs p-3 pl-9 rounded-xl border border-white/10">
+                <i class="fa-solid fa-magnifying-glass absolute left-3 top-3.5 text-gray-400 text-xs"></i>
+            </div>
             <a href="#catalogo" onclick="toggleMobileMenu();" class="block text-gray-300 hover:text-spk-blue font-semibold text-sm">Planos VIP</a>
             <a href="#vantagens" onclick="toggleMobileMenu();" class="block text-gray-300 hover:text-spk-blue font-semibold text-sm">Garantia</a>
             <a href="#quem-somos" onclick="toggleMobileMenu();" class="block text-gray-300 hover:text-spk-blue font-semibold text-sm">Quem Somos</a>
@@ -377,7 +378,7 @@
             </p>
 
             <div class="mt-8 max-w-md mx-auto relative">
-                <input id="searchInput" type="text" placeholder="Buscar VIP (Bronze, Ouro, Diamante, Mestre)..." onkeyup="filterProducts()" class="w-full bg-spk-dark/80 text-white placeholder-gray-400 px-5 py-3.5 pl-12 rounded-2xl border border-white/10 focus:border-spk-blue outline-none shadow-xl transition text-sm">
+                <input id="searchInput" type="text" placeholder="Buscar VIP (Bronze, Ouro, Diamante, Mestre)..." onkeyup="filterProducts(this.value)" class="w-full bg-spk-dark/80 text-white placeholder-gray-400 px-5 py-3.5 pl-12 rounded-2xl border border-white/10 focus:border-spk-blue outline-none shadow-xl transition text-sm">
                 <i class="fa-solid fa-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"></i>
             </div>
         </div>
@@ -462,9 +463,9 @@
                 <div>
                     <h4 class="font-bold text-white text-sm mb-4">Navegação rápida</h4>
                     <ul class="space-y-2 text-xs text-gray-400">
-                        <li><a href="#catalogo" onclick="playAudioEffect('click')" class="hover:text-spk-blue transition">Catálogo Completo</a></li>
-                        <li><a href="#vantagens" onclick="playAudioEffect('click')" class="hover:text-spk-blue transition">Central de Garantia</a></li>
-                        <li><a href="#quem-somos" onclick="playAudioEffect('click')" class="hover:text-spk-blue transition">Quem Somos Nós</a></li>
+                        <li><a href="#catalogo" class="hover:text-spk-blue transition">Catálogo Completo</a></li>
+                        <li><a href="#vantagens" class="hover:text-spk-blue transition">Central de Garantia</a></li>
+                        <li><a href="#quem-somos" class="hover:text-spk-blue transition">Quem Somos Nós</a></li>
                     </ul>
                 </div>
 
@@ -473,17 +474,17 @@
                     <ul class="space-y-2 text-xs text-gray-400">
                         <li><button onclick="showModalInfo('Termos de Uso', serverConfig.terms)" class="hover:text-spk-blue transition">Termos de Uso</button></li>
                         <li><button onclick="showModalInfo('Política de Privacidade', serverConfig.privacy)" class="hover:text-spk-blue transition">Política de Privacidade</button></li>
-                        <li><button onclick="playAudioEffect('modal'); openCouponsModal();" class="text-amber-400 hover:text-amber-300 transition flex items-center gap-1.5 font-bold"><i class="fa-solid fa-ticket text-xs"></i> Cupons Promocionais</button></li>
+                        <li><button onclick="openCouponsModal();" class="text-amber-400 hover:text-amber-300 transition flex items-center gap-1.5 font-bold"><i class="fa-solid fa-ticket text-xs"></i> Cupons Promocionais</button></li>
                     </ul>
                 </div>
 
                 <div>
                     <h4 class="font-bold text-white text-sm mb-4">Minha Conta</h4>
                     <ul class="space-y-2 text-xs text-gray-400">
-                        <li><button onclick="playAudioEffect('modal'); openProfileModal('profile')" class="hover:text-spk-blue transition">Meu Perfil</button></li>
-                        <li><button onclick="playAudioEffect('modal'); openProfileModal('purchases')" class="hover:text-spk-blue transition">Minhas Compras</button></li>
+                        <li><button onclick="openProfileModal('profile')" class="hover:text-spk-blue transition">Meu Perfil</button></li>
+                        <li><button onclick="openProfileModal('purchases')" class="hover:text-spk-blue transition">Minhas Compras</button></li>
                         <li id="ownerAdminLink" class="hidden">
-                            <button onclick="playAudioEffect('modal'); openAdminModal();" class="text-amber-400 hover:text-amber-300 transition font-bold flex items-center gap-1.5">
+                            <button onclick="openAdminModal();" class="text-amber-400 hover:text-amber-300 transition font-bold flex items-center gap-1.5">
                                 <i class="fa-solid fa-crown text-xs"></i> Painel do Dono
                             </button>
                         </li>
@@ -493,7 +494,7 @@
 
             <div class="pt-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-gray-500">
                 <p>Copyright © <span id="copyrightName">Storm VIPs</span> — Todos os direitos reservados</p>
-                <button onclick="playAudioEffect('modal'); openAiSupportModal()" class="hover:text-spk-blue transition flex items-center gap-1.5 text-gray-400">
+                <button onclick="openAiSupportModal()" class="hover:text-spk-blue transition flex items-center gap-1.5 text-gray-400">
                     <i class="fa-solid fa-robot text-spk-blue"></i> Suporte IA 24h
                 </button>
             </div>
@@ -503,11 +504,11 @@
     <!-- MODAL DE CHECKOUT -->
     <div id="checkoutModal" class="fixed inset-0 bg-black/85 backdrop-blur-md z-50 hidden flex items-center justify-center p-4">
         <div class="bg-spk-card border border-spk-border w-full max-w-2xl rounded-3xl p-6 sm:p-8 relative shadow-2xl max-h-[92vh] overflow-y-auto">
-            <button onclick="closeCheckoutModal(); playAudioEffect('click');" class="absolute top-5 right-5 text-gray-400 hover:text-white w-9 h-9 rounded-full bg-spk-dark flex items-center justify-center transition z-10">
+            <button onclick="closeCheckoutModal();" class="absolute top-5 right-5 text-gray-400 hover:text-white w-9 h-9 rounded-full bg-spk-dark flex items-center justify-center transition z-10">
                 <i class="fa-solid fa-xmark text-lg"></i>
             </button>
 
-            <!-- Passo 1: Informações do VIP -->
+            <!-- Passo 1: Informações do VIP e Aceite de Termos -->
             <div id="checkoutStep1">
                 <div class="flex items-center gap-3 mb-5">
                     <span id="modalVipBadge" class="px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider bg-spk-blue text-white">VIP</span>
@@ -543,9 +544,9 @@
                     <p id="couponMsg" class="text-[11px] font-bold hidden"></p>
                 </div>
 
-                <div class="mb-6">
+                <div class="mb-5">
                     <label class="block text-xs font-bold text-gray-300 uppercase tracking-wider mb-2">Conta Vinculada para Recebimento</label>
-                    <div onclick="playAudioEffect('modal'); openLoginModal();" class="flex items-center gap-3 bg-spk-dark p-3.5 rounded-2xl border border-white/10 cursor-pointer hover:border-spk-blue/50 transition">
+                    <div onclick="openLoginModal();" class="flex items-center gap-3 bg-spk-dark p-3.5 rounded-2xl border border-white/10 cursor-pointer hover:border-spk-blue/50 transition">
                         <img id="modalUserAvatar" src="https://placehold.co/100x100/3b82f6/ffffff?text=U" class="w-10 h-10 rounded-full border border-spk-blue object-cover">
                         <div class="flex-grow overflow-hidden">
                             <h5 id="modalUserName" class="font-bold text-sm text-white truncate">Visitante (Não Conectado)</h5>
@@ -553,6 +554,16 @@
                         </div>
                         <span class="text-xs text-spk-blue font-bold flex-shrink-0">Alterar</span>
                     </div>
+                </div>
+
+                <!-- TERMOS E CONDIÇÕES NA PARTE DE BAIXO (SEGUNDA FOTO) -->
+                <div class="bg-spk-dark/90 p-4 rounded-2xl border border-white/10 mb-5">
+                    <label class="flex items-start gap-3 cursor-pointer select-none">
+                        <input type="checkbox" id="termsCheck" onchange="togglePayButton()" class="w-4 h-4 mt-0.5 rounded accent-spk-blue cursor-pointer">
+                        <span class="text-xs text-gray-300 leading-relaxed">
+                            Eu li e concordo com os <button type="button" onclick="showModalInfo('Termos de Uso', serverConfig.terms)" class="text-spk-blue underline hover:text-blue-300">Termos de Uso</button> e a <button type="button" onclick="showModalInfo('Política de Privacidade', serverConfig.privacy)" class="text-spk-blue underline hover:text-blue-300">Política de Privacidade</button> da loja Storm VIPs.
+                        </span>
+                    </label>
                 </div>
 
                 <div class="flex items-center justify-between bg-spk-dark/90 p-4 rounded-2xl border border-white/10 mb-5">
@@ -563,7 +574,7 @@
                             <span id="modalVipPrice" class="text-2xl font-black text-white">R$ 0,00</span>
                         </div>
                     </div>
-                    <button onclick="goToPaymentStep()" class="bg-gradient-to-r from-blue-600 via-blue-500 to-cyan-500 hover:from-blue-500 hover:to-cyan-400 text-white font-black px-6 py-3.5 rounded-2xl transition flex items-center gap-2 text-sm shadow-xl btn-glow">
+                    <button id="btnProceedPayment" onclick="goToPaymentStep()" disabled class="bg-gradient-to-r from-blue-600 via-blue-500 to-cyan-500 opacity-50 cursor-not-allowed text-white font-black px-6 py-3.5 rounded-2xl transition flex items-center gap-2 text-sm shadow-xl">
                         <i class="fa-solid fa-money-bill-wave"></i> Fazer Pagamento
                     </button>
                 </div>
@@ -613,7 +624,7 @@
                     <p><strong class="text-white">Status:</strong> <span class="text-amber-400 font-bold"><i class="fa-solid fa-hourglass-half"></i> Aguardando Aprovação do Dono</span></p>
                 </div>
                 
-                <button onclick="closeCheckoutModal(); playAudioEffect('click'); openProfileModal('purchases');" class="bg-spk-blue hover:bg-blue-600 text-white font-bold px-8 py-3.5 rounded-2xl transition">
+                <button onclick="closeCheckoutModal(); openProfileModal('purchases');" class="bg-spk-blue hover:bg-blue-600 text-white font-bold px-8 py-3.5 rounded-2xl transition">
                     Ver Minhas Compras
                 </button>
             </div>
@@ -623,7 +634,7 @@
     <!-- MODAL DE LOGIN -->
     <div id="loginModal" class="fixed inset-0 bg-black/80 backdrop-blur-md z-50 hidden flex items-center justify-center p-4">
         <div class="bg-spk-card border border-spk-border w-full max-w-md rounded-3xl p-6 sm:p-8 relative shadow-2xl text-center">
-            <button onclick="closeLoginModal(); playAudioEffect('click');" class="absolute top-5 right-5 text-gray-400 hover:text-white w-9 h-9 rounded-full bg-spk-dark flex items-center justify-center transition">
+            <button onclick="closeLoginModal();" class="absolute top-5 right-5 text-gray-400 hover:text-white w-9 h-9 rounded-full bg-spk-dark flex items-center justify-center transition">
                 <i class="fa-solid fa-xmark text-lg"></i>
             </button>
 
@@ -656,7 +667,7 @@
     <!-- MODAL PERFIL DO USUÁRIO, NOTIFICAÇÕES & MINHAS COMPRAS -->
     <div id="profileModal" class="fixed inset-0 bg-black/80 backdrop-blur-md z-50 hidden flex items-center justify-center p-4">
         <div class="bg-spk-card border border-spk-border w-full max-w-2xl rounded-3xl p-6 sm:p-8 relative shadow-2xl flex flex-col max-h-[90vh]">
-            <button onclick="closeProfileModal(); playAudioEffect('click');" class="absolute top-5 right-5 text-gray-400 hover:text-white w-9 h-9 rounded-full bg-spk-dark flex items-center justify-center transition">
+            <button onclick="closeProfileModal();" class="absolute top-5 right-5 text-gray-400 hover:text-white w-9 h-9 rounded-full bg-spk-dark flex items-center justify-center transition">
                 <i class="fa-solid fa-xmark text-lg"></i>
             </button>
 
@@ -674,14 +685,13 @@
 
             <!-- Abas do Modal -->
             <div class="flex items-center gap-3 my-4 border-b border-white/10 pb-3 flex-wrap">
-                <button id="tabBtnProfile" onclick="switchProfileTab('profile'); playAudioEffect('click');" class="px-4 py-2 rounded-xl text-xs font-bold transition bg-spk-blue text-white">
+                <button id="tabBtnProfile" onclick="switchProfileTab('profile');" class="px-4 py-2 rounded-xl text-xs font-bold transition bg-spk-blue text-white">
                     <i class="fa-solid fa-user mr-1.5"></i> Perfil
                 </button>
-                <button id="tabBtnPurchases" onclick="switchProfileTab('purchases'); playAudioEffect('click');" class="px-4 py-2 rounded-xl text-xs font-bold transition text-gray-400 hover:text-white">
+                <button id="tabBtnPurchases" onclick="switchProfileTab('purchases');" class="px-4 py-2 rounded-xl text-xs font-bold transition text-gray-400 hover:text-white">
                     <i class="fa-solid fa-bag-shopping mr-1.5"></i> Minhas Compras
                 </button>
-                <!-- Somente visível para o dono -->
-                <button id="tabBtnNotifications" onclick="switchProfileTab('notifications'); playAudioEffect('click');" class="hidden px-4 py-2 rounded-xl text-xs font-bold transition text-amber-400 hover:text-amber-300 bg-amber-500/10 border border-amber-500/30">
+                <button id="tabBtnNotifications" onclick="switchProfileTab('notifications');" class="hidden px-4 py-2 rounded-xl text-xs font-bold transition text-amber-400 hover:text-amber-300 bg-amber-500/10 border border-amber-500/30">
                     <i class="fa-solid fa-bell mr-1.5"></i> Notificações / Vendas <span id="notifBadgeCount" class="bg-rose-500 text-white text-[10px] px-1.5 py-0.2 rounded-full ml-1 hidden">0</span>
                 </button>
             </div>
@@ -699,7 +709,7 @@
                     </div>
                 </div>
 
-                <button onclick="switchProfileTab('purchases'); playAudioEffect('click');" class="w-full bg-spk-dark hover:bg-white/5 text-gray-200 border border-white/10 font-bold py-3 rounded-2xl transition text-xs flex items-center justify-center gap-2">
+                <button onclick="switchProfileTab('purchases');" class="w-full bg-spk-dark hover:bg-white/5 text-gray-200 border border-white/10 font-bold py-3 rounded-2xl transition text-xs flex items-center justify-center gap-2">
                     <i class="fa-solid fa-receipt text-spk-blue"></i> Ver Histórico de VIPs Comprados
                 </button>
 
@@ -715,7 +725,7 @@
                 </div>
             </div>
 
-            <!-- Conteúdo Aba Notificações (Apenas para o Dono) -->
+            <!-- Conteúdo Aba Notificações -->
             <div id="tabContentNotifications" class="hidden py-2 overflow-y-auto flex-grow">
                 <h4 class="text-xs font-bold text-gray-300 uppercase tracking-wider mb-3 flex items-center gap-1.5">
                     <i class="fa-solid fa-crown text-amber-400"></i> Solicitações de Venda Pendentes
@@ -728,7 +738,7 @@
     <!-- MODAL DE CUPONS -->
     <div id="couponsModal" class="fixed inset-0 bg-black/80 backdrop-blur-md z-50 hidden flex items-center justify-center p-4">
         <div class="bg-spk-card border border-spk-border w-full max-w-md rounded-3xl p-6 sm:p-8 relative shadow-2xl">
-            <button onclick="closeCouponsModal(); playAudioEffect('click');" class="absolute top-5 right-5 text-gray-400 hover:text-white w-9 h-9 rounded-full bg-spk-dark flex items-center justify-center transition">
+            <button onclick="closeCouponsModal();" class="absolute top-5 right-5 text-gray-400 hover:text-white w-9 h-9 rounded-full bg-spk-dark flex items-center justify-center transition">
                 <i class="fa-solid fa-xmark text-lg"></i>
             </button>
 
@@ -746,7 +756,7 @@
     <!-- MODAL DO PAINEL ADMIN DO DONO -->
     <div id="adminModal" class="fixed inset-0 bg-black/80 backdrop-blur-md z-50 hidden flex items-center justify-center p-4">
         <div class="bg-spk-card border border-spk-border w-full max-w-3xl rounded-3xl p-6 sm:p-8 relative shadow-2xl max-h-[90vh] overflow-y-auto">
-            <button onclick="closeAdminModal(); playAudioEffect('click');" class="absolute top-5 right-5 text-gray-400 hover:text-white w-9 h-9 rounded-full bg-spk-dark flex items-center justify-center transition">
+            <button onclick="closeAdminModal();" class="absolute top-5 right-5 text-gray-400 hover:text-white w-9 h-9 rounded-full bg-spk-dark flex items-center justify-center transition">
                 <i class="fa-solid fa-xmark text-lg"></i>
             </button>
             <div class="flex items-center gap-2 mb-4 border-b border-white/10 pb-3">
@@ -754,7 +764,6 @@
                 <h3 class="text-xl font-bold text-white">Painel do Dono (Administração Completa)</h3>
             </div>
 
-            <!-- Abas do Painel do Dono -->
             <div class="flex gap-2 mb-6 border-b border-white/10 pb-3 flex-wrap">
                 <button type="button" onclick="switchAdminTab('general')" id="admTabGen" class="px-3.5 py-1.5 rounded-xl text-xs font-bold bg-spk-blue text-white transition">Geral & Bot</button>
                 <button type="button" onclick="switchAdminTab('email')" id="admTabEmail" class="px-3.5 py-1.5 rounded-xl text-xs font-bold text-gray-400 hover:text-white transition"><i class="fa-solid fa-envelope mr-1"></i> Config E-mail</button>
@@ -765,7 +774,6 @@
             </div>
 
             <form id="adminForm" onsubmit="saveAdminSettings(event)" class="space-y-4">
-                <!-- Aba Geral & Bot -->
                 <div id="admSecGeneral" class="space-y-4">
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>
@@ -791,14 +799,11 @@
                     </div>
                 </div>
 
-                <!-- Nova Aba Config E-mail (EmailJS) -->
                 <div id="admSecEmail" class="hidden space-y-4">
                     <div class="bg-spk-dark/80 p-4 rounded-2xl border border-white/10 space-y-3">
                         <h4 class="text-xs font-bold text-white mb-2 flex items-center gap-2">
-                            <i class="fa-solid fa-envelope-circle-check text-spk-blue"></i> Configurações do EmailJS (Envio de Comprovantes)
+                            <i class="fa-solid fa-envelope-circle-check text-spk-blue"></i> Configurações do EmailJS
                         </h4>
-                        <p class="text-[11px] text-gray-400">Crie uma conta gratuita em <a href="https://www.emailjs.com/" target="_blank" class="text-spk-blue underline">emailjs.com</a> para configurar o disparo automático.</p>
-                        
                         <div>
                             <label class="block text-xs font-bold text-gray-300 mb-1">EmailJS Service ID</label>
                             <input id="cfgEmailServiceId" type="text" placeholder="service_xxxxxx" class="w-full bg-spk-dark text-sm text-white px-3.5 py-2.5 rounded-xl border border-white/10 outline-none font-mono">
@@ -814,41 +819,31 @@
                     </div>
                 </div>
 
-                <!-- Aba Chave PIX -->
                 <div id="admSecPix" class="hidden space-y-4">
-                    <div class="bg-spk-dark/80 p-4 rounded-2xl border border-white/10">
-                        <h4 class="text-xs font-bold text-white mb-3 flex items-center gap-2">
-                            <i class="fa-solid fa-key text-amber-400"></i> Configurações do PIX para Recebimento
-                        </h4>
-                        
-                        <div class="space-y-4">
-                            <div>
-                                <label class="block text-xs font-bold text-gray-300 mb-1">Tipo de Chave PIX</label>
-                                <select id="cfgPixType" class="w-full bg-spk-dark text-sm text-white px-3.5 py-2.5 rounded-xl border border-white/10 outline-none">
-                                    <option value="CPF">CPF</option>
-                                    <option value="E-mail">E-mail</option>
-                                    <option value="Telefone">Telefone</option>
-                                    <option value="Chave Aleatória">Chave Aleatória</option>
-                                </select>
-                            </div>
-
-                            <div>
-                                <label class="block text-xs font-bold text-gray-300 mb-1">Chave PIX</label>
-                                <input id="cfgPixKey" type="text" placeholder="Digite sua chave PIX aqui..." class="w-full bg-spk-dark text-sm text-white px-3.5 py-2.5 rounded-xl border border-white/10 outline-none font-mono">
-                            </div>
-
-                            <div>
-                                <label class="block text-xs font-bold text-gray-300 mb-1">Link do QR Code (URL da Imagem)</label>
-                                <input id="cfgPixQrCodeUrl" type="text" placeholder="https://site.com/imagem-qr-code.png" class="w-full bg-spk-dark text-sm text-white px-3.5 py-2.5 rounded-xl border border-white/10 outline-none">
-                            </div>
+                    <div class="bg-spk-dark/80 p-4 rounded-2xl border border-white/10 space-y-4">
+                        <div>
+                            <label class="block text-xs font-bold text-gray-300 mb-1">Tipo de Chave PIX</label>
+                            <select id="cfgPixType" class="w-full bg-spk-dark text-sm text-white px-3.5 py-2.5 rounded-xl border border-white/10 outline-none">
+                                <option value="CPF">CPF</option>
+                                <option value="E-mail">E-mail</option>
+                                <option value="Telefone">Telefone</option>
+                                <option value="Chave Aleatória">Chave Aleatória</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-gray-300 mb-1">Chave PIX</label>
+                            <input id="cfgPixKey" type="text" placeholder="Digite sua chave PIX..." class="w-full bg-spk-dark text-sm text-white px-3.5 py-2.5 rounded-xl border border-white/10 outline-none font-mono">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-gray-300 mb-1">Link do QR Code (URL da Imagem)</label>
+                            <input id="cfgPixQrCodeUrl" type="text" placeholder="https://site.com/qr-code.png" class="w-full bg-spk-dark text-sm text-white px-3.5 py-2.5 rounded-xl border border-white/10 outline-none">
                         </div>
                     </div>
                 </div>
 
-                <!-- Aba Produtos -->
                 <div id="admSecProducts" class="hidden space-y-4">
                     <div class="flex justify-between items-center mb-2">
-                        <span class="text-xs text-gray-400 font-bold">Edite produtos, fotos, destaque e estoque:</span>
+                        <span class="text-xs text-gray-400 font-bold">Gerenciar VIPs:</span>
                         <button type="button" onclick="addNewProduct()" class="bg-emerald-500 hover:bg-emerald-600 text-white font-bold px-3 py-1.5 rounded-xl text-xs transition">
                             + Criar VIP
                         </button>
@@ -856,10 +851,9 @@
                     <div id="adminProductsList" class="space-y-4 max-h-[380px] overflow-y-auto pr-1"></div>
                 </div>
 
-                <!-- Aba Termos & Textos -->
                 <div id="admSecTerms" class="hidden space-y-4">
                     <div>
-                        <label class="block text-xs font-bold text-gray-300 mb-1">Termos de Uso do Site</label>
+                        <label class="block text-xs font-bold text-gray-300 mb-1">Termos de Uso</label>
                         <textarea id="cfgTerms" rows="4" class="w-full bg-spk-dark text-xs text-white p-3.5 rounded-xl border border-white/10 outline-none leading-relaxed"></textarea>
                     </div>
                     <div>
@@ -868,7 +862,6 @@
                     </div>
                 </div>
 
-                <!-- Aba Cupons -->
                 <div id="admSecCoupons" class="hidden space-y-4">
                     <div class="flex gap-2">
                         <input id="newCouponCode" type="text" placeholder="CÓDIGO" class="uppercase bg-spk-dark text-xs text-white px-3.5 py-2 rounded-xl border border-white/10 flex-grow font-mono">
@@ -900,7 +893,7 @@
     <!-- MODAL SUPORTE IA -->
     <div id="aiSupportModal" class="fixed inset-0 bg-black/80 backdrop-blur-md z-50 hidden flex items-center justify-center p-4">
         <div class="bg-spk-card border border-spk-border w-full max-w-xl rounded-3xl p-6 relative shadow-2xl flex flex-col h-[520px]">
-            <button onclick="closeAiSupportModal(); playAudioEffect('click');" class="absolute top-5 right-5 text-gray-400 hover:text-white w-9 h-9 rounded-full bg-spk-dark flex items-center justify-center transition">
+            <button onclick="closeAiSupportModal();" class="absolute top-5 right-5 text-gray-400 hover:text-white w-9 h-9 rounded-full bg-spk-dark flex items-center justify-center transition">
                 <i class="fa-solid fa-xmark text-lg"></i>
             </button>
             <h3 class="text-lg font-bold text-white mb-2">Assistente Storm VIPs IA</h3>
@@ -920,6 +913,92 @@
 
     <div id="toastContainer" class="fixed bottom-5 right-5 z-50 flex flex-col gap-2 pointer-events-none"></div>
 
+    <!-- ANIMAÇÃO DE PARTICULAS E BOLINHAS NO CANVAS -->
+    <script>
+        (function initCanvasAnimation() {
+            const canvas = document.getElementById("bgCanvas");
+            if (!canvas) return;
+            const ctx = canvas.getContext("2d");
+
+            let width, height;
+            let particles = [];
+
+            function resize() {
+                width = canvas.width = window.innerWidth;
+                height = canvas.height = window.innerHeight;
+            }
+
+            class Particle {
+                constructor() {
+                    this.reset();
+                }
+
+                reset() {
+                    this.x = Math.random() * width;
+                    this.y = Math.random() * height;
+                    this.radius = Math.random() * 4 + 1; 
+                    this.vx = (Math.random() - 0.5) * 0.6; 
+                    this.vy = (Math.random() - 0.5) * 0.6;
+                    this.alpha = Math.random() * 0.5 + 0.2;
+                    this.color = Math.random() > 0.5 ? '59, 130, 246' : '139, 92, 246'; // Azul ou Roxo
+                }
+
+                update() {
+                    this.x += this.vx;
+                    this.y += this.vy;
+
+                    if (this.x < 0 || this.x > width) this.vx *= -1;
+                    if (this.y < 0 || this.y > height) this.vy *= -1;
+                }
+
+                draw() {
+                    ctx.beginPath();
+                    ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+                    ctx.fillStyle = `rgba(${this.color}, ${this.alpha})`;
+                    ctx.fill();
+                }
+            }
+
+            function setup() {
+                resize();
+                particles = [];
+                const totalParticles = Math.floor((width * height) / 12000);
+                for (let i = 0; i < totalParticles; i++) {
+                    particles.push(new Particle());
+                }
+            }
+
+            function loop() {
+                ctx.clearRect(0, 0, width, height);
+
+                for (let i = 0; i < particles.length; i++) {
+                    particles[i].update();
+                    particles[i].draw();
+
+                    for (let j = i + 1; j < particles.length; j++) {
+                        const dx = particles[i].x - particles[j].x;
+                        const dy = particles[i].y - particles[j].y;
+                        const dist = Math.sqrt(dx * dx + dy * dy);
+
+                        if (dist < 120) {
+                            ctx.beginPath();
+                            ctx.moveTo(particles[i].x, particles[i].y);
+                            ctx.lineTo(particles[j].x, particles[j].y);
+                            ctx.strokeStyle = `rgba(59, 130, 246, ${0.15 * (1 - dist / 120)})`;
+                            ctx.lineWidth = 0.8;
+                            ctx.stroke();
+                        }
+                    }
+                }
+                requestAnimationFrame(loop);
+            }
+
+            window.addEventListener('resize', () => { resize(); });
+            setup();
+            loop();
+        })();
+    </script>
+
     <!-- JAVASCRIPT PRINCIPAL -->
     <script>
         const OWNER_EMAIL = "antoniomiguel46779@gmail.com";
@@ -934,7 +1013,7 @@
         let serverConfig = {
             name: "Storm VIPs",
             logo: "https://placehold.co/180x180/0a1026/3b82f6?text=STORM",
-            botWebhookUrl: window.BOT_WEBHOOK_URL || "https://discord.com/api/webhooks/1549285505252728832/WboYE5IlvN7RhUXqdbBZRavpYBSJ0oOeleJBz4N7cq0aDmDxGi70YXaIjTuYmwOgxemH",
+            botWebhookUrl: window.BOT_WEBHOOK_URL || "",
             botUri: window.BOT_URI || "uri 1455730680330977415",
             emailServiceId: "",
             emailTemplateId: "",
@@ -1035,27 +1114,8 @@
             }
         ];
 
-        window.playAudioEffect = function(type) {
-            try {
-                const AudioCtx = window.AudioContext || window.webkitAudioContext;
-                if (!AudioCtx) return;
-                const ctx = new AudioCtx();
-                const osc = ctx.createOscillator();
-                const gain = ctx.createGain();
-                osc.connect(gain);
-                gain.connect(ctx.destination);
-                const now = ctx.currentTime;
-                if (type === 'click') {
-                    osc.frequency.setValueAtTime(400, now);
-                    gain.gain.setValueAtTime(0.05, now);
-                    osc.start(now); osc.stop(now + 0.05);
-                } else if (type === 'modal') {
-                    osc.frequency.setValueAtTime(500, now);
-                    gain.gain.setValueAtTime(0.08, now);
-                    osc.start(now); osc.stop(now + 0.08);
-                }
-            } catch (e) {}
-        };
+        // Efeitos sonoros desativados a seu pedido
+        window.playAudioEffect = function(type) { return; };
 
         window.onload = function() {
             const savedConfig = localStorage.getItem("spk_shop_config");
@@ -1090,7 +1150,7 @@
 
             if (window.currentUser) {
                 authSection.innerHTML = `
-                    <button onclick="playAudioEffect('modal'); openProfileModal('profile')" class="flex items-center gap-2.5 bg-spk-dark/80 hover:bg-spk-dark p-1.5 pr-4 rounded-2xl border border-spk-blue/40 transition">
+                    <button onclick="openProfileModal('profile')" class="flex items-center gap-2.5 bg-spk-dark/80 hover:bg-spk-dark p-1.5 pr-4 rounded-2xl border border-spk-blue/40 transition">
                         <img src="${window.currentUser.avatar || 'https://placehold.co/100x100/3b82f6/ffffff?text=U'}" class="w-8 h-8 rounded-xl border border-spk-blue object-cover">
                         <span class="text-xs font-bold text-white truncate max-w-[100px] sm:max-w-[140px]">${window.currentUser.username}</span>
                     </button>
@@ -1103,7 +1163,7 @@
                 }
             } else {
                 authSection.innerHTML = `
-                    <button onclick="playAudioEffect('modal'); openLoginModal();" class="bg-gradient-to-r from-blue-600 via-blue-500 to-cyan-500 hover:from-blue-500 hover:to-cyan-400 text-white font-extrabold px-5 py-2.5 rounded-2xl text-sm transition shadow-lg btn-glow flex items-center gap-2">
+                    <button onclick="openLoginModal();" class="bg-gradient-to-r from-blue-600 via-blue-500 to-cyan-500 hover:from-blue-500 hover:to-cyan-400 text-white font-extrabold px-5 py-2.5 rounded-2xl text-sm transition shadow-lg btn-glow flex items-center gap-2">
                         <i class="fa-solid fa-user-large text-xs"></i>
                         <span>Entrar</span>
                     </button>
@@ -1139,15 +1199,14 @@
         }
 
         window.setCategory = function(cat) {
-            playAudioEffect('click');
             activeCategory = cat;
             renderCategories();
             renderPlans();
         };
 
-        function renderPlans() {
+        function renderPlans(searchQuery = "") {
             const container = document.getElementById("plansContainer");
-            const searchVal = document.getElementById("searchInput") ? document.getElementById("searchInput").value.toLowerCase().trim() : "";
+            const searchVal = searchQuery.toLowerCase().trim() || (document.getElementById("searchInput") ? document.getElementById("searchInput").value.toLowerCase().trim() : "");
 
             let filtered = plansData.filter(plan => {
                 const matchCat = activeCategory === 'all' || plan.category === activeCategory;
@@ -1215,15 +1274,7 @@
             container.innerHTML = html;
         }
 
-        window.filterProducts = function() { renderPlans(); };
-
-        window.focusSearchInput = function() {
-            const input = document.getElementById("searchInput");
-            if (input) {
-                input.focus();
-                input.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            }
-        };
+        window.filterProducts = function(val = "") { renderPlans(val); };
 
         window.toggleMobileMenu = function() {
             const menu = document.getElementById("mobileMenu");
@@ -1271,7 +1322,6 @@
         };
 
         window.openCheckoutModal = function(vipId) {
-            playAudioEffect('modal');
             selectedVip = plansData.find(p => p.id === vipId);
             if (!selectedVip) return;
 
@@ -1279,6 +1329,11 @@
             document.getElementById("couponInput").value = "";
             document.getElementById("couponMsg").classList.add("hidden");
             document.getElementById("modalVipOriginalPrice").classList.add("hidden");
+
+            // Resetar o Aceite dos Termos
+            const termsCheck = document.getElementById("termsCheck");
+            if (termsCheck) termsCheck.checked = false;
+            togglePayButton();
 
             document.getElementById("modalVipBadge").innerText = selectedVip.badge || "VIP";
             document.getElementById("modalVipBadge").className = `px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider ${selectedVip.badgeStyle || 'bg-spk-blue text-white'}`;
@@ -1304,12 +1359,27 @@
             document.getElementById("checkoutModal").classList.remove("hidden");
         };
 
+        window.togglePayButton = function() {
+            const termsCheck = document.getElementById("termsCheck");
+            const btn = document.getElementById("btnProceedPayment");
+            if (termsCheck && btn) {
+                if (termsCheck.checked) {
+                    btn.disabled = false;
+                    btn.classList.remove("opacity-50", "cursor-not-allowed");
+                    btn.classList.add("btn-glow");
+                } else {
+                    btn.disabled = true;
+                    btn.classList.add("opacity-50", "cursor-not-allowed");
+                    btn.classList.remove("btn-glow");
+                }
+            }
+        };
+
         window.closeCheckoutModal = function() {
             document.getElementById("checkoutModal").classList.add("hidden");
         };
 
         window.applyCoupon = function() {
-            playAudioEffect('click');
             const code = document.getElementById("couponInput").value.trim().toUpperCase();
             const msgEl = document.getElementById("couponMsg");
 
@@ -1338,8 +1408,6 @@
                 return;
             }
 
-            playAudioEffect('click');
-
             document.getElementById("displayPixType").innerText = serverConfig.pixType || "CPF";
             document.getElementById("displayPixKey").value = serverConfig.pixKey || "000.000.000-00";
             
@@ -1358,8 +1426,6 @@
         };
 
         window.notifyPaymentDone = async function() {
-            playAudioEffect('click');
-            
             if (selectedVip) {
                 const planRef = plansData.find(p => p.id === selectedVip.id);
                 if (planRef) {
@@ -1438,7 +1504,6 @@
                 openLoginModal();
                 return;
             }
-            playAudioEffect('modal');
             document.getElementById("profileUserName").innerHTML = `${window.currentUser.username} <span id="profileProviderBadge" class="text-[10px] px-2 py-0.5 rounded-full bg-spk-blue/20 text-spk-blue border border-spk-blue/30 font-bold uppercase">${window.currentUser.provider || 'Conta'}</span>`;
             document.getElementById("profileUserEmail").innerText = window.currentUser.email || "Conectado via ID Direto";
             document.getElementById("profileUserId").innerText = `ID: ${window.currentUser.id || window.currentUser.uid || '000000'}`;
@@ -1447,7 +1512,6 @@
 
             const notifTabBtn = document.getElementById("tabBtnNotifications");
             
-            // VERIFICAÇÃO RIGOROSA: APENAS O DONO PODE VER A ABA DE NOTIFICAÇÕES/VENDAS
             if (window.currentUser.email && window.currentUser.email.toLowerCase() === OWNER_EMAIL.toLowerCase()) {
                 notifTabBtn.classList.remove("hidden");
                 updateOwnerNotifBadge();
@@ -1565,7 +1629,6 @@
         }
 
         window.approveSale = async function(txId) {
-            playAudioEffect('click');
             const saleIndex = window.allPendingSales.findIndex(s => s.txId === txId);
             if (saleIndex === -1) return;
 
@@ -1612,7 +1675,6 @@
         };
 
         window.rejectSale = function(txId) {
-            playAudioEffect('click');
             window.allPendingSales = window.allPendingSales.filter(s => s.txId !== txId);
             localStorage.setItem("spk_shop_pending_sales", JSON.stringify(window.allPendingSales));
 
@@ -1625,7 +1687,6 @@
         };
 
         window.logoutAccount = async function() {
-            playAudioEffect('click');
             if (window.firebaseSignOut) await window.firebaseSignOut();
             window.currentUser = null;
             localStorage.removeItem("spk_shop_user");
@@ -1639,7 +1700,6 @@
                 showToast("Acesso negado. Apenas o proprietário pode acessar.", "error");
                 return;
             }
-            playAudioEffect('modal');
 
             document.getElementById("cfgServerName").value = serverConfig.name;
             document.getElementById("cfgServerLogo").value = serverConfig.logo;
@@ -1682,7 +1742,6 @@
             if (activeBtn) activeBtn.className = "px-3.5 py-1.5 rounded-xl text-xs font-bold bg-spk-blue text-white transition";
         };
 
-        // GERENCIAMENTO DE PRODUTOS NO PAINEL DO DONO (COM SUPORTE A FOTO E DESTAQUE)
         function renderAdminProductsList() {
             const container = document.getElementById("adminProductsList");
             let html = "";
@@ -1790,15 +1849,14 @@
 
         window.saveAdminSettings = function(event) {
             event.preventDefault();
-            playAudioEffect('click');
 
             serverConfig.name = document.getElementById("cfgServerName").value;
             serverConfig.logo = document.getElementById("cfgServerLogo").value;
             serverConfig.botWebhookUrl = document.getElementById("cfgBotWebhook").value;
             serverConfig.botUri = document.getElementById("cfgBotUri").value;
-            
-            const catsRaw = document.getElementById("cfgCategoriesInput").value;
-            serverConfig.categories = catsRaw.split(',').map(c => c.trim().toLowerCase()).filter(c => c.length > 0);
+
+            const cats = document.getElementById("cfgCategoriesInput").value.split(",").map(c => c.trim().toLowerCase()).filter(c => c !== "");
+            if (cats.length > 0) serverConfig.categories = cats;
 
             serverConfig.emailServiceId = document.getElementById("cfgEmailServiceId").value;
             serverConfig.emailTemplateId = document.getElementById("cfgEmailTemplateId").value;
@@ -1823,9 +1881,9 @@
             showToast("Configurações salvas com sucesso!", "success");
         };
 
-        window.showModalInfo = function(title, text) {
+        window.showModalInfo = function(title, content) {
             document.getElementById("infoModalTitle").innerText = title;
-            document.getElementById("infoModalBody").innerText = text;
+            document.getElementById("infoModalBody").innerText = content;
             document.getElementById("infoModal").classList.remove("hidden");
         };
 
@@ -1833,118 +1891,63 @@
             document.getElementById("infoModal").classList.add("hidden");
         };
 
-        window.openAiSupportModal = function() { document.getElementById("aiSupportModal").classList.remove("hidden"); };
-        window.closeAiSupportModal = function() { document.getElementById("aiSupportModal").classList.add("hidden"); };
+        window.openAiSupportModal = function() {
+            document.getElementById("aiSupportModal").classList.remove("hidden");
+        };
+
+        window.closeAiSupportModal = function() {
+            document.getElementById("aiSupportModal").classList.add("hidden");
+        };
 
         window.sendAiMessage = function() {
             const input = document.getElementById("aiChatInput");
             const text = input.value.trim();
             if (!text) return;
 
-            const chatHistory = document.getElementById("aiChatHistory");
-            chatHistory.innerHTML += `
-                <div class="bg-spk-blue/20 text-white p-3.5 rounded-2xl border border-spk-blue/30 text-xs ml-8">
+            const history = document.getElementById("aiChatHistory");
+            history.innerHTML += `
+                <div class="bg-spk-blue/20 p-3.5 rounded-2xl border border-spk-blue/30 text-xs text-white ml-8 text-right">
                     ${text}
                 </div>
             `;
             input.value = "";
 
             setTimeout(() => {
-                let reply = "Para comprar qualquer VIP, basta clicar no botão 'Adquirir', aplicar um cupom de desconto caso tenha e finalizar o pagamento via PIX.";
+                let reply = "Para ativação do VIP, certifique-se de realizar o pagamento do PIX e notificar pelo botão 'Já Paguei'!";
                 if (text.toLowerCase().includes("cupom") || text.toLowerCase().includes("desconto")) {
-                    reply = "Nossos cupons ativos atualmente podem ser visualizados clicando no botão 'Cupons' no topo do site!";
-                } else if (text.toLowerCase().includes("entrega") || text.toLowerCase().includes("demora")) {
-                    reply = "A ativação é feita assim que o pagamento via PIX é confirmado pelo dono no sistema.";
+                    reply = "Você pode conferir os cupons disponíveis clicando no botão 'Cupons' no topo da loja.";
+                } else if (text.toLowerCase().includes("pix") || text.toLowerCase().includes("pagar")) {
+                    reply = "O pagamento via PIX é instantâneo e aprovado direto pelo proprietário da loja.";
                 }
 
-                chatHistory.innerHTML += `
+                history.innerHTML += `
                     <div class="bg-spk-dark p-3.5 rounded-2xl border border-white/10 text-xs text-gray-200 mr-8">
                         ${reply}
                     </div>
                 `;
-                chatHistory.scrollTop = chatHistory.scrollHeight;
+                history.scrollTop = history.scrollHeight;
             }, 600);
         };
 
-        function showToast(message, type = "info") {
+        window.showToast = function(msg, type = "info") {
             const container = document.getElementById("toastContainer");
             if (!container) return;
 
             const toast = document.createElement("div");
-            let bgClass = "bg-spk-card border-spk-blue text-white";
-            if (type === "success") bgClass = "bg-emerald-950/90 border-emerald-500 text-emerald-200";
-            if (type === "error") bgClass = "bg-rose-950/90 border-rose-500 text-rose-200";
+            let bg = "bg-spk-card border-spk-blue text-white";
+            if (type === "success") bg = "bg-emerald-900/90 border-emerald-500 text-emerald-100";
+            if (type === "error") bg = "bg-rose-900/90 border-rose-500 text-rose-100";
 
-            toast.className = `px-4 py-3 rounded-2xl border shadow-2xl text-xs font-bold transition-all transform translate-y-2 opacity-0 pointer-events-auto flex items-center gap-2 ${bgClass}`;
-            toast.innerHTML = `<span>${message}</span>`;
+            toast.className = `p-4 rounded-2xl border shadow-2xl text-xs font-bold transition-all duration-300 transform translate-y-2 pointer-events-auto flex items-center gap-2 ${bg}`;
+            toast.innerHTML = `<span>${msg}</span>`;
 
             container.appendChild(toast);
-            setTimeout(() => {
-                toast.classList.remove("translate-y-2", "opacity-0");
-            }, 10);
-
+            setTimeout(() => { toast.classList.remove("translate-y-2"); }, 10);
             setTimeout(() => {
                 toast.classList.add("opacity-0", "translate-y-2");
                 setTimeout(() => toast.remove(), 300);
-            }, 4000);
-        }
-
-        function initConstellationCanvas() {
-            const canvas = document.getElementById("bgCanvas");
-            if (!canvas) return;
-            const ctx = canvas.getContext("2d");
-
-            let width = (canvas.width = window.innerWidth);
-            let height = (canvas.height = window.innerHeight);
-
-            window.addEventListener("resize", () => {
-                width = canvas.width = window.innerWidth;
-                height = canvas.height = window.innerHeight;
-            });
-
-            const particles = [];
-            for (let i = 0; i < 45; i++) {
-                particles.push({
-                    x: Math.random() * width,
-                    y: Math.random() * height,
-                    vx: (Math.random() - 0.5) * 0.5,
-                    vy: (Math.random() - 0.5) * 0.5,
-                    radius: Math.random() * 1.5 + 1
-                });
-            }
-
-            function animate() {
-                ctx.clearRect(0, 0, width, height);
-                ctx.fillStyle = "rgba(59, 130, 246, 0.4)";
-                ctx.strokeStyle = "rgba(59, 130, 246, 0.08)";
-
-                for (let i = 0; i < particles.length; i++) {
-                    let p = particles[i];
-                    p.x += p.vx;
-                    p.y += p.vy;
-
-                    if (p.x < 0 || p.x > width) p.vx *= -1;
-                    if (p.y < 0 || p.y > height) p.vy *= -1;
-
-                    ctx.beginPath();
-                    ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
-                    ctx.fill();
-
-                    for (let j = i + 1; j < particles.length; j++) {
-                        let p2 = particles[j];
-                        let dist = Math.hypot(p.x - p2.x, p.y - p2.y);
-                        if (dist < 120) {
-                            ctx.beginPath();
-                            ctx.moveTo(p.x, p.y);
-                            ctx.lineTo(p2.x, p2.y);
-                            ctx.stroke();
-                        }
-                    }
-                }
-                requestAnimationFrame(animate);
-            }
-            animate();
-        }
+            }, 3500);
+        };
     </script>
 </body>
 </html>
