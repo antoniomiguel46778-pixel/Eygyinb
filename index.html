@@ -32,6 +32,7 @@
             getFirestore, 
             doc, 
             setDoc, 
+            getDoc,
             addDoc,
             collection, 
             onSnapshot
@@ -74,42 +75,6 @@
             }
         }
         authenticateFirebase();
-
-        // ESCUTADOR DE CONFIGURAÇÕES DA LOJA E PRODUTOS EM TEMPO REAL NO FIRESTORE
-        const configDocRef = doc(db, 'artifacts', appId, 'public', 'store_settings');
-        onSnapshot(configDocRef, (docSnap) => {
-            if (docSnap.exists()) {
-                const data = docSnap.data();
-                if (data.serverConfig) {
-                    window.serverConfig = { ...window.serverConfig, ...data.serverConfig };
-                    localStorage.setItem("spk_shop_config", JSON.stringify(window.serverConfig));
-                    if (typeof updateServerDisplay === 'function') updateServerDisplay();
-                }
-                if (data.plansData) {
-                    window.plansData = data.plansData;
-                    localStorage.setItem("spk_shop_plans", JSON.stringify(window.plansData));
-                    if (typeof renderPlans === 'function') renderPlans();
-                }
-                if (data.validCoupons) {
-                    window.validCoupons = data.validCoupons;
-                    localStorage.setItem("spk_shop_coupons", JSON.stringify(window.validCoupons));
-                }
-            }
-        });
-
-        // SALVA AS CONFIGURAÇÕES E PRODUTOS GLOBALMENTE NO FIRESTORE
-        window.saveStoreSettingsToFirestore = async function() {
-            try {
-                await setDoc(configDocRef, {
-                    serverConfig: window.serverConfig,
-                    plansData: window.plansData,
-                    validCoupons: window.validCoupons,
-                    updatedAt: new Date().toISOString()
-                }, { merge: true });
-            } catch (err) {
-                console.error("Erro ao salvar dados globais no Firestore:", err);
-            }
-        };
 
         const googleProvider = new GoogleAuthProvider();
         googleProvider.setCustomParameters({ prompt: 'select_account' });
@@ -247,6 +212,35 @@
                 } else {
                     if (typeof showToast === 'function') showToast("Login do Discord cancelado.", "error");
                 }
+            }
+        };
+
+        // --- SISTEMA DE NUVEM FIRESTORE INTEGRALMENTE HABILITADO ---
+        window.saveConfigToFirestore = async function(configData, plansData, couponsData) {
+            try {
+                const configDocRef = doc(db, 'artifacts', appId, 'global', 'settings');
+                await setDoc(configDocRef, {
+                    serverConfig: configData,
+                    plansData: plansData,
+                    validCoupons: couponsData,
+                    updatedAt: new Date().toISOString()
+                }, { merge: true });
+            } catch (e) {
+                console.error("Erro ao salvar dados globais no Firestore:", e);
+            }
+        };
+
+        window.loadConfigFromFirestore = function(callback) {
+            try {
+                const configDocRef = doc(db, 'artifacts', appId, 'global', 'settings');
+                onSnapshot(configDocRef, (docSnap) => {
+                    if (docSnap.exists()) {
+                        const data = docSnap.data();
+                        if (callback) callback(data);
+                    }
+                });
+            } catch (e) {
+                console.warn("Erro ao escutar Firestore:", e);
             }
         };
 
@@ -857,7 +851,7 @@
                     </div>
                 </div>
 
-                <!-- Aba Config E-mail (EmailJS) -->
+                <!-- Nova Aba Config E-mail (EmailJS) -->
                 <div id="admSecEmail" class="hidden space-y-4">
                     <div class="bg-spk-dark/80 p-4 rounded-2xl border border-white/10 space-y-3">
                         <h4 class="text-xs font-bold text-white mb-2 flex items-center gap-2">
@@ -986,7 +980,7 @@
 
     <div id="toastContainer" class="fixed bottom-5 right-5 z-50 flex flex-col gap-2 pointer-events-none"></div>
 
-    <!-- JAVASCRIPT PRINCIPAL -->
+    <!-- JAVASCRIPT PRINCIPAL E DE SISTEMA TOTALMENTE COMPLETO -->
     <script>
         const OWNER_EMAIL = "antoniomiguel46779@gmail.com";
 
@@ -997,7 +991,7 @@
         let appliedDiscountPercent = 0;
         let activeCategory = 'all';
 
-        window.serverConfig = {
+        let serverConfig = {
             name: "Storm VIPs",
             logo: "https://placehold.co/180x180/0a1026/3b82f6?text=STORM",
             botWebhookUrl: window.BOT_WEBHOOK_URL || "https://discord.com/api/webhooks/1549285505252728832/WboYE5IlvN7RhUXqdbBZRavpYBSJ0oOeleJBz4N7cq0aDmDxGi70YXaIjTuYmwOgxemH",
@@ -1013,13 +1007,13 @@
             privacy: "A sua privacidade é totalmente preservada em nosso sistema. Não compartilhamos dados sensíveis com terceiros."
         };
 
-        window.validCoupons = {
+        let validCoupons = {
             "STORM10": 10,
             "VIPMASTER": 15,
             "LANCAMENTO": 20
         };
 
-        window.plansData = [
+        let plansData = [
             {
                 id: "bronze",
                 title: "VIP Storm Bronze",
@@ -1101,7 +1095,7 @@
             }
         ];
 
-        // SISTEMA DE PARTICULAS (BOLINHAS EM MOVIMENTO NO FUNDO)
+        // SISTEMA DE PARTICULAS NO FUNDO
         function initParticlesBackground() {
             const canvas = document.getElementById("bgCanvas");
             if (!canvas) return;
@@ -1171,14 +1165,20 @@
         window.onload = function() {
             initParticlesBackground();
 
-            const savedConfig = localStorage.getItem("spk_shop_config");
-            if (savedConfig) { try { serverConfig = { ...serverConfig, ...JSON.parse(savedConfig) }; } catch(e){} }
-
-            const savedPlans = localStorage.getItem("spk_shop_plans");
-            if (savedPlans) { try { plansData = JSON.parse(savedPlans); } catch(e){} }
-
-            const savedCoupons = localStorage.getItem("spk_shop_coupons");
-            if (savedCoupons) { try { validCoupons = JSON.parse(savedCoupons); } catch(e){} }
+            // Sincronização e escuta direta em nuvem no Firestore
+            if (window.loadConfigFromFirestore) {
+                window.loadConfigFromFirestore((cloudData) => {
+                    if (cloudData) {
+                        if (cloudData.serverConfig) serverConfig = { ...serverConfig, ...cloudData.serverConfig };
+                        if (cloudData.plansData) plansData = cloudData.plansData;
+                        if (cloudData.validCoupons) validCoupons = cloudData.validCoupons;
+                        
+                        updateServerDisplay();
+                        renderCategories();
+                        renderPlans();
+                    }
+                });
+            }
 
             const savedUser = localStorage.getItem("spk_shop_user");
             if (savedUser) { try { window.currentUser = JSON.parse(savedUser); } catch(e){} }
@@ -1235,6 +1235,7 @@
 
         function renderCategories() {
             const container = document.getElementById("categoryContainer");
+            if (!container) return;
             let html = `
                 <button onclick="setCategory('all')" class="px-5 py-2 rounded-2xl text-xs font-bold transition ${activeCategory === 'all' ? 'bg-spk-blue text-white shadow-lg shadow-spk-blue/30' : 'bg-spk-card/80 text-gray-400 hover:text-white border border-white/10'}">
                     <i class="fa-solid fa-border-all mr-1.5"></i> Todos os Planos
@@ -1271,6 +1272,7 @@
 
         function renderPlans() {
             const container = document.getElementById("plansContainer");
+            if (!container) return;
             const searchVal = document.getElementById("searchInput") ? document.getElementById("searchInput").value.toLowerCase().trim() : "";
 
             let filtered = plansData.filter(plan => {
@@ -1338,16 +1340,6 @@
             });
             container.innerHTML = html;
         }
-
-        window.filterProducts = function() { renderPlans(); };
-
-        window.focusSearchInput = function() {
-            const input = document.getElementById("searchInput");
-            if (input) {
-                input.focus();
-                input.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            }
-        };
 
         window.toggleMobileMenu = function() {
             const menu = document.getElementById("mobileMenu");
@@ -1488,8 +1480,9 @@
                 const planRef = plansData.find(p => p.id === selectedVip.id);
                 if (planRef) {
                     planRef.stock = Math.max(0, (planRef.stock || 0) - 1);
-                    localStorage.setItem("spk_shop_plans", JSON.stringify(plansData));
-                    if (window.saveStoreSettingsToFirestore) window.saveStoreSettingsToFirestore();
+                    if (window.saveConfigToFirestore) {
+                        await window.saveConfigToFirestore(serverConfig, plansData, validCoupons);
+                    }
                     renderPlans();
                 }
             }
@@ -1528,32 +1521,6 @@
 
             showToast("Notificação de pagamento enviada com sucesso ao Dono!", "success");
         };
-
-        async function sendDiscordApprovedNotification(purchaseObj) {
-            if (!serverConfig.botWebhookUrl) return;
-            try {
-                const payload = {
-                    embeds: [{
-                        title: "✅ Venda Aprovada pelo Proprietário!",
-                        color: 1097625,
-                        fields: [
-                            { name: "VIP", value: purchaseObj.vipTitle, inline: true },
-                            { name: "Valor", value: `R$ ${purchaseObj.price}`, inline: true },
-                            { name: "Usuário", value: purchaseObj.username, inline: false },
-                            { name: "ID Transação", value: purchaseObj.txId, inline: false }
-                        ],
-                        timestamp: new Date().toISOString()
-                    }]
-                };
-                await fetch(serverConfig.botWebhookUrl, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
-                });
-            } catch (e) {
-                console.warn("Erro ao enviar webhook:", e);
-            }
-        }
 
         window.openLoginModal = function() { document.getElementById("loginModal").classList.remove("hidden"); };
         window.closeLoginModal = function() { document.getElementById("loginModal").classList.add("hidden"); };
@@ -1698,19 +1665,15 @@
             window.userPurchases = window.userPurchases.map(p => p.txId === txId ? { ...p, status: 'Aprovado' } : p);
             localStorage.setItem("spk_shop_purchases", JSON.stringify(window.userPurchases));
 
-            sendDiscordApprovedNotification(sale);
-            showToast("Venda aprovada com sucesso!", "success");
+            showToast(`Venda ${txId} aprovada com sucesso!`, "success");
             renderOwnerNotifications();
             updateOwnerNotifBadge();
         };
 
         window.rejectSale = function(txId) {
-            const saleIndex = window.allPendingSales.findIndex(s => s.txId === txId);
-            if (saleIndex !== -1) {
-                window.allPendingSales.splice(saleIndex, 1);
-                localStorage.setItem("spk_shop_pending_sales", JSON.stringify(window.allPendingSales));
-            }
-            showToast("Solicitação de venda recusada.", "info");
+            window.allPendingSales = window.allPendingSales.filter(s => s.txId !== txId);
+            localStorage.setItem("spk_shop_pending_sales", JSON.stringify(window.allPendingSales));
+            showToast(`Venda ${txId} recusada.`, "error");
             renderOwnerNotifications();
             updateOwnerNotifBadge();
         };
@@ -1721,37 +1684,12 @@
             localStorage.removeItem("spk_shop_user");
             renderUserAuth();
             closeProfileModal();
-            showToast("Sessão encerrada.", "info");
+            showToast("Desconectado com sucesso.", "success");
         };
 
-        window.showToast = function(msg, type = 'info') {
-            const container = document.getElementById("toastContainer");
-            const toast = document.createElement("div");
-            
-            let bg = "bg-spk-card border-spk-blue text-white";
-            if (type === 'success') bg = "bg-emerald-950/90 border-emerald-500 text-emerald-200";
-            if (type === 'error') bg = "bg-rose-950/90 border-rose-500 text-rose-200";
-
-            toast.className = `pointer-events-auto px-4 py-3 rounded-2xl border ${bg} shadow-2xl text-xs font-bold flex items-center gap-2 transition duration-300 transform translate-y-2 opacity-0`;
-            toast.innerHTML = `<i class="fa-solid ${type === 'success' ? 'fa-circle-check text-emerald-400' : (type === 'error' ? 'fa-triangle-exclamation text-rose-400' : 'fa-circle-info text-spk-blue')}"></i> ${msg}`;
-
-            container.appendChild(toast);
-            setTimeout(() => { toast.classList.remove("translate-y-2", "opacity-0"); }, 10);
-            setTimeout(() => {
-                toast.classList.add("opacity-0", "translate-y-2");
-                setTimeout(() => toast.remove(), 300);
-            }, 3500);
-        };
-
-        window.showModalInfo = function(title, body) {
-            document.getElementById("infoModalTitle").innerText = title;
-            document.getElementById("infoModalBody").innerText = body;
-            document.getElementById("infoModal").classList.remove("hidden");
-        };
-        window.closeInfoModal = function() { document.getElementById("infoModal").classList.add("hidden"); };
-
+        // --- FUNÇÕES DO PAINEL ADMIN DO DONO ---
         window.openAdminModal = function() {
-            if (!window.currentUser || !window.currentUser.email || window.currentUser.email.toLowerCase() !== OWNER_EMAIL.toLowerCase()) {
+            if (!window.currentUser || window.currentUser.email.toLowerCase() !== OWNER_EMAIL.toLowerCase()) {
                 showToast("Acesso restrito ao proprietário da loja.", "error");
                 return;
             }
@@ -1760,13 +1698,16 @@
             document.getElementById("cfgServerLogo").value = serverConfig.logo || "";
             document.getElementById("cfgBotWebhook").value = serverConfig.botWebhookUrl || "";
             document.getElementById("cfgBotUri").value = serverConfig.botUri || "";
+            document.getElementById("cfgCategoriesInput").value = (serverConfig.categories || []).join(", ");
+
             document.getElementById("cfgEmailServiceId").value = serverConfig.emailServiceId || "";
             document.getElementById("cfgEmailTemplateId").value = serverConfig.emailTemplateId || "";
             document.getElementById("cfgEmailPublicKey").value = serverConfig.emailPublicKey || "";
+
             document.getElementById("cfgPixType").value = serverConfig.pixType || "CPF";
             document.getElementById("cfgPixKey").value = serverConfig.pixKey || "";
             document.getElementById("cfgPixQrCodeUrl").value = serverConfig.pixQrCodeUrl || "";
-            document.getElementById("cfgCategoriesInput").value = (serverConfig.categories || []).join(", ");
+
             document.getElementById("cfgTerms").value = serverConfig.terms || "";
             document.getElementById("cfgPrivacy").value = serverConfig.privacy || "";
 
@@ -1777,59 +1718,59 @@
             document.getElementById("adminModal").classList.remove("hidden");
         };
 
-        window.closeAdminModal = function() { document.getElementById("adminModal").classList.add("hidden"); };
+        window.closeAdminModal = function() {
+            document.getElementById("adminModal").classList.add("hidden");
+        };
 
         window.switchAdminTab = function(tab) {
-            const tabs = ['general', 'email', 'pix', 'products', 'terms', 'coupons'];
+            const tabs = ['Gen', 'Email', 'Pix', 'Prod', 'Terms', 'Coup'];
+            const secs = ['General', 'Email', 'Pix', 'Products', 'Terms', 'Coupons'];
+
+            secs.forEach(s => document.getElementById(`admSec${s}`).classList.add("hidden"));
             tabs.forEach(t => {
-                const sec = document.getElementById("admSec" + t.charAt(0).toUpperCase() + t.slice(1));
-                const btn = document.getElementById("admTab" + t.charAt(0).toUpperCase() + t.slice(1, 4));
-                if (sec) sec.classList.add("hidden");
+                const btn = document.getElementById(`admTab${t}`);
                 if (btn) btn.className = "px-3.5 py-1.5 rounded-xl text-xs font-bold text-gray-400 hover:text-white transition";
             });
 
-            const targetSec = document.getElementById("admSec" + tab.charAt(0).toUpperCase() + tab.slice(1));
-            const targetBtn = document.getElementById("admTab" + tab.charAt(0).toUpperCase() + tab.slice(1, 4));
-            if (targetSec) targetSec.classList.remove("hidden");
-            if (targetBtn) targetBtn.className = "px-3.5 py-1.5 rounded-xl text-xs font-bold bg-spk-blue text-white transition";
+            if (tab === 'general') {
+                document.getElementById("admSecGeneral").classList.remove("hidden");
+                document.getElementById("admTabGen").className = "px-3.5 py-1.5 rounded-xl text-xs font-bold bg-spk-blue text-white transition";
+            } else if (tab === 'email') {
+                document.getElementById("admSecEmail").classList.remove("hidden");
+                document.getElementById("admTabEmail").className = "px-3.5 py-1.5 rounded-xl text-xs font-bold bg-spk-blue text-white transition";
+            } else if (tab === 'pix') {
+                document.getElementById("admSecPix").classList.remove("hidden");
+                document.getElementById("admTabPix").className = "px-3.5 py-1.5 rounded-xl text-xs font-bold bg-spk-blue text-white transition";
+            } else if (tab === 'products') {
+                document.getElementById("admSecProducts").classList.remove("hidden");
+                document.getElementById("admTabProd").className = "px-3.5 py-1.5 rounded-xl text-xs font-bold bg-spk-blue text-white transition";
+            } else if (tab === 'terms') {
+                document.getElementById("admSecTerms").classList.remove("hidden");
+                document.getElementById("admTabTerms").className = "px-3.5 py-1.5 rounded-xl text-xs font-bold bg-spk-blue text-white transition";
+            } else if (tab === 'coupons') {
+                document.getElementById("admSecCoupons").classList.remove("hidden");
+                document.getElementById("admTabCoup").className = "px-3.5 py-1.5 rounded-xl text-xs font-bold bg-spk-blue text-white transition";
+            }
         };
 
         function renderAdminProductsList() {
             const container = document.getElementById("adminProductsList");
             let html = "";
-            plansData.forEach((p, idx) => {
+            plansData.forEach((plan, index) => {
                 html += `
                     <div class="bg-spk-dark p-4 rounded-2xl border border-white/10 space-y-3">
-                        <div class="flex justify-between items-center pb-2 border-b border-white/5">
-                            <span class="font-bold text-xs text-spk-blue">Produto #${idx+1} (${p.id})</span>
-                            <button type="button" onclick="removeAdminProduct('${p.id}')" class="text-rose-400 hover:text-rose-300 text-xs font-bold"><i class="fa-solid fa-trash mr-1"></i> Remover</button>
+                        <div class="flex justify-between items-center">
+                            <span class="font-bold text-xs text-spk-blue uppercase">VIP #${index + 1}</span>
+                            <button type="button" onclick="removeProduct(${index})" class="text-xs text-rose-400 hover:underline"><i class="fa-solid fa-trash"></i> Excluir</button>
                         </div>
-                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
-                            <div>
-                                <label class="block text-gray-400 mb-1">Título</label>
-                                <input id="admPTitle_${p.id}" type="text" value="${p.title}" class="w-full bg-spk-card text-white p-2 rounded-xl border border-white/10 outline-none">
-                            </div>
-                            <div>
-                                <label class="block text-gray-400 mb-1">Preço (R$)</label>
-                                <input id="admPPrice_${p.id}" type="number" step="0.01" value="${p.price}" class="w-full bg-spk-card text-white p-2 rounded-xl border border-white/10 outline-none">
-                            </div>
-                            <div>
-                                <label class="block text-gray-400 mb-1">Categoria</label>
-                                <input id="admPCat_${p.id}" type="text" value="${p.category}" class="w-full bg-spk-card text-white p-2 rounded-xl border border-white/10 outline-none">
-                            </div>
-                            <div>
-                                <label class="block text-gray-400 mb-1">Estoque</label>
-                                <input id="admPStock_${p.id}" type="number" value="${p.stock}" class="w-full bg-spk-card text-white p-2 rounded-xl border border-white/10 outline-none">
-                            </div>
-                            <div class="sm:col-span-2">
-                                <label class="block text-gray-400 mb-1">URL da Imagem / Banner do Produto</label>
-                                <input id="admPImg_${p.id}" type="text" value="${p.image || ''}" class="w-full bg-spk-card text-white p-2 rounded-xl border border-white/10 outline-none">
-                            </div>
-                            <div class="sm:col-span-2">
-                                <label class="block text-gray-400 mb-1">Descrição</label>
-                                <textarea id="admPDesc_${p.id}" rows="2" class="w-full bg-spk-card text-white p-2 rounded-xl border border-white/10 outline-none">${p.description}</textarea>
-                            </div>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <input type="text" value="${plan.title}" onchange="plansData[${index}].title=this.value" placeholder="Título do VIP" class="bg-spk-card text-xs text-white p-2.5 rounded-xl border border-white/10 outline-none">
+                            <input type="number" step="0.01" value="${plan.price}" onchange="plansData[${index}].price=parseFloat(this.value)" placeholder="Preço R$" class="bg-spk-card text-xs text-white p-2.5 rounded-xl border border-white/10 outline-none">
+                            <input type="text" value="${plan.category}" onchange="plansData[${index}].category=this.value" placeholder="Categoria" class="bg-spk-card text-xs text-white p-2.5 rounded-xl border border-white/10 outline-none">
+                            <input type="number" value="${plan.stock || 0}" onchange="plansData[${index}].stock=parseInt(this.value)" placeholder="Estoque" class="bg-spk-card text-xs text-white p-2.5 rounded-xl border border-white/10 outline-none">
                         </div>
+                        <input type="text" value="${plan.image || ''}" onchange="plansData[${index}].image=this.value" placeholder="URL da Imagem / Banner do Produto" class="w-full bg-spk-card text-xs text-white p-2.5 rounded-xl border border-white/10 outline-none">
+                        <textarea onchange="plansData[${index}].description=this.value" placeholder="Descrição do VIP" class="w-full bg-spk-card text-xs text-white p-2.5 rounded-xl border border-white/10 outline-none">${plan.description}</textarea>
                     </div>
                 `;
             });
@@ -1840,14 +1781,14 @@
             const newId = "vip_" + Date.now();
             plansData.push({
                 id: newId,
-                title: "Novo VIP Personalizado",
+                title: "Novo VIP Storm",
                 badge: "Especial",
-                category: "popular",
+                category: "iniciante",
                 price: 25.00,
                 stock: 50,
                 featured: false,
                 image: "https://placehold.co/600x300/0f172a/3b82f6?text=Novo+VIP",
-                description: "Descrição do seu novo produto VIP.",
+                description: "Descrição do novo plano VIP.",
                 badgeStyle: "bg-spk-blue text-white",
                 btnBg: "bg-spk-blue hover:bg-blue-600 text-white font-bold",
                 benefits: ["Benefício exclusivo 1", "Benefício exclusivo 2"]
@@ -1855,8 +1796,8 @@
             renderAdminProductsList();
         };
 
-        window.removeAdminProduct = function(id) {
-            plansData = plansData.filter(p => p.id !== id);
+        window.removeProduct = function(index) {
+            plansData.splice(index, 1);
             renderAdminProductsList();
         };
 
@@ -1865,23 +1806,26 @@
             let html = "";
             Object.keys(validCoupons).forEach(code => {
                 html += `
-                    <div class="bg-spk-dark p-3 rounded-xl border border-white/10 flex justify-between items-center text-xs">
+                    <div class="bg-spk-dark p-2.5 rounded-xl border border-white/10 flex justify-between items-center text-xs">
                         <span class="font-mono font-bold text-amber-400">${code} (${validCoupons[code]}%)</span>
-                        <button type="button" onclick="removeAdminCoupon('${code}')" class="text-rose-400 hover:text-rose-300 font-bold"><i class="fa-solid fa-xmark"></i></button>
+                        <button type="button" onclick="removeAdminCoupon('${code}')" class="text-rose-400 hover:underline"><i class="fa-solid fa-trash"></i></button>
                     </div>
                 `;
             });
-            container.innerHTML = html;
+            container.innerHTML = html || '<p class="text-xs text-gray-500 py-2">Nenhum cupom cadastrado.</p>';
         }
 
         window.addAdminCoupon = function() {
             const code = document.getElementById("newCouponCode").value.trim().toUpperCase();
-            const disc = parseFloat(document.getElementById("newCouponDiscount").value);
-            if (code && !isNaN(disc)) {
-                validCoupons[code] = disc;
+            const discount = parseFloat(document.getElementById("newCouponDiscount").value);
+
+            if (code && !isNaN(discount) && discount > 0) {
+                validCoupons[code] = discount;
                 document.getElementById("newCouponCode").value = "";
                 document.getElementById("newCouponDiscount").value = "";
                 renderAdminCouponsList();
+            } else {
+                showToast("Preencha o código e um desconto válido.", "error");
             }
         };
 
@@ -1890,57 +1834,54 @@
             renderAdminCouponsList();
         };
 
-        window.saveAdminSettings = async function(e) {
-            e.preventDefault();
+        window.saveAdminSettings = async function(event) {
+            event.preventDefault();
 
             serverConfig.name = document.getElementById("cfgServerName").value.trim();
             serverConfig.logo = document.getElementById("cfgServerLogo").value.trim();
             serverConfig.botWebhookUrl = document.getElementById("cfgBotWebhook").value.trim();
             serverConfig.botUri = document.getElementById("cfgBotUri").value.trim();
+
+            const catsRaw = document.getElementById("cfgCategoriesInput").value.split(",");
+            serverConfig.categories = catsRaw.map(c => c.trim().toLowerCase()).filter(c => c.length > 0);
+
             serverConfig.emailServiceId = document.getElementById("cfgEmailServiceId").value.trim();
             serverConfig.emailTemplateId = document.getElementById("cfgEmailTemplateId").value.trim();
             serverConfig.emailPublicKey = document.getElementById("cfgEmailPublicKey").value.trim();
+
             serverConfig.pixType = document.getElementById("cfgPixType").value;
             serverConfig.pixKey = document.getElementById("cfgPixKey").value.trim();
             serverConfig.pixQrCodeUrl = document.getElementById("cfgPixQrCodeUrl").value.trim();
-            
-            const catsRaw = document.getElementById("cfgCategoriesInput").value;
-            serverConfig.categories = catsRaw.split(',').map(c => c.trim().toLowerCase()).filter(c => c !== "");
 
             serverConfig.terms = document.getElementById("cfgTerms").value.trim();
             serverConfig.privacy = document.getElementById("cfgPrivacy").value.trim();
 
-            plansData.forEach(p => {
-                const tEl = document.getElementById(`admPTitle_${p.id}`);
-                const prEl = document.getElementById(`admPPrice_${p.id}`);
-                const cEl = document.getElementById(`admPCat_${p.id}`);
-                const sEl = document.getElementById(`admPStock_${p.id}`);
-                const iEl = document.getElementById(`admPImg_${p.id}`);
-                const dEl = document.getElementById(`admPDesc_${p.id}`);
-
-                if (tEl) p.title = tEl.value.trim();
-                if (prEl) p.price = parseFloat(prEl.value) || p.price;
-                if (cEl) p.category = cEl.value.trim().toLowerCase();
-                if (sEl) p.stock = parseInt(sEl.value) || 0;
-                if (iEl) p.image = iEl.value.trim();
-                if (dEl) p.description = dEl.value.trim();
-            });
+            // SALVA NO FIRESTORE EM NUVEM PARA TODOS OS DISPOSITIVOS E VISITANTES
+            if (window.saveConfigToFirestore) {
+                await window.saveConfigToFirestore(serverConfig, plansData, validCoupons);
+            }
 
             localStorage.setItem("spk_shop_config", JSON.stringify(serverConfig));
             localStorage.setItem("spk_shop_plans", JSON.stringify(plansData));
             localStorage.setItem("spk_shop_coupons", JSON.stringify(validCoupons));
-
-            // Salva na nuvem no Firestore para que persista para qualquer pessoa e ao limpar histórico
-            if (window.saveStoreSettingsToFirestore) {
-                await window.saveStoreSettingsToFirestore();
-            }
 
             updateServerDisplay();
             renderCategories();
             renderPlans();
 
             closeAdminModal();
-            showToast("Todas as configurações salvas no Firestore e aplicadas com sucesso!", "success");
+            showToast("Configurações salvas permanentemente na nuvem com sucesso!", "success");
+        };
+
+        // --- AUXILIARES, MODAL DE INFORMAÇÕES E TOAST ---
+        window.showModalInfo = function(title, body) {
+            document.getElementById("infoModalTitle").innerText = title;
+            document.getElementById("infoModalBody").innerText = body;
+            document.getElementById("infoModal").classList.remove("hidden");
+        };
+
+        window.closeInfoModal = function() {
+            document.getElementById("infoModal").classList.add("hidden");
         };
 
         window.openAiSupportModal = function() { document.getElementById("aiSupportModal").classList.remove("hidden"); };
@@ -1948,36 +1889,49 @@
 
         window.sendAiMessage = function() {
             const input = document.getElementById("aiChatInput");
-            const text = input.value.trim();
-            if (!text) return;
+            const history = document.getElementById("aiChatHistory");
+            const msg = input.value.trim();
+            if (!msg) return;
 
-            const chatHistory = document.getElementById("aiChatHistory");
-            const userMsg = document.createElement("div");
-            userMsg.className = "bg-spk-blue/20 text-blue-200 p-3 rounded-2xl border border-spk-blue/30 text-xs ml-auto max-w-[85%]";
-            userMsg.innerText = text;
-            chatHistory.appendChild(userMsg);
-
+            history.innerHTML += `
+                <div class="bg-spk-blue/20 p-3.5 rounded-2xl border border-spk-blue/30 text-xs text-white text-right">
+                    ${msg}
+                </div>
+            `;
             input.value = "";
-            chatHistory.scrollTop = chatHistory.scrollHeight;
 
             setTimeout(() => {
-                const botMsg = document.createElement("div");
-                botMsg.className = "bg-spk-dark p-3.5 rounded-2xl border border-white/10 text-xs text-gray-200 max-w-[85%]";
-                
-                let lower = text.toLowerCase();
-                if (lower.includes("pix") || lower.includes("pagamento")) {
-                    botMsg.innerText = "Os pagamentos são feitos via PIX. Ao escolher um VIP e clicar em Comprar, você terá acesso à chave PIX e ao QR Code.";
-                } else if (lower.includes("cupom") || lower.includes("desconto")) {
-                    botMsg.innerText = "Você pode conferir os cupons ativos clicando no botão 'Cupons' no topo da página e inserindo-os na tela de checkout!";
-                } else if (lower.includes("entrega") || lower.includes("demora")) {
-                    botMsg.innerText = "Após o pagamento, o proprietário analisa e confirma o envio. Seu histórico de compras fica disponível no perfil do site.";
-                } else {
-                    botMsg.innerText = "Estou aqui para ajudar! Você pode adquirir VIPs através da nossa vitrine de planos abaixo com total segurança.";
+                let response = "Olá! Como posso ajudar você hoje?";
+                const lower = msg.toLowerCase();
+                if (lower.includes("cupom") || lower.includes("desconto")) {
+                    response = "Você pode resgatar cupons ativos no botão 'Cupons' do menu superior!";
+                } else if (lower.includes("pix") || lower.includes("pagar")) {
+                    response = "O pagamento é efetuado via PIX com liberação ágil assim que confirmado pelo proprietário.";
+                } else if (lower.includes("vip") || lower.includes("plano")) {
+                    response = "Nossos VIPs garantem cargos exclusivos, kits de itens diários e acesso ao painel especial!";
                 }
 
-                chatHistory.appendChild(botMsg);
-                chatHistory.scrollTop = chatHistory.scrollHeight;
+                history.innerHTML += `
+                    <div class="bg-spk-dark p-3.5 rounded-2xl border border-white/10 text-xs text-gray-200">
+                        ${response}
+                    </div>
+                `;
+                history.scrollTop = history.scrollHeight;
             }, 600);
+        };
+
+        window.showToast = function(msg, type = "info") {
+            const container = document.getElementById("toastContainer");
+            if (!container) return;
+
+            const toast = document.createElement("div");
+            const bgColor = type === "success" ? "bg-emerald-500 text-black font-extrabold" : type === "error" ? "bg-rose-500 text-white font-extrabold" : "bg-spk-blue text-white font-extrabold";
+
+            toast.className = `${bgColor} px-4 py-3 rounded-2xl shadow-2xl text-xs flex items-center gap-2 pointer-events-auto animate-bounce`;
+            toast.innerHTML = `<i class="fa-solid fa-circle-info"></i> ${msg}`;
+
+            container.appendChild(toast);
+            setTimeout(() => { toast.remove(); }, 4000);
         };
     </script>
 </body>
